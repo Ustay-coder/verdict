@@ -1,5 +1,5 @@
 import { htmlToText } from "html-to-text";
-import type { Evidence, Input, Subject } from "../schema/subject.js";
+import type { Evidence, ImageMeta, Input, ScreenshotOptions, Subject } from "../schema/subject.js";
 
 export interface IngestOptions {
   /** Max characters per evidence block (judges see at most this much). */
@@ -11,7 +11,14 @@ export interface IngestOptions {
   timeoutMs?: number;
   /** Pluggable YouTube transcript provider (e.g. a paid API). */
   youtubeTranscript?: (videoId: string, lang?: string) => Promise<{ text: string; title?: string } | null>;
+  /**
+   * Screenshot renderer for `url` inputs with `screenshot` set (e.g. `playwrightScreenshot()` in Node).
+   * Without one, such inputs still ingest their text and carry a warning.
+   */
+  screenshot?: ScreenshotRenderer;
 }
+
+export type ScreenshotRenderer = (url: string, opts: Required<Omit<ScreenshotOptions, "fullPage">> & { fullPage: boolean }) => Promise<{ data: Uint8Array; mimeType?: string } | null>;
 
 export type Ingestor = (input: Input, index: number, opts: Required<Pick<IngestOptions, "maxChars" | "fetch" | "allowLocalFiles" | "timeoutMs">> & IngestOptions) => Promise<Evidence>;
 
@@ -43,6 +50,118 @@ function make(input: Input, index: number, text: string, extra: Partial<Evidence
     ...extra,
   };
 }
+
+/* ---------- images ---------- */
+// Image bytes stay out of the Evidence object so stored evaluations never carry them; judges read them from here.
+const media = new WeakMap<Evidence, string[]>();
+
+/** Data URIs of the images attached to an evidence block (empty when none). */
+export function evidenceImages(e: Evidence): string[] { return media.get(e) ?? []; }
+
+/** Attach images to an evidence block: metadata on the evidence, bytes in memory only. */
+export function attachImages(e: Evidence, images: Array<{ data: Uint8Array; mimeType?: string }>): Evidence {
+  const uris: string[] = [];
+  const meta: ImageMeta[] = [];
+  for (const img of images) {
+    const info = imageInfo(img.data, img.mimeType);
+    if (!info) throw new Error("unsupported image: expected PNG, JPEG or WebP");
+    uris.push(`data:${info.mimeType};base64,${toBase64(img.data)}`);
+    meta.push(info);
+  }
+  media.set(e, [...evidenceImages(e), ...uris]);
+  e.images = [...(e.images ?? []), ...meta];
+  return e;
+}
+
+/** Sniff PNG / JPEG / WebP and read the pixel size from the header. */
+export function imageInfo(buf: Uint8Array, declared?: string): ImageMeta | undefined {
+  const b = buf, at = (i: number) => b[i] ?? 0;
+  const be16 = (i: number) => (at(i) << 8) | at(i + 1), be32 = (i: number) => ((at(i) << 24) >>> 0) + (at(i + 1) << 16) + (at(i + 2) << 8) + at(i + 3);
+  const le16 = (i: number) => at(i) | (at(i + 1) << 8), le24 = (i: number) => at(i) | (at(i + 1) << 8) | (at(i + 2) << 16);
+  if (at(0) === 0x89 && at(1) === 0x50 && at(2) === 0x4e && at(3) === 0x47) return { mimeType: "image/png", bytes: b.length, width: be32(16), height: be32(20) };
+  if (at(0) === 0xff && at(1) === 0xd8) {
+    let i = 2;
+    while (i + 9 < b.length) {
+      if (at(i) !== 0xff) { i++; continue; }
+      const marker = at(i + 1), len = be16(i + 2);
+      if (marker >= 0xc0 && marker <= 0xcf && ![0xc4, 0xc8, 0xcc].includes(marker)) return { mimeType: "image/jpeg", bytes: b.length, height: be16(i + 5), width: be16(i + 7) };
+      i += 2 + len;
+    }
+    return { mimeType: "image/jpeg", bytes: b.length };
+  }
+  if (String.fromCharCode(at(0), at(1), at(2), at(3)) === "RIFF" && String.fromCharCode(at(8), at(9), at(10), at(11)) === "WEBP") {
+    const chunk = String.fromCharCode(at(12), at(13), at(14), at(15));
+    if (chunk === "VP8X") return { mimeType: "image/webp", bytes: b.length, width: le24(24) + 1, height: le24(27) + 1 };
+    if (chunk === "VP8 ") return { mimeType: "image/webp", bytes: b.length, width: le16(26) & 0x3fff, height: le16(28) & 0x3fff };
+    if (chunk === "VP8L") { const bits = (at(21) | (at(22) << 8) | (at(23) << 16) | (at(24) << 24)) >>> 0; return { mimeType: "image/webp", bytes: b.length, width: (bits & 0x3fff) + 1, height: ((bits >> 14) & 0x3fff) + 1 }; }
+    return { mimeType: "image/webp", bytes: b.length };
+  }
+  void declared;
+  return undefined;
+}
+
+function toBase64(u8: Uint8Array): string {
+  const B = (globalThis as { Buffer?: { from(u: Uint8Array): { toString(enc: string): string } } }).Buffer;
+  if (B) return B.from(u8).toString("base64");
+  let s = "";
+  for (let i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode(...u8.subarray(i, i + 0x8000));
+  return btoa(s);
+}
+function fromBase64(b64: string): Uint8Array {
+  const B = (globalThis as { Buffer?: { from(s: string, enc: string): Uint8Array } }).Buffer;
+  if (B) return new Uint8Array(B.from(b64, "base64"));
+  return Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+}
+const describeImage = (m: ImageMeta) => `${m.width && m.height ? `${m.width}×${m.height} ` : ""}${m.mimeType.slice(6).toUpperCase()}`;
+
+/**
+ * Node-only screenshot renderer backed by Playwright, loaded lazily (never on Workers).
+ * Returns undefined when Playwright isn't installed, so callers can fall back to text-only ingestion.
+ */
+export async function playwrightScreenshot(): Promise<ScreenshotRenderer | undefined> {
+  let pw: { chromium: { launch(o?: unknown): Promise<{ newPage(o: unknown): Promise<PwPage>; close(): Promise<void> }> } };
+  try {
+    const { createRequire } = await import("node:module");
+    pw = createRequire(import.meta.url)("playwright");
+  } catch { return undefined; }
+  return async (url, o) => {
+    const browser = await pw.chromium.launch();
+    try {
+      const page = await browser.newPage({ viewport: { width: o.width, height: o.height }, deviceScaleFactor: 1 });
+      await page.goto(url, { waitUntil: "networkidle", timeout: 20_000 });
+      const data = await page.screenshot({ type: "png", fullPage: o.fullPage });
+      return { data: new Uint8Array(data), mimeType: "image/png" };
+    } finally { await browser.close(); }
+  };
+}
+/** A renderer that loads Playwright on first use; resolves to null (→ evidence warning) when it isn't installed. */
+export function lazyPlaywrightScreenshot(): ScreenshotRenderer {
+  let renderer: Promise<ScreenshotRenderer | undefined> | undefined;
+  return async (url, o) => {
+    const r = await (renderer ??= playwrightScreenshot());
+    return r ? r(url, o) : null;
+  };
+}
+type PwPage = { goto(u: string, o: unknown): Promise<unknown>; screenshot(o: unknown): Promise<Uint8Array> };
+
+registerIngestor("image", async (input, i, o) => {
+  if (input.type !== "image") throw new Error("bad input");
+  let buf: Uint8Array;
+  let name = input.filename ?? "";
+  if (input.base64) buf = fromBase64(input.base64.replace(/^data:[^;]+;base64,/, ""));
+  else if (input.path) {
+    if (!o.allowLocalFiles) throw new Error("local file paths are disabled; send base64 content instead");
+    const { readFile } = await import("node:fs/promises");
+    const { basename } = await import("node:path");
+    buf = new Uint8Array(await readFile(input.path));
+    name ||= basename(input.path);
+  } else throw new Error("image input needs `path` or `base64`");
+  const info = imageInfo(buf, input.mimeType);
+  if (!info) throw new Error(`unsupported image${name ? ` ${name}` : ""}: expected PNG, JPEG or WebP`);
+  const label = input.label ?? (name || `image #${i + 1}`);
+  const e = make(input, i, `[image: ${label}, ${describeImage(info)}; attached for vision-capable judges]`, { label, source: name || undefined }, o.maxChars);
+  return attachImages(e, [{ data: buf, mimeType: info.mimeType }]);
+});
 
 /* ---------- text / json ---------- */
 registerIngestor("text", async (input, i, o) => {
@@ -130,7 +249,17 @@ registerIngestor("url", async (input, i, o) => {
     title = /<title[^>]*>([^<]*)<\/title>/i.exec(html)?.[1]?.trim();
     text = ct.includes("html") || /<html/i.test(html) ? htmlToPlain(html) : html;
   }
-  return make(input, i, text, { label: input.label ?? title ?? input.url, source: input.url, json }, o.maxChars);
+  const e = make(input, i, text, { label: input.label ?? title ?? input.url, source: input.url, json }, o.maxChars);
+  if (input.screenshot) {
+    const so = typeof input.screenshot === "object" ? input.screenshot : {};
+    const shot = o.screenshot ? await o.screenshot(input.url, { width: so.width ?? 1280, height: so.height ?? 800, fullPage: so.fullPage ?? false }) : null;
+    if (shot) {
+      attachImages(e, [shot]);
+      e.text += `\n\n[screenshot of ${input.url} attached: ${describeImage(e.images!.at(-1)!)}]`;
+      e.stats = stats(e.text);
+    } else e.warnings = [...(e.warnings ?? []), o.screenshot ? "no screenshot captured (is Playwright installed?)" : "screenshot requested, but this engine has no screenshot renderer (CLI / MCP with Playwright installed)"];
+  }
+  return e;
 });
 
 /* ---------- youtube ---------- */

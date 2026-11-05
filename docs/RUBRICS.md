@@ -170,6 +170,15 @@ inputs:
   - { type: file, path: ./deck.pdf }                  # CLI / MCP local; API needs VERDICT_ALLOW_LOCAL_FILES=1
   - { type: file, base64: "...", filename: deck.pdf, mimeType: application/pdf }
   - { type: url, url: https://acme.example, tags: [site] }
+  - { type: url, url: http://localhost:5173/, screenshot: true }        # + screenshot ({ width, height, fullPage } optional)
+  - { type: image, path: ./dashboard.png, tags: [ui] }                  # PNG / JPEG / WebP, path or base64 (data URI ok)
   - { type: youtube, url: https://youtu.be/VIDEO, lang: en, tags: [video] }
 ```
 `label`/`tags` let criteria scope their evidence (`inputs: [video]`) and let `jsonpath` pick an input (`input: brief`).
+
+Images (an `image` input or a `url` screenshot) go to vision-capable decision providers only. Today that's
+`cloudflare` (Clef / Clef-flash): ≤4 images per request, extra images are dropped, and `raw.images` reports
+`{ attached, sent }`. Other providers see a placeholder line such as `[image: shot.png, 1280×800 PNG; …]`. Scope a
+criterion to the screenshot with `inputs:` tags when only it should look at the picture. Screenshots need a
+renderer: the CLI and MCP server use Playwright when it's installed; the Node API needs `VERDICT_SCREENSHOTS=1`;
+Workers have none yet, so the input keeps its text and carries a warning.

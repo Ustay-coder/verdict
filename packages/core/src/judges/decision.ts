@@ -3,6 +3,7 @@ import type { Criterion, DecisionJudgeSpec as DecisionSpecSchema, Rubric, Scale 
 import type { Rating } from "../schema/evaluation.js";
 import { normalizeScore, scaleRange, snapToScale } from "../aggregate/index.js";
 import { type Judge, type JudgeContext, newRatingId, ratingBase, renderEvidence } from "./types.js";
+import { evidenceImages } from "../ingest/index.js";
 
 type Spec = z.infer<typeof DecisionSpecSchema>;
 
@@ -68,16 +69,24 @@ export interface DecisionRequest {
   baseUrl?: string;
   apiKey?: string;
   options?: Record<string, unknown>;
+  /** Embedded images (data URIs) from the evidence; only sent to adapters with `acceptsImages`. */
+  images?: string[];
 }
 export interface DecisionResponse {
   answers: Record<string, SystemOneAnswer>;
   model?: string;
   usage?: { inputTokens: number; outputTokens: number };
   raw?: unknown;
+  /** Images in the evidence vs. images actually sent (text-only providers drop them; Clef takes at most 4). */
+  images?: { attached: number; sent: number };
 }
 
 export interface DecisionProviderAdapter {
   name: string;
+  /** Vision-capable: the request may carry `images`. Text-only adapters never receive them. */
+  acceptsImages?: boolean;
+  /** Most images one request may carry (extra images are dropped and reported). */
+  maxImages?: number;
   decide(req: DecisionRequest, ctx: JudgeContext): Promise<DecisionResponse>;
 }
 
@@ -175,11 +184,13 @@ export class DecisionJudge implements Judge {
     const provider = getDecisionProvider(this.spec.provider);
     const limit = typeof this.spec.options?.stateCharLimit === "number" ? this.spec.options.stateCharLimit : defaultStateCharLimit(this.spec.provider, this.spec.model);
     const { stateCharLimit: _limit, ...options } = this.spec.options ?? {};
+    const attached = ctx.evidence.flatMap(evidenceImages);
+    const images = provider.acceptsImages ? attached.slice(0, provider.maxImages ?? attached.length) : [];
     ctx.usage.decisionCalls++;
-    const res = await provider.decide({ model: this.spec.model, state: renderEvidence(ctx.evidence).slice(0, limit), questions, baseUrl: this.spec.baseUrl, apiKey: this.spec.apiKeyEnv ? ctx.env(this.spec.apiKeyEnv) : undefined, options }, ctx);
+    const res = await provider.decide({ model: this.spec.model, state: renderEvidence(ctx.evidence).slice(0, limit), questions, baseUrl: this.spec.baseUrl, apiKey: this.spec.apiKeyEnv ? ctx.env(this.spec.apiKeyEnv) : undefined, options, images: images.length ? images : undefined }, ctx);
     ctx.usage.inputTokens += res.usage?.inputTokens ?? 0;
     ctx.usage.outputTokens += res.usage?.outputTokens ?? 0;
-    return res;
+    return attached.length ? { ...res, images: { attached: attached.length, sent: images.length } } : res;
   }
 
   async rate(ctx: JudgeContext): Promise<Rating[]> {
@@ -224,7 +235,7 @@ export class DecisionJudge implements Judge {
         const rating: Rating = {
           ...base, status: "scored", choice, score, normalized, confidence, probabilities,
           rationale: `${provider.name}${res.model ? `/${res.model}` : ""} distribution: ${dist}${low ? ` (low confidence ${confidence.toFixed(2)} < ${this.spec.minConfidence})` : ""}`,
-          raw: { provider: provider.name, model: res.model ?? this.spec.model, question: questions[c.criterion.id], answer, levels, latencyMs, lowConfidence: low, stateChars: state.length, stateTruncated },
+          raw: { provider: provider.name, model: res.model ?? this.spec.model, question: questions[c.criterion.id], answer, levels, latencyMs, lowConfidence: low, stateChars: state.length, stateTruncated, ...(res.images ? { images: res.images } : {}) },
         };
         if (low && this.spec.onLowConfidence === "error") out.set(c.criterion.id, [{ ...rating, status: "error", error: `confidence ${confidence.toFixed(2)} below ${this.spec.minConfidence}` }]);
         else if (low && this.spec.onLowConfidence === "human") {
@@ -290,6 +301,8 @@ export const openrouterProvider = systemOneAdapter("openrouter", { baseUrl: "htt
  */
 export const cloudflareDecisionProvider: DecisionProviderAdapter = {
   name: "cloudflare",
+  acceptsImages: true,
+  maxImages: 4,
   async decide(req, ctx) {
     const account = (req.options?.accountId as string | undefined) ?? ctx.env("CLOUDFLARE_ACCOUNT_ID");
     const token = req.apiKey ?? ctx.env("CLOUDFLARE_API_TOKEN");
@@ -298,7 +311,10 @@ export const cloudflareDecisionProvider: DecisionProviderAdapter = {
     if (!base) throw new Error("cloudflare provider needs CLOUDFLARE_ACCOUNT_ID (or judge.baseUrl pointing at an AI Gateway)");
     if (!token) throw new Error("cloudflare provider needs CLOUDFLARE_API_TOKEN (Workers AI: Read)");
     const selector = req.options?.selector as string | undefined;
-    const body = { model: selector ?? model.split("/").pop(), state: req.state, questions: req.questions, ...requestExtras(req.options) };
+    const extras = requestExtras(req.options);
+    const images = [...(Array.isArray(extras.images) ? (extras.images as string[]) : []), ...(req.images ?? [])];
+    checkClefImages(images);
+    const body = { model: selector ?? model.split("/").pop(), state: req.state, questions: req.questions, ...extras, ...(images.length ? { images } : {}) };
     const data = await postJson(ctx, `${base}/${model}`, body, { authorization: `Bearer ${token}` });
     if (data.success === false) throw new Error(`cloudflare error: ${JSON.stringify(data.errors)}`);
     const d = (data.result ?? data) as Record<string, unknown>;
@@ -306,6 +322,19 @@ export const cloudflareDecisionProvider: DecisionProviderAdapter = {
     return { answers: (d.answers ?? {}) as Record<string, SystemOneAnswer>, model, usage: { inputTokens: usage?.input_tokens ?? usage?.prompt_tokens ?? 0, outputTokens: usage?.output_tokens ?? 0 }, raw: data };
   },
 };
+
+/** Clef limits (Workers AI model page, verified live 2026-11-05): ≤4 images, embedded data URIs, ≤4 MiB each, ≤8 MiB total. */
+export function checkClefImages(images: string[]) {
+  if (images.length > 4) throw new Error(`Clef accepts at most 4 images per request (got ${images.length})`);
+  let total = 0;
+  for (const [i, uri] of images.entries()) {
+    if (!/^data:image\/(png|jpeg|webp);base64,/.test(uri)) throw new Error(`image ${i + 1} must be an embedded PNG/JPEG/WebP data URI`);
+    const bytes = Math.floor(((uri.length - uri.indexOf(",") - 1) * 3) / 4);
+    if (bytes > 4 * 1024 * 1024) throw new Error(`image ${i + 1} is ${(bytes / 1048576).toFixed(1)} MiB; Clef allows 4 MiB per image`);
+    total += bytes;
+  }
+  if (total > 8 * 1024 * 1024) throw new Error(`images total ${(total / 1048576).toFixed(1)} MiB; Clef allows 8 MiB per request`);
+}
 
 /**
  * OpenAI Decisions API — POST /v1/decisions (public beta, gpt-6-luna). Question types: predicate | choice | score.
@@ -331,6 +360,7 @@ export const openaiDecisionsProvider: DecisionProviderAdapter = {
 /** Deterministic fake. options.level (index) / options.normalized / options.probabilities / options.noul, else a length heuristic. */
 export const mockDecisionProvider: DecisionProviderAdapter = {
   name: "mock",
+  acceptsImages: true,
   async decide(req, ctx) {
     const answers: Record<string, SystemOneAnswer> = {};
     const o = req.options ?? {};
@@ -360,7 +390,7 @@ export const mockDecisionProvider: DecisionProviderAdapter = {
       const score = probs.reduce((s, p, i) => s + p * i, 0);
       answers[id] = { type: "score", score, probabilities: probs, confidence: (Math.max(...probs) - 1 / n) / (1 - 1 / n), legend: q.criteria };
     }
-    return { answers, model: "mock-decision", usage: { inputTokens: Math.ceil(req.state.length / 4) + 50 * Object.keys(req.questions).length, outputTokens: 0 } };
+    return { answers, model: "mock-decision", usage: { inputTokens: Math.ceil(req.state.length / 4) + 50 * Object.keys(req.questions).length, outputTokens: 0 }, raw: { images: req.images?.length ?? 0 } };
   },
 };
 

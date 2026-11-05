@@ -28,7 +28,7 @@ Every hiring pipeline, accelerator, grant committee, school, hackathon, content 
 
 | Concern | How Verdict handles it |
 | --- | --- |
-| **Any input** | `text`, `json`, `file` (PDF/MD/TXT/CSV/HTML/JSON — path or base64), `url`, `youtube` (transcript + description). Ingestors are pluggable. |
+| **Any input** | `text`, `json`, `file` (PDF/MD/TXT/CSV/HTML/JSON — path or base64), `url` (optionally with a `screenshot`), `image` (PNG/JPEG/WebP), `youtube` (transcript + description). Images and screenshots reach vision-capable decision models (Clef). Ingestors are pluggable. |
 | **Any criteria** | Numeric / binary / ordinal scales per criterion, weights, anchors (level descriptions), groups, optional criteria, per-criterion input filters. |
 | **Any judge** | `decision` (**default** — Jev via TypeSafe, Clef on Cloudflare Workers AI, OpenRouter, OpenAI Decisions, any `/v1/systemone`-compatible endpoint; per-level probabilities, confidence gates, escalation to humans), `human` (multi-rater, inbox, submit via API), `benchmark` (regex, keywords, length, JSON path, formula, similarity, external scorer), `llm` (generative judge with rationale + quotes), `panel` (combine several judges: mean/median/min/max/majority). Mix freely per criterion. |
 | **Any aggregation** | `weighted_mean`, `weighted_sum`, `mean`, `median`, `min`, `max`, `geometric_mean`, or a custom **formula** over criterion scores. Rater aggregation (mean/median/trimmed/majority), gates, grades/tiers, pass thresholds, missing-score policy, output range. Re-aggregate any past evaluation without re-judging. |
@@ -111,6 +111,18 @@ const { evaluation, replayed } = await verdict.evaluations.createIdempotent(
 // batches.createIdempotent(params, key) returns { evaluations, ranking, replayed }.
 // create(), createAsync(), and batches.create() also accept { idempotencyKey } as a second argument.
 
+```
+
+### Judging what a page looks like
+
+Decision models normally read text. Clef also takes images: give an `image` input, or set `screenshot` on a `url`
+input. The CLI and the MCP server then render the page with Playwright (1280×800 by default) and attach the
+screenshot. Vision-capable providers (`cloudflare`: Clef, Clef-flash) receive up to 4 images per request. Text-only
+providers (Jev, …) get a placeholder line in the state, and the rating's `raw.images` records `{ attached, sent }`. Image bytes stay in
+memory for the judges: stored evidence keeps only `{ mimeType, bytes, width, height }`.
+
+```bash
+pnpm verdict eval -r ui.yaml -i http://localhost:5173/ --screenshot     # or -i shot.png
 ```
 
 ### MCP (agents)
@@ -208,7 +220,8 @@ Auth: `Authorization: Bearer <key>`. With a database store, keys live hashed in 
 | `VERDICT_ADMIN_KEY` | Bearer token for `/v1/admin/*` (key management) |
 | `VERDICT_DATA_DIR` | Persist to JSON files instead (CLI default `./.verdict`; API default memory) |
 | `VERDICT_WEBHOOK_SECRET` | HMAC signing of webhook deliveries |
-| `VERDICT_ALLOW_LOCAL_FILES=1` | Let the API read `file.path` inputs (off by default; CLI/MCP local mode allow it) |
+| `VERDICT_ALLOW_LOCAL_FILES=1` | Let the API read `file.path` / `image.path` inputs (off by default; CLI/MCP local mode allow it) |
+| `VERDICT_SCREENSHOTS=1` | Let the Node API render `url` inputs with `screenshot` through Playwright (off by default: it loads arbitrary URLs in a browser). CLI/MCP local mode render when Playwright is installed |
 | `VERDICT_API_URL`, `VERDICT_API_KEY` | Make the CLI / MCP server talk to a hosted API instead of the local engine |
 
 Secrets never live in rubrics: judges reference them with `apiKeyEnv: MY_KEY_VAR`.

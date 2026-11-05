@@ -1,6 +1,6 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import { calibrate, Engine, FileStore, MemoryStore, loadRubricText, parseRubric, type Evaluation } from "@verdict/core";
+import { calibrate, Engine, FileStore, MemoryStore, lazyPlaywrightScreenshot, loadRubricText, parseRubric, type Evaluation } from "@verdict/core";
 import { Verdict } from "@verdict/sdk";
 
 /**
@@ -20,7 +20,8 @@ const InputSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("text"), text: z.string(), label: z.string().optional(), tags: z.array(z.string()).optional() }),
   z.object({ type: z.literal("json"), data: z.unknown(), label: z.string().optional(), tags: z.array(z.string()).optional() }),
   z.object({ type: z.literal("file"), path: z.string().optional(), base64: z.string().optional(), filename: z.string().optional(), mimeType: z.string().optional(), label: z.string().optional(), tags: z.array(z.string()).optional() }),
-  z.object({ type: z.literal("url"), url: z.string(), label: z.string().optional(), tags: z.array(z.string()).optional() }),
+  z.object({ type: z.literal("url"), url: z.string(), screenshot: z.union([z.boolean(), z.object({ width: z.number().optional(), height: z.number().optional(), fullPage: z.boolean().optional() })]).optional().describe("Also attach a screenshot for vision-capable judges (Clef)"), label: z.string().optional(), tags: z.array(z.string()).optional() }),
+  z.object({ type: z.literal("image"), path: z.string().optional(), base64: z.string().optional(), filename: z.string().optional(), mimeType: z.string().optional(), label: z.string().optional(), tags: z.array(z.string()).optional() }),
   z.object({ type: z.literal("youtube"), url: z.string(), label: z.string().optional(), tags: z.array(z.string()).optional(), lang: z.string().optional() }),
 ]);
 
@@ -44,7 +45,7 @@ function summarize(ev: Evaluation | Record<string, unknown>) {
 export function createMcpServer(opts: McpOptions = {}) {
   const mode = opts.mode ?? (process.env.VERDICT_API_URL ? "remote" : "local");
   const client = mode === "remote" ? new Verdict({ baseUrl: opts.apiUrl ?? process.env.VERDICT_API_URL, apiKey: opts.apiKey ?? process.env.VERDICT_API_KEY }) : undefined;
-  const engine = mode === "local" ? new Engine({ store: (opts.dataDir ?? process.env.VERDICT_DATA_DIR) ? new FileStore(opts.dataDir ?? process.env.VERDICT_DATA_DIR!) : new MemoryStore(), ingest: { allowLocalFiles: opts.allowLocalFiles ?? true } }) : undefined;
+  const engine = mode === "local" ? new Engine({ store: (opts.dataDir ?? process.env.VERDICT_DATA_DIR) ? new FileStore(opts.dataDir ?? process.env.VERDICT_DATA_DIR!) : new MemoryStore(), ingest: { allowLocalFiles: opts.allowLocalFiles ?? true, screenshot: lazyPlaywrightScreenshot() } }) : undefined;
 
   const server = new McpServer({ name: "verdict", version: "0.1.0" }, { instructions: "Verdict scores documents, websites, YouTube videos, JSON and text against customizable rubrics. Judges: decision models (Jev / Clef / OpenAI Decisions — typed questions, probabilities, one call per rubric), humans, deterministic benchmarks, optional generative LLM for rationales. Create or inline a rubric, then call evaluate." });
   const text = (v: unknown) => ({ content: [{ type: "text" as const, text: JSON.stringify(v, null, 2) }] });
@@ -81,7 +82,7 @@ export function createMcpServer(opts: McpOptions = {}) {
 
   server.registerTool("evaluate", {
     title: "Evaluate",
-    description: "Score a subject against a rubric. `rubric` is a stored rubric id or an inline rubric. Inputs can be text, json, file (path or base64), url, or youtube. Returns the total score, grade, pass/fail, per-criterion scores with rationales, and any pending human tasks.",
+    description: "Score a subject against a rubric. `rubric` is a stored rubric id or an inline rubric. Inputs can be text, json, file (path or base64), url (set `screenshot: true` to let vision judges see the page), image (PNG/JPEG/WebP), or youtube. Returns the total score, grade, pass/fail, per-criterion scores with rationales, and any pending human tasks.",
     inputSchema: {
       rubric: z.union([z.string(), z.record(z.string(), z.unknown())]),
       inputs: z.array(InputSchema).min(1),

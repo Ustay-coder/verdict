@@ -1,5 +1,13 @@
 import { z } from "zod";
 
+/** Viewport for `url` screenshots. Defaults: 1280×800, viewport only (≈1,000 Clef image tokens). */
+export const ScreenshotOptions = z.object({
+  width: z.number().int().min(320).max(2560).optional(),
+  height: z.number().int().min(240).max(4096).optional(),
+  fullPage: z.boolean().optional(),
+});
+export type ScreenshotOptions = z.infer<typeof ScreenshotOptions>;
+
 /** Something to evaluate. Each input is ingested into one or more Evidence blocks. */
 export const Input = z.discriminatedUnion("type", [
   z.object({ type: z.literal("text"), text: z.string(), label: z.string().optional(), tags: z.array(z.string()).optional() }),
@@ -15,7 +23,24 @@ export const Input = z.discriminatedUnion("type", [
     label: z.string().optional(),
     tags: z.array(z.string()).optional(),
   }),
-  z.object({ type: z.literal("url"), url: z.string().url(), label: z.string().optional(), tags: z.array(z.string()).optional() }),
+  z.object({
+    type: z.literal("url"),
+    url: z.string().url(),
+    /** Also capture a screenshot for vision-capable decision models (needs an engine with a screenshot renderer). */
+    screenshot: z.union([z.boolean(), ScreenshotOptions]).optional(),
+    label: z.string().optional(),
+    tags: z.array(z.string()).optional(),
+  }),
+  /** An image (PNG / JPEG / WebP) for vision-capable decision models. Embedded only: remote image URLs are not fetched. */
+  z.object({
+    type: z.literal("image"),
+    path: z.string().optional(),
+    base64: z.string().optional(),
+    filename: z.string().optional(),
+    mimeType: z.string().optional(),
+    label: z.string().optional(),
+    tags: z.array(z.string()).optional(),
+  }),
   z.object({ type: z.literal("youtube"), url: z.string(), label: z.string().optional(), tags: z.array(z.string()).optional(), lang: z.string().optional() }),
 ]);
 export type Input = z.infer<typeof Input>;
@@ -43,6 +68,18 @@ export interface Evidence {
   /** Source descriptor (url, filename, ...). */
   source?: string;
   truncated?: boolean;
+  /**
+   * Images attached to this evidence (an `image` input or a `url` screenshot). Metadata only: the bytes are held
+   * in memory for the judges (`evidenceImages`) and never persisted with the evaluation.
+   */
+  images?: ImageMeta[];
   stats: { chars: number; words: number; lines: number };
   warnings?: string[];
+}
+
+export interface ImageMeta {
+  mimeType: "image/png" | "image/jpeg" | "image/webp";
+  bytes: number;
+  width?: number;
+  height?: number;
 }

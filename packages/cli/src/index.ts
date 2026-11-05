@@ -2,13 +2,13 @@ import { readFile, writeFile } from "node:fs/promises";
 import { basename, resolve } from "node:path";
 import { Command } from "commander";
 import YAML from "yaml";
-import { calibrate, MemoryQueue, Engine, FileStore, MemoryStore, loadRubricText, parseRubric, youtubeId, type Evaluation, type Input, type Rubric } from "@verdict/core";
+import { calibrate, MemoryQueue, Engine, FileStore, MemoryStore, lazyPlaywrightScreenshot, loadRubricText, parseRubric, youtubeId, type Evaluation, type Input, type Rubric } from "@verdict/core";
 import { Verdict } from "@verdict/sdk";
 
 const dataDir = () => process.env.VERDICT_DATA_DIR ?? resolve(process.cwd(), ".verdict");
 
 function localEngine() {
-  return new Engine({ store: new FileStore(dataDir()), ingest: { allowLocalFiles: true } });
+  return new Engine({ store: new FileStore(dataDir()), ingest: { allowLocalFiles: true, screenshot: lazyPlaywrightScreenshot() } });
 }
 function remote(): Verdict | undefined {
   return process.env.VERDICT_API_URL ? new Verdict({ baseUrl: process.env.VERDICT_API_URL, apiKey: process.env.VERDICT_API_KEY }) : undefined;
@@ -24,6 +24,7 @@ export function parseInput(raw: string): Input {
   if (raw.startsWith("json:")) return { type: "json", data: JSON.parse(raw.slice(5)), label, tags };
   if (/^https?:\/\//.test(raw)) return youtubeId(raw) ? { type: "youtube", url: raw, label, tags } : { type: "url", url: raw, label, tags };
   if (raw === "-") return { type: "text", text: "", label: label ?? "stdin", tags };
+  if (/\.(png|jpe?g|webp)$/i.test(raw)) return { type: "image", path: resolve(raw), filename: basename(raw), label, tags };
   return { type: "file", path: resolve(raw), filename: basename(raw), label, tags };
 }
 
@@ -154,10 +155,11 @@ export function buildCli() {
     .option("--webhook <url>", "POST the result when complete")
     .option("--idempotency-key <key>")
     .option("--mock", "use mock providers (no API calls) — overrides every decision and llm judge")
+    .option("--screenshot", "also screenshot every URL input for vision-capable judges (local engine: needs Playwright)")
     .action(async (o) => {
       let rubric = await loadRubric(o.rubric);
       if (o.mock && typeof rubric !== "string") rubric = mockify(rubric);
-      const inputs = (o.input as string[]).map(parseInput);
+      const inputs = (o.input as string[]).map(parseInput).map((i) => (o.screenshot && i.type === "url" ? { ...i, screenshot: true } : i));
       for (const i of inputs) if (i.type === "text" && i.label === "stdin") i.text = await readStdin();
       const api = remote();
       const params = { rubric: rubric as never, inputs, name: o.name, webhook: o.webhook, includeEvidence: o.evidence };

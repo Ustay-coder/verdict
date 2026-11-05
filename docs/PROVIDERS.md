@@ -69,7 +69,13 @@ Token permissions verified for this: **Workers AI → Read** is sufficient for i
 
 - Body **requires** `model: "clef"` or `"clef-flash"` — the selector, not the `@cf/…` id. Verdict derives it from the model id (`options.selector` overrides).
 - `questions`: 1–64 entries; ids match `[A-Za-z0-9_.-]{1,100}` (criterion ids satisfy this).
-- `images`: up to 4 embedded PNG/JPEG/WebP (≤4 MiB and 16 MP each; 8 MiB decoded total; 13 MiB body). Pass via `options.request.images` (only `options.request` reaches the provider body). Remote URLs are not accepted.
+- `images`: up to 4 embedded PNG/JPEG/WebP (≤4 MiB and 16 MP each; 8 MiB decoded total; 13 MiB body). Remote URLs are not accepted.
+  **Verified live 2026-11-05 (clef-flash and clef):** each entry must be a `data:image/…;base64,…` URI string. A bare base64 string is rejected
+  ("image must be an embedded base64 data URI"), and so is an object ("image object has invalid fields"). A 640×400 PNG costs ~250 input tokens
+  (32×32 px per token). The model reads it: on "is the background a purple/blue gradient?" a gradient screenshot scored `noul` 0.93–0.98,
+  a white page 0.02–0.05, and the same request without the image 0.49. Verbatim response:
+  `packages/core/test/fixtures/cloudflare-clef-flash-image-response.json`. Verdict sends images from `image` inputs and `url` screenshots
+  automatically (`checkClefImages` enforces the limits). `options.request.images` still works for fixed reference images.
 - Context: clef 65,536 tokens; clef-flash 24,576 tokens. Long text state is **truncated by the model** to fit — Verdict truncates first, to its own budget, so the cut is visible (`rating.raw.stateTruncated`).
 - Pricing: clef $0.24 / M input tokens; clef-flash $0.038 / M; no output charge; media billed as input tokens (32×32 px per token, ≤1,024 per image).
 - Zero data retention; multimodal (vision).

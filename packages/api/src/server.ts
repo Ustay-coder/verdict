@@ -1,5 +1,5 @@
 import { serve } from "@hono/node-server";
-import { Engine, MemoryQueue, FileStore, MemoryStore, type Store } from "@verdict/core";
+import { Engine, MemoryQueue, FileStore, MemoryStore, lazyPlaywrightScreenshot, type Store } from "@verdict/core";
 import { createApp, envAuth, type Auth, type KeyManager } from "./app.js";
 
 /**
@@ -24,7 +24,7 @@ export async function startServer(opts: { port?: number; dataDir?: string; datab
     store = h.store; auth = h.auth; keys = h.auth;
   } else store = dataDir ? new FileStore(dataDir) : new MemoryStore();
   const queue = new MemoryQueue();
-  const engine = new Engine({ store, queue, ingest: { allowLocalFiles: opts.allowLocalFiles ?? process.env.VERDICT_ALLOW_LOCAL_FILES === "1" } });
+  const engine = new Engine({ store, queue, ingest: { allowLocalFiles: opts.allowLocalFiles ?? process.env.VERDICT_ALLOW_LOCAL_FILES === "1", screenshot: process.env.VERDICT_SCREENSHOTS === "1" ? lazyPlaywrightScreenshot() : undefined } });
   queue.engine = engine;
   const app = createApp({ engine, auth, keys, log: process.env.VERDICT_LOG !== "0" });
   const server = serve({ fetch: app.fetch, port }, (info) => {

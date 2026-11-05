@@ -1,4 +1,4 @@
-import { Engine, MemoryStore, RetryableError, registerDecisionProvider, type DecisionProviderAdapter, type Job, type SystemOneAnswer } from "@verdict/core";
+import { Engine, MemoryStore, RetryableError, checkClefImages, registerDecisionProvider, type DecisionProviderAdapter, type Job, type SystemOneAnswer } from "@verdict/core";
 import { fromD1 } from "@verdict/db";
 import { createApp, envAuth } from "./app.js";
 import { CloudflareQueue } from "./queue-cloudflare.js";
@@ -19,10 +19,14 @@ const memory = new MemoryStore();
 function aiBindingProvider(ai: NonNullable<Env["AI"]>): DecisionProviderAdapter {
   return {
     name: "cloudflare",
+    acceptsImages: true,
+    maxImages: 4,
     async decide(req) {
       const model = req.model ?? "@cf/cloudflare/clef-flash";
-      const extra = req.options?.request;
-      const body = { model: (req.options?.selector as string | undefined) ?? model.split("/").pop(), state: req.state, questions: req.questions, ...(extra && typeof extra === "object" ? (extra as Record<string, unknown>) : {}) };
+      const extra = (req.options?.request && typeof req.options.request === "object" ? req.options.request : {}) as Record<string, unknown>;
+      const images = [...(Array.isArray(extra.images) ? (extra.images as string[]) : []), ...(req.images ?? [])];
+      checkClefImages(images);
+      const body = { model: (req.options?.selector as string | undefined) ?? model.split("/").pop(), state: req.state, questions: req.questions, ...extra, ...(images.length ? { images } : {}) };
       const data = (await ai.run(model, body)) as { answers?: Record<string, SystemOneAnswer>; model?: string; usage?: { input_tokens?: number; prompt_tokens?: number; output_tokens?: number } };
       return { answers: data.answers ?? {}, model, usage: { inputTokens: data.usage?.input_tokens ?? data.usage?.prompt_tokens ?? 0, outputTokens: data.usage?.output_tokens ?? 0 }, raw: data };
     },

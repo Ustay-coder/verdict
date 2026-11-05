@@ -112,6 +112,6 @@ Idempotent evaluation and batch entry points scope keys by tenant and hash canon
 ## Roadmap
 1. **Decision-model depth:** per-provider verified fixtures once official docs are reachable from CI, Clef media state on Workers AI, OpenAI Decisions GA shape.
 2. **Calibration:** stored-evaluation reports now compare decision ratings (including escalations) with human consensus: agreement, normalized error/bias, confidence buckets, ECE, suggested `minConfidence`, and interval Krippendorff’s α, exposed through REST, SDK, CLI and MCP. Next: gold-standard sets per rubric, judge drift reports, per-rubric cost/latency stats.
-3. Richer evidence: PDF page renders and video frames for media-capable decision models, audio transcription provider hooks.
+3. Richer evidence: `image` inputs and `url` screenshots now reach Clef (Playwright renderer in CLI/MCP, opt-in on the Node API). Next: a Workers renderer (Cloudflare Browser Rendering), PDF page renders and video frames, audio transcription provider hooks.
 4. Rubric versioning + migration of past evaluations; rubric templates library (hiring, grants, essays, hackathons, RFPs, model evals, ticket triage).
 6. Human-rater UI kit (hosted task inbox) and SSO-aware rater identities; blind mode (strip names/brands from state).
