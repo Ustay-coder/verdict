@@ -145,6 +145,20 @@ row). If a line runs long, the waiting stretches before it can be slowed to make
 | 12 | 0:40.5–0:45.9 | Six rewrites. One criterion each. Under two minutes, unattended. | |
 | 13 | 0:46.0–0:49.7 | Your taste, as YAML. Your agent, as the editor. | |
 
+## Plain working video (no effects)
+
+The founder's preferred format: Claude Code on the left, the landing page on the right, and nothing added.
+[`recording/plain2pane.mjs`](recording/plain2pane.mjs) builds it from Take A.
+- **Left:** the recorded terminal bytes, replayed at their recorded times.
+- **Right:** `landing.md` rendered as a page (one neutral stylesheet), re-rendered at the exact moment each `Edit`
+  landed (tool-result timestamps aligned to the recording, within 0.1 s). When a change lands outside the visible
+  part, the preview jumps to it, as an editor's live preview does.
+- **Not in it:** captions, score cards, stamps, diff highlights, intros, sound or speed changes.
+- **Cuts:** real time (133 s, recording 0:10 → 2:23), and a uniform 3× cut (44.5 s) labelled "3× speed".
+
+Honesty note: this is a frame-accurate replay of one real run, not a capture of a desktop. Same bytes, same
+timestamps, same file contents. The right pane renders the Markdown file, not a deployed site.
+
 ## Recording
 
 What Take A used, in order to reshoot or record a new take:
