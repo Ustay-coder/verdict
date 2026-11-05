@@ -1,0 +1,426 @@
+{
+ "agentSeconds": 229,
+ "edits": [
+  142.297,
+  196.712,
+  197.688,
+  199.365,
+  206.861,
+  232.947,
+  234.599,
+  235.801
+ ],
+ "evaluations": [
+  {
+   "src": 71.19,
+   "name": "BRIEF v1",
+   "score": 100,
+   "grade": "ready",
+   "state": 0,
+   "criteria": [
+    {
+     "id": "audience",
+     "name": "Names the user and the moment of use",
+     "n": 1,
+     "rationale": "typesafe/jev-1.14.0 distribution: none=0% role=0% moment=100%"
+    },
+    {
+     "id": "questions",
+     "name": "Three questions, ranked, answerable from the data",
+     "n": 1,
+     "rationale": "typesafe/jev-1.14.0 distribution: none=0% unranked=0% ranked=100%"
+    },
+    {
+     "id": "attention",
+     "name": "Defines what needs attention",
+     "n": 1,
+     "rationale": "typesafe/jev-1.14.0 distribution: none=0% vague=0% defined=100%"
+    },
+    {
+     "id": "cuts",
+     "name": "Says what the page leaves out",
+     "n": 1,
+     "rationale": "typesafe/jev-1.14.0 distribution: none=0% cuts=100%"
+    },
+    {
+     "id": "honest",
+     "name": "No invented targets or metrics",
+     "n": 1,
+     "rationale": "typesafe/jev-1.14.0 distribution: no=5% yes=95%"
+    }
+   ]
+  },
+  {
+   "src": 181.33,
+   "name": "UI round 1",
+   "score": 78,
+   "grade": "almost",
+   "state": 1,
+   "criteria": [
+    {
+     "id": "questions",
+     "name": "P1 Answers the operator's questions",
+     "n": 0.8999999999999999,
+     "rationale": "typesafe/jev-1.14.0 distribution: inventory=2% partial=16% answers=82%"
+    },
+    {
+     "id": "context",
+     "name": "P2 Every figure has context",
+     "n": 0.575,
+     "rationale": "typesafe/jev-1.14.0 distribution: bare=10% some=65% all=25%"
+    },
+    {
+     "id": "attention",
+     "name": "P3 What needs attention comes first",
+     "n": 0.44999999999999996,
+     "rationale": "typesafe/jev-1.14.0 distribution: buried=21% present=68% surfaced=11%"
+    },
+    {
+     "id": "numbers_true",
+     "name": "Every figure derives from data.json",
+     "n": 1,
+     "rationale": "all 25 figures derive from data.json"
+    },
+    {
+     "id": "defaults",
+     "name": "P11 Free of AI defaults (first and second order)",
+     "n": 0.62125,
+     "rationale": "cloudflare/@cf/cloudflare/clef distribution: first_order=1% unstyled=20% second_order=16% mostly_own=28% own=35%"
+    },
+    {
+     "id": "chart_fit",
+     "name": "P5 Charts use position and length",
+     "n": 0.97,
+     "rationale": "[clef: 4.759] cloudflare/@cf/cloudflare/clef distribution: angle_area=1% text_only=5% mixed=2% position=92% | [audit_charts: 5] 0 angle/area charts (donut, pie, gauge)"
+    },
+    {
+     "id": "color_signal",
+     "name": "P7 Colour is a signal, not decoration",
+     "n": 0.9035,
+     "rationale": "cloudflare/@cf/cloudflare/clef distribution: decorative=2% partial=16% signal=82%"
+    },
+    {
+     "id": "hierarchy",
+     "name": "P8 Hierarchy by importance",
+     "n": 0.8520000000000001,
+     "rationale": "cloudflare/@cf/cloudflare/clef distribution: flat=4% some=22% clear=74%"
+    },
+    {
+     "id": "at_a_glance",
+     "name": "P9 Answers fit the first screen",
+     "n": 0.853,
+     "rationale": "cloudflare/@cf/cloudflare/clef distribution: below=7% partial=16% glance=78%"
+    },
+    {
+     "id": "craft",
+     "name": "Designed, not default-styled (Few #13)",
+     "n": 0.8855,
+     "rationale": "cloudflare/@cf/cloudflare/clef distribution: unstyled=6% uneven=11% crafted=83%"
+    },
+    {
+     "id": "data_ink",
+     "name": "P6 Data-ink, no chartjunk",
+     "n": 0.8007500000000001,
+     "rationale": "cloudflare/@cf/cloudflare/clef distribution: junk=5% some=29% clean=65%"
+    },
+    {
+     "id": "redundancy",
+     "name": "P4 Each figure shown once",
+     "n": 1,
+     "rationale": "every figure shown fewer than 3 times"
+    },
+    {
+     "id": "numerals",
+     "name": "P10 Tabular figures",
+     "n": 1,
+     "rationale": "20/20 numeric labels use tabular figures"
+    },
+    {
+     "id": "template_chrome",
+     "name": "P11 Template habits (eyebrows, accent words, icon tiles)",
+     "n": 1,
+     "rationale": "0 template habits (none)"
+    },
+    {
+     "id": "decoration",
+     "name": "P6 Decorative effects",
+     "n": 1,
+     "rationale": "0 decorative effects (gradients, glass, glows); 2 are free"
+    },
+    {
+     "id": "motion",
+     "name": "No ambient animation",
+     "n": 1,
+     "rationale": "0 infinite animations"
+    },
+    {
+     "id": "contrast",
+     "name": "Text contrast (WCAG AA)",
+     "n": 1,
+     "rationale": "58/58 text elements pass WCAG AA"
+    },
+    {
+     "id": "type_scale",
+     "name": "Type scale (\u2264 5 sizes)",
+     "n": 1,
+     "rationale": "4 font sizes: 12, 14, 18, 40 px"
+    },
+    {
+     "id": "palette",
+     "name": "Palette (\u2264 2 hue families)",
+     "n": 1,
+     "rationale": "1 saturated hue families (0\u00b0)"
+    }
+   ],
+   "draft": "evaluated/round1.html"
+  },
+  {
+   "src": 215.098,
+   "name": "UI round 2",
+   "score": 73,
+   "grade": "almost",
+   "state": 5,
+   "criteria": [
+    {
+     "id": "questions",
+     "name": "P1 Answers the operator's questions",
+     "n": 0.815,
+     "rationale": "typesafe/jev-1.14.0 distribution: inventory=4% partial=29% answers=67%"
+    },
+    {
+     "id": "context",
+     "name": "P2 Every figure has context",
+     "n": 0.55,
+     "rationale": "typesafe/jev-1.14.0 distribution: bare=13% some=64% all=23%"
+    },
+    {
+     "id": "attention",
+     "name": "P3 What needs attention comes first",
+     "n": 0.19,
+     "rationale": "typesafe/jev-1.14.0 distribution: buried=63% present=36% surfaced=1%"
+    },
+    {
+     "id": "numbers_true",
+     "name": "Every figure derives from data.json",
+     "n": 1,
+     "rationale": "all 25 figures derive from data.json"
+    },
+    {
+     "id": "defaults",
+     "name": "P11 Free of AI defaults (first and second order)",
+     "n": 0.6405,
+     "rationale": "cloudflare/@cf/cloudflare/clef distribution: first_order=1% unstyled=18% second_order=16% mostly_own=29% own=36%"
+    },
+    {
+     "id": "chart_fit",
+     "name": "P5 Charts use position and length",
+     "n": 0.97875,
+     "rationale": "[clef: 4.829] cloudflare/@cf/cloudflare/clef distribution: angle_area=1% text_only=4% mixed=2% position=94% | [audit_charts: 5] 0 angle/area charts (donut, pie, gauge)"
+    },
+    {
+     "id": "color_signal",
+     "name": "P7 Colour is a signal, not decoration",
+     "n": 0.90175,
+     "rationale": "cloudflare/@cf/cloudflare/clef distribution: decorative=1% partial=17% signal=82%"
+    },
+    {
+     "id": "hierarchy",
+     "name": "P8 Hierarchy by importance",
+     "n": 0.81925,
+     "rationale": "cloudflare/@cf/cloudflare/clef distribution: flat=6% some=25% clear=70%"
+    },
+    {
+     "id": "at_a_glance",
+     "name": "P9 Answers fit the first screen",
+     "n": 0.80725,
+     "rationale": "cloudflare/@cf/cloudflare/clef distribution: below=8% partial=23% glance=69%"
+    },
+    {
+     "id": "craft",
+     "name": "Designed, not default-styled (Few #13)",
+     "n": 0.88625,
+     "rationale": "cloudflare/@cf/cloudflare/clef distribution: unstyled=5% uneven=13% crafted=82%"
+    },
+    {
+     "id": "data_ink",
+     "name": "P6 Data-ink, no chartjunk",
+     "n": 0.79775,
+     "rationale": "cloudflare/@cf/cloudflare/clef distribution: junk=4% some=32% clean=64%"
+    },
+    {
+     "id": "redundancy",
+     "name": "P4 Each figure shown once",
+     "n": 1,
+     "rationale": "every figure shown fewer than 3 times"
+    },
+    {
+     "id": "numerals",
+     "name": "P10 Tabular figures",
+     "n": 1,
+     "rationale": "20/20 numeric labels use tabular figures"
+    },
+    {
+     "id": "template_chrome",
+     "name": "P11 Template habits (eyebrows, accent words, icon tiles)",
+     "n": 1,
+     "rationale": "0 template habits (none)"
+    },
+    {
+     "id": "decoration",
+     "name": "P6 Decorative effects",
+     "n": 1,
+     "rationale": "0 decorative effects (gradients, glass, glows); 2 are free"
+    },
+    {
+     "id": "motion",
+     "name": "No ambient animation",
+     "n": 1,
+     "rationale": "0 infinite animations"
+    },
+    {
+     "id": "contrast",
+     "name": "Text contrast (WCAG AA)",
+     "n": 1,
+     "rationale": "58/58 text elements pass WCAG AA"
+    },
+    {
+     "id": "type_scale",
+     "name": "Type scale (\u2264 5 sizes)",
+     "n": 1,
+     "rationale": "4 font sizes: 12, 14, 18, 40 px"
+    },
+    {
+     "id": "palette",
+     "name": "Palette (\u2264 2 hue families)",
+     "n": 1,
+     "rationale": "1 saturated hue families (0\u00b0)"
+    }
+   ],
+   "draft": "evaluated/round2.html"
+  },
+  {
+   "src": 243.705,
+   "name": "UI round 3",
+   "score": 82,
+   "grade": "ship it",
+   "state": 8,
+   "criteria": [
+    {
+     "id": "questions",
+     "name": "P1 Answers the operator's questions",
+     "n": 0.8600000000000001,
+     "rationale": "typesafe/jev-1.14.0 distribution: inventory=3% partial=22% answers=75%"
+    },
+    {
+     "id": "context",
+     "name": "P2 Every figure has context",
+     "n": 0.54,
+     "rationale": "typesafe/jev-1.14.0 distribution: bare=9% some=74% all=17%"
+    },
+    {
+     "id": "attention",
+     "name": "P3 What needs attention comes first",
+     "n": 0.9850000000000001,
+     "rationale": "typesafe/jev-1.14.0 distribution: buried=1% present=1% surfaced=98%"
+    },
+    {
+     "id": "numbers_true",
+     "name": "Every figure derives from data.json",
+     "n": 1,
+     "rationale": "all 25 figures derive from data.json"
+    },
+    {
+     "id": "defaults",
+     "name": "P11 Free of AI defaults (first and second order)",
+     "n": 0.657,
+     "rationale": "cloudflare/@cf/cloudflare/clef distribution: first_order=1% unstyled=15% second_order=16% mostly_own=30% own=37%"
+    },
+    {
+     "id": "chart_fit",
+     "name": "P5 Charts use position and length",
+     "n": 0.968,
+     "rationale": "[clef: 4.745] cloudflare/@cf/cloudflare/clef distribution: angle_area=1% text_only=5% mixed=3% position=91% | [audit_charts: 5] 0 angle/area charts (donut, pie, gauge)"
+    },
+    {
+     "id": "color_signal",
+     "name": "P7 Colour is a signal, not decoration",
+     "n": 0.87775,
+     "rationale": "cloudflare/@cf/cloudflare/clef distribution: decorative=2% partial=21% signal=77%"
+    },
+    {
+     "id": "hierarchy",
+     "name": "P8 Hierarchy by importance",
+     "n": 0.83175,
+     "rationale": "cloudflare/@cf/cloudflare/clef distribution: flat=5% some=24% clear=71%"
+    },
+    {
+     "id": "at_a_glance",
+     "name": "P9 Answers fit the first screen",
+     "n": 0.8042499999999999,
+     "rationale": "cloudflare/@cf/cloudflare/clef distribution: below=8% partial=23% glance=69%"
+    },
+    {
+     "id": "craft",
+     "name": "Designed, not default-styled (Few #13)",
+     "n": 0.8919999999999999,
+     "rationale": "cloudflare/@cf/cloudflare/clef distribution: unstyled=5% uneven=11% crafted=84%"
+    },
+    {
+     "id": "data_ink",
+     "name": "P6 Data-ink, no chartjunk",
+     "n": 0.8045,
+     "rationale": "cloudflare/@cf/cloudflare/clef distribution: junk=4% some=31% clean=65%"
+    },
+    {
+     "id": "redundancy",
+     "name": "P4 Each figure shown once",
+     "n": 1,
+     "rationale": "every figure shown fewer than 3 times"
+    },
+    {
+     "id": "numerals",
+     "name": "P10 Tabular figures",
+     "n": 1,
+     "rationale": "20/20 numeric labels use tabular figures"
+    },
+    {
+     "id": "template_chrome",
+     "name": "P11 Template habits (eyebrows, accent words, icon tiles)",
+     "n": 1,
+     "rationale": "0 template habits (none)"
+    },
+    {
+     "id": "decoration",
+     "name": "P6 Decorative effects",
+     "n": 1,
+     "rationale": "0 decorative effects (gradients, glass, glows); 2 are free"
+    },
+    {
+     "id": "motion",
+     "name": "No ambient animation",
+     "n": 1,
+     "rationale": "0 infinite animations"
+    },
+    {
+     "id": "contrast",
+     "name": "Text contrast (WCAG AA)",
+     "n": 1,
+     "rationale": "60/60 text elements pass WCAG AA"
+    },
+    {
+     "id": "type_scale",
+     "name": "Type scale (\u2264 5 sizes)",
+     "n": 1,
+     "rationale": "4 font sizes: 12, 14, 18, 40 px"
+    },
+    {
+     "id": "palette",
+     "name": "Palette (\u2264 2 hue families)",
+     "n": 1,
+     "rationale": "1 saturated hue families (0\u00b0)"
+    }
+   ],
+   "draft": "evaluated/round3.html"
+  }
+ ]
+}

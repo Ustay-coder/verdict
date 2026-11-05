@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Acme Pulse monthly review</title>
+<style>
+  :root {
+    --ink: #1a1a1a;
+    --ink-2: #4a4a4a;
+    --ink-3: #5c5c5c;
+    --rule: #d9d9d9;
+    --bar: #6e6e6e;
+    --alert: #b3261e;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { background: #fff; color: var(--ink); }
+  body {
+    font: 14px/1.45 "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-variant-numeric: tabular-nums lining-nums;
+  }
+  .page { max-width: 1200px; margin: 0 auto; padding: 20px 40px 24px; }
+
+  header { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 2px solid var(--ink); padding-bottom: 8px; }
+  header h1 { font-size: 14px; font-weight: 700; }
+  header p { font-size: 12px; color: var(--ink-3); }
+
+  .grid { display: grid; grid-template-columns: 7fr 5fr; gap: 0 48px; margin-top: 20px; }
+  section + section { margin-top: 22px; }
+  h2 { font-size: 14px; font-weight: 700; margin-bottom: 6px; }
+  .muted { color: var(--ink-3); }
+  .small { font-size: 12px; }
+
+  /* Q1: the lead answer */
+  .lead-figure { font-size: 40px; font-weight: 700; line-height: 1.1; letter-spacing: -0.01em; }
+  .lead-figure span { font-weight: 400; }
+  .lead-line { font-size: 18px; margin-top: 6px; }
+  .lead-line b { font-weight: 700; }
+  .verdict { margin-top: 10px; color: var(--ink-2); max-width: 56ch; }
+
+  /* Q3: signups */
+  #chart { display: block; width: 100%; height: 190px; margin-top: 4px; }
+  #chart text { font-size: 12px; fill: var(--ink-3); }
+  #chart text.v { fill: var(--ink); }
+  .chart-note { margin-top: 4px; color: var(--ink-2); }
+
+  /* Q2: attention */
+  .attention { border-left: 4px solid var(--alert); padding: 2px 0 2px 16px; }
+  .attention h2 { color: var(--alert); }
+  .flag { font-size: 18px; font-weight: 700; }
+  .flag-detail { color: var(--ink-2); }
+  .attention .churn { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--rule); }
+
+  /* Plans table */
+  table { width: 100%; border-collapse: collapse; }
+  th { font-size: 12px; font-weight: 400; color: var(--ink-3); text-align: left; padding: 0 0 4px; border-bottom: 1px solid var(--rule); }
+  td { padding: 6px 0; border-bottom: 1px solid var(--rule); vertical-align: middle; }
+  th.num, td.num { text-align: right; padding-left: 12px; }
+  td.bar-cell { width: 34%; padding-left: 14px; }
+  .bar { height: 10px; background: var(--bar); }
+
+  /* Routine events */
+  .events li { list-style: none; display: grid; grid-template-columns: 92px 1fr; gap: 10px; padding: 4px 0; border-bottom: 1px solid var(--rule); color: var(--ink-2); }
+  .events li time { color: var(--ink-3); font-size: 12px; padding-top: 1px; }
+
+  footer { margin-top: 20px; font-size: 12px; color: var(--ink-3); }
+
+  @media (max-width: 900px) {
+    .grid { grid-template-columns: 1fr; }
+    .page { padding: 16px 20px; }
+    .side { margin-top: 24px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <header>
+    <h1 id="title">Acme Pulse</h1>
+    <p id="sub"></p>
+  </header>
+
+  <div class="grid">
+    <main>
+      <section aria-labelledby="q1">
+        <h2 id="q1">Did revenue grow?</h2>
+        <p class="lead-figure" id="mrr"></p>
+        <p class="lead-line" id="accounts"></p>
+        <p class="verdict" id="verdict"></p>
+      </section>
+
+      <section aria-labelledby="q3">
+        <h2 id="q3">Is the pipeline still filling?</h2>
+        <p class="small muted" id="chart-label"></p>
+        <svg id="chart" role="img" aria-label="Weekly signups"></svg>
+        <p class="chart-note" id="chart-note"></p>
+        <p class="chart-note" id="trial"></p>
+      </section>
+    </main>
+
+    <aside class="side">
+      <section class="attention" aria-labelledby="q2">
+        <h2 id="q2">Needs attention</h2>
+        <div id="flags"></div>
+        <p class="churn" id="churn"></p>
+      </section>
+
+      <section aria-labelledby="plans-h">
+        <h2 id="plans-h">Where revenue comes from</h2>
+        <table>
+          <thead><tr><th>Plan</th><th class="num">Accounts</th><th class="num">MRR</th><th class="num" colspan="2">Share of MRR</th></tr></thead>
+          <tbody id="plans"></tbody>
+        </table>
+      </section>
+
+      <section aria-labelledby="ev-h">
+        <h2 id="ev-h">Other account events</h2>
+        <ul class="events" id="events"></ul>
+      </section>
+    </aside>
+  </div>
+
+  <footer id="note"></footer>
+</div>
+
+<script>
+(async () => {
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const int = n => n.toLocaleString("en-US");
+  const usd = n => "$" + int(Math.round(n));
+  const pct = n => n.toFixed(1) + "%";
+  const signed = (n, f) => (n > 0 ? "+" : n < 0 ? "−" : "") + f(Math.abs(n));
+
+  let D;
+  try {
+    D = await (await fetch("data.json", { cache: "no-store" })).json();
+  } catch (e) {
+    document.querySelector(".grid").textContent = "Could not load data.json.";
+    return;
+  }
+  const k = D.kpis;
+
+  // Month names derived from the period string ("October 2026")
+  const periodDate = new Date(D.period.replace(/(\w+) (\d{4})/, "$1 1, $2"));
+  const month = periodDate.toLocaleString("en-US", { month: "long" });
+  const prevMonth = new Date(periodDate.getFullYear(), periodDate.getMonth() - 1, 1).toLocaleString("en-US", { month: "long" });
+
+  document.title = `${D.product}: ${D.period} review`;
+  $("title").textContent = `${D.product}: ${D.period} review`;
+  $("sub").textContent = `Monthly check-in, compared with ${prevMonth} where the data allows`;
+  $("note").textContent = D.note;
+
+  // Q1 — revenue
+  const mrrWord = k.mrr_change_pct >= 0 ? "up" : "down";
+  $("mrr").innerHTML = `${usd(k.mrr_usd)} <span>MRR, ${mrrWord} ${pct(Math.abs(k.mrr_change_pct))} on ${prevMonth}</span>`;
+  if (k.mrr_change_pct < 0) $("mrr").style.color = "var(--alert)";
+  $("accounts").innerHTML = `<b>${int(k.active_accounts)}</b> active accounts, ${signed(k.active_accounts_change, int)} net in ${month}`;
+  if (k.active_accounts_change < 0) $("accounts").style.color = "var(--alert)";
+
+  const weeks = D.weekly_signups;
+  const last = weeks.at(-1), prev = weeks.at(-2);
+  const wow = last.signups - prev.signups;
+  const isHigh = last.signups === Math.max(...weeks.map(w => w.signups));
+  const growing = [k.mrr_change_pct > 0, k.active_accounts_change > 0, wow > 0];
+  $("verdict").textContent = growing.every(Boolean)
+    ? `On track by every trend the data has: revenue, accounts and weekly signups all rose. There are no targets in the data, so this is direction, not progress against a goal.`
+    : `Not every trend rose this month: see the figures marked in red. There are no targets in the data, so this is direction, not progress against a goal.`;
+
+  // Q2 — attention
+  const isCancel = e => /cancel/i.test(e.event);
+  const cancels = D.recent_events.filter(isCancel);
+  $("flags").innerHTML = cancels.length
+    ? cancels.map(e => {
+        const reason = (e.event.match(/reason:\s*([^)]+)/i) || [])[1];
+        return `<p class="flag">${esc(e.account)} cancelled</p>
+                <p class="flag-detail">${esc(e.time)}${reason ? ` · reason given: ${esc(reason)}` : ""}. Candidate for a win-back call.</p>`;
+      }).join("")
+    : `<p class="flag-detail">No cancellations among recent events.</p>`;
+  $("churn").innerHTML = `Churn rate in ${month}: <b>${pct(k.churn_rate_pct)}</b>. The data has no earlier churn rate, so it can’t be called better or worse.`;
+
+  // Q3 — signups chart (position on a common scale, direct labels, no gridlines)
+  $("chart-label").textContent = `Signups per week, ${weeks[0].week} to ${last.week}`;
+  const svg = $("chart");
+  const NS = "http://www.w3.org/2000/svg";
+  const mk = (tag, attrs, text) => { const n = document.createElementNS(NS, tag); for (const a in attrs) n.setAttribute(a, attrs[a]); if (text != null) n.textContent = text; return n; };
+  function draw() {
+    svg.replaceChildren();
+    const W = svg.clientWidth, H = svg.clientHeight;
+    svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+    const pad = { l: 22, r: 22, t: 22, b: 24 };
+    const vals = weeks.map(w => w.signups);
+    const lo = 0, hi = Math.max(...vals);
+    const x = i => pad.l + i * (W - pad.l - pad.r) / (weeks.length - 1);
+    const y = v => pad.t + (1 - (v - lo) / (hi - lo)) * (H - pad.t - pad.b);
+    svg.appendChild(mk("line", { x1: pad.l - 8, x2: W - pad.r + 8, y1: y(0), y2: y(0), stroke: "#bdbdbd", "stroke-width": 1 }));
+    svg.appendChild(mk("polyline", { points: weeks.map((w, i) => `${x(i)},${y(w.signups)}`).join(" "), fill: "none", stroke: "#1a1a1a", "stroke-width": 2, "stroke-linejoin": "round" }));
+    weeks.forEach((w, i) => {
+      const isLast = i === weeks.length - 1;
+      svg.appendChild(mk("circle", { cx: x(i), cy: y(w.signups), r: isLast ? 4 : 2.5, fill: "#1a1a1a" }));
+      svg.appendChild(mk("text", { x: x(i), y: y(w.signups) - 9, "text-anchor": "middle", class: "v", "font-weight": isLast ? 700 : 400 }, int(w.signups)));
+      svg.appendChild(mk("text", { x: x(i), y: H - 6, "text-anchor": "middle" }, w.week));
+    });
+  }
+  draw();
+  addEventListener("resize", draw);
+
+  $("chart-note").textContent =
+    `Latest week ${wow >= 0 ? "up" : "down"} ${int(Math.abs(wow))} on the week before` +
+    (isHigh ? `, the highest of the ${weeks.length} weeks shown.` : ".");
+  if (wow < 0) $("chart-note").style.color = "var(--alert)";
+  $("trial").textContent = `Trial to paid in ${month}: ${pct(k.trial_to_paid_pct)}. No earlier rate in the data to compare with.`;
+
+  // Plans lookup
+  const totalMrr = D.plans.reduce((s, p) => s + p.mrr_usd, 0);
+  const maxShare = Math.max(...D.plans.map(p => p.mrr_usd / totalMrr));
+  $("plans").innerHTML = D.plans.map(p => {
+    const share = p.mrr_usd / totalMrr;
+    return `<tr><td>${esc(p.plan)}</td><td class="num">${int(p.accounts)}</td><td class="num">${usd(p.mrr_usd)}</td>
+      <td class="num">${pct(share * 100)}</td><td class="bar-cell"><div class="bar" style="width:${(share / maxShare) * 100}%"></div></td></tr>`;
+  }).join("");
+
+  // Routine events, quiet
+  $("events").innerHTML = D.recent_events.filter(e => !isCancel(e)).map(e =>
+    `<li><time>${esc(e.time)}</time><span>${esc(e.account)}: ${esc(e.event)}</span></li>`).join("");
+})();
+</script>
+</body>
+</html>

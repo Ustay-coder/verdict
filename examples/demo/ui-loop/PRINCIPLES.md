@@ -82,12 +82,64 @@ can't reach "ship it" by excelling at nine principles while failing one.
 The probe separates "restyled" from "designed", and it shows that even the hand-made reference misses P1–P3: it
 never says what needs attention.
 
+## v2 calibration (live, 2026-11-05)
+
+`dashboard-principles.yaml` + `dashboard-brief.yaml` as committed. Every page is scored with the same data.json.
+
+| Page | v1 | **v2** | Gates failed |
+| --- | --- | --- | --- |
+| AI one-shot (`start/`) | 27 | **28** | questions, context, attention, defaults, chart_fit, color_signal |
+| Take B final | 92 | **44** | questions, context, attention, defaults, chart_fit |
+| Bare unstyled page | 43 | **45** | questions, attention, defaults, hierarchy, craft |
+| v1 reference (`calibration/good`) | 92 | **65** | questions, attention |
+| Principled reference (`calibration/principled`, from its own BRIEF.md) | – | **82** ship it | none |
+
+What calibration changed:
+- **`numbers_true` is now deterministic.** Jev was a coin flip (0.43–0.51) on derived figures. The scorer recomputes
+  leaves, sums, shares, ratios and % changes from the data.json evidence, and it caught an invented "$50,000 target".
+- **"Nothing" no longer scores.** Without `unstyled` / `text_only` levels and a `craft` criterion, a bare page got 62.
+- **The threshold is set at the reference.** Taste judgements spread probability over neighbouring levels, so expected
+  values top out in the low 80s even for a page that follows every principle. "Ship it" is 80, and the 3/5 floor
+  gates carry the rest.
+- **Screenshots settle** (engine `settleMs`, default 1.5 s; the scorer waits 2.5 s). Count-up animations had shown
+  `$48,199` and hidden a repeated figure.
+
+## Take C: the v2 routine, recorded (2026-11-05)
+
+Same start page and data, a fresh folder, and the agent got [`take-c/PRINCIPLES-given-to-agent.md`](take-c/PRINCIPLES-given-to-agent.md)
+(the table above, no calibration results or reference paths). The prompt is [`take-c/prompt.txt`](take-c/prompt.txt).
+The run took 3 min 49 s of agent time. It never read outside its folder and left `data.json` untouched. Its final
+state matches the rebuilt last state byte for byte, and re-scoring gives 82 twice.
+
+| Step | Score |
+| --- | --- |
+| Brief ([`take-c/BRIEF.md`](take-c/BRIEF.md)) | **100**, passed on the first try |
+| Start page under v2 (calibration run) | 28 |
+| Round 1: rebuilt from the brief, layout discarded | **78** |
+| Round 2 | 73 (worse) |
+| Round 3 | **82**, passed, all gates |
+
+**What it got right:** the page is organised around the brief's questions (revenue → needs attention → pipeline).
+It uses a line chart for weeks and a bar table for the plan mix instead of a donut. Red is the only colour, and it
+marks the cancellation. Each figure appears once, and where the data has no comparison the page says so.
+
+**What v2 still misses (seen by eye, not by the rubric):**
+1. **Copy written for the judge.** "Flagged here first… Routine events sit quietly at the bottom right" and "this is
+   direction, not progress against a goal" explain the design to the rubric, not to a user. That's Goodhart in prose.
+2. **Invented advice.** "Action: ask the customer team for a win-back call" isn't a number, so `numbers_true`
+   passes it, but it isn't in the data.
+3. **Remaining defaults.** A thick red bar down one edge of the attention block, numbered section headings
+   ("1. 2. 3."), and Inter. All three are on the AI-tells lists and none is measured yet.
+
+Proposed v2.1: a Jev `no_meta_copy` criterion ("text addresses the user's task, not the design or the reviewer"),
+recommendations constrained to stated brief rules, and audit checks for one-edge accent borders, numbered section
+markers and the resolved font family. Phase 4 (the founder's taste check) has not been run yet.
+
 ## Next steps
 
-1. Add the audit metrics `chart_types`, `eyebrows`, `repeated_figures`, `numerals`. Write `dashboard-principles.yaml` (v2).
-2. Calibrate v2 against: the one-shot, Take B's final, the hand-made reference, a bare page, and a new reference
-   that follows P1–P11 (it must reach ≥ 85, or the rubric is asking for the impossible).
-3. Record **Take C** with the four-phase routine from the same start page.
+1. ~~Audit metrics, rubric v2, calibration, Take C~~ (done above).
+2. Phase 4: the founder judges Take C. That judgement decides whether v2.1 is needed before the video.
+3. v2.1 checks for the three gaps above, then re-score Take C and the reference.
 4. Video angle worth considering: *"Our first rubric gave it 92. You said it still looked AI-made. You were right."*
    Show the v1 → v2 rubric change on camera, then Take C.
 
