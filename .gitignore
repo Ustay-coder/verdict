@@ -5,3 +5,4 @@ dist
 .verdict/
 coverage
 .wrangler/
+.verdict-deploy.env
