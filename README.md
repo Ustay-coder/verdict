@@ -85,6 +85,14 @@ ev.aggregate.score; ev.aggregate.grade; ev.criteria[0].ratings[0].rationale;
 await verdict.evaluations.submitScore(ev.id, { criterionId: "team", raterId: "partner_a", score: 4 });
 await verdict.evaluations.reaggregate(ev.id, { method: "min" });
 const { ranking } = await verdict.batches.create({ rubric: rubric.id, subjects: [...] });
+
+const { evaluation, replayed } = await verdict.evaluations.createIdempotent(
+  { rubric: rubric.id, name: "Acme", inputs: [{ type: "youtube", url }] },
+  "acme-review-123",
+);
+// batches.createIdempotent(params, key) returns { evaluations, ranking, replayed }.
+// create(), createAsync(), and batches.create() also accept { idempotencyKey } as a second argument.
+
 ```
 
 ### MCP (agents)
@@ -146,6 +154,8 @@ Full reference: [docs/RUBRICS.md](docs/RUBRICS.md). Design and extension points:
 
 ## REST API
 
+**Idempotency.** Send `Idempotency-Key: <key>` (1–255 characters) on `POST /v1/evaluations` or `POST /v1/batches` to retry safely within a tenant. A matching request returns the stored result with HTTP 200 and `Idempotency-Replayed: true`, without running judges again. Reusing a key with a different body returns HTTP 409 (`idempotency_conflict`). Keys expire after 24 hours by default. `async` and `includeEvidence` do not affect request identity. Async replays return the stored `{ id, status, url }` summary. Evaluation documents expose `idempotencyKey`.
+
 | Method | Path | Purpose |
 | --- | --- | --- |
 | `POST` | `/v1/rubrics` | Create (JSON body, or YAML with `content-type: application/yaml`) |
@@ -161,7 +171,7 @@ Full reference: [docs/RUBRICS.md](docs/RUBRICS.md). Design and extension points:
 | `GET` | `/v1/rubrics/:id/calibration?target=0.8&buckets=5&limit=1000` | Decision confidence calibration against humans |
 | `GET` | `/v1/openapi.json`, `/v1/health` | Discovery |
 
-Auth: `Authorization: Bearer <key>`. With a database store, keys live hashed in the `api_keys` table (create them via `/v1/admin/keys` or `verdict keys create`); `VERDICT_API_KEYS="key:tenant,..."` adds bootstrap keys, and with no database and no env keys the API runs open as a single tenant. Errors: `{ "error": { "type": "validation|not_found|http|internal", "message", "issues?" } }`. Webhooks carry `verdict-signature: sha256=<hmac>` when `VERDICT_WEBHOOK_SECRET` is set.
+Auth: `Authorization: Bearer <key>`. With a database store, keys live hashed in the `api_keys` table (create them via `/v1/admin/keys` or `verdict keys create`); `VERDICT_API_KEYS="key:tenant,..."` adds bootstrap keys, and with no database and no env keys the API runs open as a single tenant. Errors: `{ "error": { "type": "validation|not_found|idempotency_conflict|http|internal", "message", "issues?" } }`. Webhooks carry `verdict-signature: sha256=<hmac>` when `VERDICT_WEBHOOK_SECRET` is set.
 
 ## Configuration
 

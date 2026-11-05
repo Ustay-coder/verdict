@@ -47,20 +47,24 @@ export class Verdict {
     this.timeoutMs = opts.timeoutMs ?? 600_000;
   }
 
-  async request<T>(method: string, path: string, body?: unknown, contentType = "application/json"): Promise<T> {
+  async request<T>(method: string, path: string, body?: unknown, contentType = "application/json", headers?: Record<string, string>): Promise<T> {
+    return (await this.requestWithMeta<T>(method, path, body, contentType, headers)).data;
+  }
+
+  async requestWithMeta<T>(method: string, path: string, body?: unknown, contentType = "application/json", headers?: Record<string, string>): Promise<{ data: T; replayed: boolean }> {
     const ctrl = new AbortController();
     const t = setTimeout(() => ctrl.abort(), this.timeoutMs);
     try {
       const res = await this.f(`${this.baseUrl}${path}`, {
         method,
         signal: ctrl.signal,
-        headers: { "content-type": contentType, ...(this.apiKey ? { authorization: `Bearer ${this.apiKey}` } : {}) },
+        headers: { "content-type": contentType, ...(this.apiKey ? { authorization: `Bearer ${this.apiKey}` } : {}), ...headers },
         body: body === undefined ? undefined : typeof body === "string" ? body : JSON.stringify(body),
       });
-      if (res.status === 204) return undefined as T;
+      if (res.status === 204) return { data: undefined as T, replayed: res.headers.get("Idempotency-Replayed") === "true" };
       const data = (await res.json().catch(() => ({}))) as { error?: { type: string; message: string; issues?: unknown } };
       if (!res.ok && !(res.status === 422 && !data.error)) throw new VerdictError(res.status, data.error?.type ?? "http", data.error?.message ?? `HTTP ${res.status}`, data.error?.issues);
-      return data as T;
+      return { data: data as T, replayed: res.headers.get("Idempotency-Replayed") === "true" };
     } finally { clearTimeout(t); }
   }
 
@@ -76,9 +80,13 @@ export class Verdict {
   };
 
   evaluations = {
-    create: (params: EvaluateParams) => this.request<EvaluationView>("POST", "/v1/evaluations", params),
+    create: (params: EvaluateParams, opts: { idempotencyKey?: string } = {}) => this.request<EvaluationView>("POST", "/v1/evaluations", params, "application/json", keyHeaders(opts.idempotencyKey)),
+    createIdempotent: async (params: EvaluateParams, key: string) => {
+      const { data: evaluation, replayed } = await this.requestWithMeta<EvaluationView>("POST", "/v1/evaluations", params, "application/json", keyHeaders(key));
+      return { evaluation, replayed };
+    },
     /** Returns {id,status:"queued"}; poll with `get`, or use a webhook. */
-    createAsync: (params: EvaluateParams) => this.request<{ id: string; status: string }>("POST", "/v1/evaluations", { ...params, async: true }),
+    createAsync: (params: EvaluateParams, opts: { idempotencyKey?: string } = {}) => this.request<{ id: string; status: string; url: string }>("POST", "/v1/evaluations", { ...params, async: true }, "application/json", keyHeaders(opts.idempotencyKey)),
     get: (id: string, opts: { evidence?: boolean } = {}) => this.request<EvaluationView>("GET", `/v1/evaluations/${id}${opts.evidence ? "?evidence=true" : ""}`),
     list: (q: { rubric?: string; status?: string; limit?: number } = {}) => this.request<{ data: EvaluationView[] }>("GET", `/v1/evaluations?${new URLSearchParams(Object.entries(q).filter(([, v]) => v !== undefined).map(([k, v]) => [k, String(v)]))}`),
     submitScore: (id: string, s: { criterionId: string; raterId: string; score: number | string; rationale?: string; confidence?: number }) => this.request<EvaluationView>("POST", `/v1/evaluations/${id}/scores`, s),
@@ -101,9 +109,17 @@ export class Verdict {
   };
 
   batches = {
-    create: (params: { rubric: string | RubricInput; subjects: Subject[]; metadata?: Record<string, unknown>; webhook?: string }) =>
-      this.request<{ ranking: Array<{ rank: number; evaluationId: string; subject: string; score?: number; grade?: string; passed?: boolean; status: string }>; evaluations: EvaluationView[] }>("POST", "/v1/batches", params),
+    create: (params: BatchParams, opts: { idempotencyKey?: string } = {}) =>
+      this.request<BatchResult>("POST", "/v1/batches", params, "application/json", keyHeaders(opts.idempotencyKey)),
+    createIdempotent: async (params: BatchParams, key: string) => {
+      const { data, replayed } = await this.requestWithMeta<BatchResult>("POST", "/v1/batches", params, "application/json", keyHeaders(key));
+      return { ...data, replayed };
+    },
   };
 }
 
 export default Verdict;
+
+export interface BatchParams { rubric: string | RubricInput; subjects: Subject[]; metadata?: Record<string, unknown>; webhook?: string }
+export interface BatchResult { ranking: Array<{ rank: number; evaluationId: string; subject: string; score?: number; grade?: string; passed?: boolean; status: string }>; evaluations: EvaluationView[] }
+function keyHeaders(key?: string): Record<string, string> { return key === undefined ? {} : { "Idempotency-Key": key }; }

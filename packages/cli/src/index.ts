@@ -152,6 +152,7 @@ export function buildCli() {
     .option("--json", "print the full evaluation as JSON")
     .option("--evidence", "include ingested evidence text in JSON output")
     .option("--webhook <url>", "POST the result when complete")
+    .option("--idempotency-key <key>")
     .option("--mock", "use mock providers (no API calls) — overrides every decision and llm judge")
     .action(async (o) => {
       let rubric = await loadRubric(o.rubric);
@@ -159,11 +160,14 @@ export function buildCli() {
       const inputs = (o.input as string[]).map(parseInput);
       for (const i of inputs) if (i.type === "text" && i.label === "stdin") i.text = await readStdin();
       const api = remote();
-      const ev = api
-        ? ((await api.evaluations.create({ rubric: rubric as never, inputs, name: o.name, webhook: o.webhook, includeEvidence: o.evidence })) as unknown as Evaluation)
-        : await localEngine().evaluate({ rubric, subject: { name: o.name, inputs }, webhook: o.webhook });
+      const params = { rubric: rubric as never, inputs, name: o.name, webhook: o.webhook, includeEvidence: o.evidence };
+      const req = { rubric, subject: { name: o.name, inputs }, webhook: o.webhook };
+      const result = o.idempotencyKey !== undefined
+        ? api ? await api.evaluations.createIdempotent(params, o.idempotencyKey) : await localEngine().evaluateIdempotent({ ...req, idempotencyKey: o.idempotencyKey })
+        : { evaluation: api ? await api.evaluations.create(params) : await localEngine().evaluate(req), replayed: false };
+      const ev = result.evaluation as unknown as Evaluation;
       if (o.json) console.log(JSON.stringify(o.evidence ? ev : { ...ev, evidence: ev.evidence?.map((e) => ({ ...e, text: undefined })) }, null, 2));
-      else console.log(renderReport(ev));
+      else console.log(renderReport(ev).replace(/(Status:[^\n]*)/i, `$1${result.replayed ? " (replayed)" : ""}`));
       if (ev.status === "failed") process.exitCode = 1;
     });
 
@@ -173,15 +177,19 @@ export function buildCli() {
     .requiredOption("-r, --rubric <fileOrId>")
     .requiredOption("-s, --subject <subject...>", "name=input[,input...]")
     .option("--json")
+    .option("--idempotency-key <key>")
     .option("--mock")
     .action(async (o) => {
       let rubric = await loadRubric(o.rubric);
       if (o.mock && typeof rubric !== "string") rubric = mockify(rubric);
       const subjects = (o.subject as string[]).map((s) => { const [name, rest] = s.split(/=(.*)/s); return { name: name!, inputs: rest!.split(",").map(parseInput) }; });
       const api = remote();
-      const ranking = api ? (await api.batches.create({ rubric: rubric as never, subjects })).ranking : (await localEngine().evaluateBatch(rubric, subjects)).ranking;
+      const result = o.idempotencyKey !== undefined
+        ? api ? await api.batches.createIdempotent({ rubric: rubric as never, subjects }, o.idempotencyKey) : await localEngine().evaluateBatchIdempotent(rubric, subjects, { idempotencyKey: o.idempotencyKey })
+        : { ...await (api ? api.batches.create({ rubric: rubric as never, subjects }) : localEngine().evaluateBatch(rubric, subjects)), replayed: false };
+      const { ranking } = result;
       if (o.json) console.log(JSON.stringify(ranking, null, 2));
-      else for (const r of ranking) console.log(`${String(r.rank).padStart(3)}. ${r.subject.padEnd(24)} ${fmt(r.score, 2).padStart(7)}  ${r.grade ?? ""} ${r.passed === undefined ? "" : r.passed ? "PASS" : "FAIL"}  ${r.status !== "completed" ? r.status : ""}`);
+      else for (const r of ranking) console.log(`${String(r.rank).padStart(3)}. ${r.subject.padEnd(24)} ${fmt(r.score, 2).padStart(7)}  ${r.grade ?? ""} ${r.passed === undefined ? "" : r.passed ? "PASS" : "FAIL"}  ${r.status !== "completed" ? r.status : ""}${result.replayed ? " (replayed)" : ""}`);
     });
 
   program.command("calibrate <rubricId>").description("compare decision confidence with human scores")

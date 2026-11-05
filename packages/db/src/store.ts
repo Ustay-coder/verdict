@@ -1,7 +1,7 @@
-import { and, desc, eq, inArray } from "drizzle-orm";
+import { and, desc, eq, inArray, sql, type SQL } from "drizzle-orm";
 import type { BaseSQLiteDatabase } from "drizzle-orm/sqlite-core";
-import type { Evaluation, ListOptions, Store, StoredRubric } from "@verdict/core";
-import { evaluations, ratings, rubrics, type Schema } from "./schema/sqlite.js";
+import type { IdempotencyRecord, Evaluation, ListOptions, Store, StoredRubric } from "@verdict/core";
+import { idempotencyKeys, evaluations, ratings, rubrics, type Schema } from "./schema/sqlite.js";
 
 /** Any Drizzle SQLite database: D1 (`drizzle-orm/d1`, async), better-sqlite3 (sync), libsql. */
 export type SqliteDb = BaseSQLiteDatabase<"async" | "sync", unknown, Schema>;
@@ -11,7 +11,47 @@ export type SqliteDb = BaseSQLiteDatabase<"async" | "sync", unknown, Schema>;
  * listings and analytics never parse blobs. Tenant scoping is enforced in every read.
  */
 export class DrizzleStore implements Store {
-  constructor(private db: SqliteDb) {}
+  constructor(private db: SqliteDb, private atomicBatch?: (statements: SQL[]) => Promise<void>) {}
+
+  async reserveIdempotency(r: IdempotencyRecord, initial: Evaluation[]): Promise<boolean> {
+    const tenant = r.tenantId ?? "";
+    // The reservation and initial documents commit together. Concurrent connections see
+    // either no reservation or a reservation whose targets already exist.
+    const statements: SQL[] = [sql`insert into idempotency_keys
+      (tenant_id, key, fingerprint, target_type, target_id, target_ids, created_at, expires_at)
+      values (${tenant}, ${r.key}, ${r.fingerprint}, ${r.targetType}, ${r.targetId ?? null}, ${r.evaluationIds ? JSON.stringify(r.evaluationIds) : null}, ${r.createdAt}, ${r.expiresAt})
+      on conflict (tenant_id, key) do update set fingerprint=excluded.fingerprint, target_type=excluded.target_type,
+        target_id=excluded.target_id, target_ids=excluded.target_ids, created_at=excluded.created_at, expires_at=excluded.expires_at
+      where idempotency_keys.expires_at <= ${new Date().toISOString()}
+        or (idempotency_keys.target_type = 'evaluation' and not exists
+          (select 1 from evaluations where id = idempotency_keys.target_id and coalesce(tenant_id, '') = ${tenant}))
+        or (idempotency_keys.target_type = 'batch' and exists
+          (select 1 from json_each(idempotency_keys.target_ids) as target where not exists
+            (select 1 from evaluations where id = target.value and coalesce(tenant_id, '') = ${tenant})))`];
+    const owner = r.targetId ?? r.evaluationIds?.[0];
+    for (const e of initial) {
+      statements.push(sql`insert into evaluations (id, tenant_id, rubric_id, rubric_name, subject_name, status, doc, created_at, updated_at)
+        select ${e.id}, ${e.tenantId ?? null}, ${e.rubricId ?? null}, ${e.rubric.name}, ${e.subject.name ?? null}, ${e.status}, ${JSON.stringify(e)}, ${e.createdAt}, ${e.updatedAt}
+        where exists (select 1 from idempotency_keys where tenant_id=${tenant} and key=${r.key}
+          and coalesce(target_id, json_extract(target_ids, '$[0]'))=${owner ?? null})`);
+    }
+    if (this.atomicBatch) await this.atomicBatch(statements);
+    else this.db.transaction(tx => { for (const statement of statements) tx.run(statement); }, { behavior: "immediate" });
+    const record = await this.getIdempotency(r.tenantId, r.key);
+    return record?.targetId === r.targetId && JSON.stringify(record?.evaluationIds) === JSON.stringify(r.evaluationIds);
+  }
+
+  async putIdempotency(r: IdempotencyRecord): Promise<void> {
+    const row = { tenantId: r.tenantId ?? "", key: r.key, fingerprint: r.fingerprint, targetType: r.targetType,
+      targetId: r.targetId ?? null, targetIds: r.evaluationIds ?? null, createdAt: r.createdAt, expiresAt: r.expiresAt };
+    await this.db.insert(idempotencyKeys).values(row).onConflictDoUpdate({ target: [idempotencyKeys.tenantId, idempotencyKeys.key], set: row });
+  }
+
+  async getIdempotency(tenantId: string | undefined, key: string): Promise<IdempotencyRecord | undefined> {
+    const [row] = await this.db.select().from(idempotencyKeys).where(and(eq(idempotencyKeys.tenantId, tenantId ?? ""), eq(idempotencyKeys.key, key))).limit(1);
+    return row ? { tenantId: row.tenantId || undefined, key: row.key, fingerprint: row.fingerprint, targetType: row.targetType,
+      targetId: row.targetId ?? undefined, evaluationIds: row.targetIds ?? undefined, createdAt: row.createdAt, expiresAt: row.expiresAt } : undefined;
+  }
 
   /* ---------------- rubrics ---------------- */
 

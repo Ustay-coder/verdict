@@ -93,5 +93,16 @@ export const apiKeys = sqliteTable(
   (t) => [uniqueIndex("api_keys_hash").on(t.keyHash), index("api_keys_tenant").on(t.tenantId)],
 );
 
-export const schema = { rubrics, evaluations, ratings, apiKeys };
+export const idempotencyKeys = sqliteTable("idempotency_keys", {
+  tenantId: text("tenant_id"),
+  key: text("key").notNull(),
+  fingerprint: text("fingerprint").notNull(),
+  targetType: text("target_type").notNull().$type<"evaluation" | "batch">(),
+  targetId: text("target_id"),
+  targetIds: text("target_ids", { mode: "json" }).$type<string[]>(),
+  createdAt: text("created_at").notNull(),
+  expiresAt: text("expires_at").notNull(),
+}, t => [uniqueIndex("idempotency_keys_tenant_key").on(t.tenantId, t.key)]);
+
+export const schema = { rubrics, evaluations, ratings, apiKeys, idempotencyKeys };
 export type Schema = typeof schema;

@@ -76,6 +76,8 @@ Two layers, both configurable:
 `Engine.evaluate` builds one `JudgeContext` per (criterion, judge). Judges that implement `rateMany` + `batchKey` (decision models) are grouped by `batchKey() + evidence input indexes`; each group becomes one request. Everything else (humans, benchmarks, panels, LLM judges) runs per criterion. All jobs share the evaluation's concurrency limit. Panels call their members per criterion, so a decision model inside a panel is not batched across criteria — use the top-level judge for the common case.
 
 ### Evaluation lifecycle
+
+Idempotent evaluation and batch entry points scope keys by tenant and hash canonical request JSON with Web Crypto SHA-256, excluding response flags (`async`, `includeEvidence`). They reserve pre-assigned evaluation IDs before ingestion or judges start, and persist the key on evaluation documents. Matching retries reload current evaluations and rebuild batch rankings with `rankEvaluations`, without calling judges; changed requests raise `ConflictError` (HTTP 409). Keys expire after 24 hours (`EngineOptions.idempotencyTtlMs`), and missing targets allow a fresh run. All stores persist idempotency records. The engine serializes reservations within a store; FileStore also locks across instances and replaces JSON files atomically. SQLite/D1 atomically commits conditional key reservations and initial evaluation documents (SQLite transaction / D1 batch), using the unique `(tenant_id, key)` index, so separate processes cannot start duplicate judge work.
 `running → completed | pending_human | failed`. Human submissions move `pending_human → completed`. Webhooks fire on `completed`/`failed` (HMAC-signed). `reaggregate` never touches judges: it re-runs layer 1 + 2 on stored ratings — cheap what-if analysis and policy changes after the fact.
 
 **Checks.** After ingestion, rubric pre-screen checks run as one batch of noul questions before criterion judges. Failures flag, fail the aggregate, or abort with excluded criteria. Provider errors continue as flags, except abort checks complete with an evaluation error. Stored check results and fail gates survive reaggregation.
@@ -110,7 +112,7 @@ Two layers, both configurable:
 ## Roadmap
 1. **Decision-model depth:** per-provider verified fixtures once official docs are reachable from CI, Clef media state on Workers AI, OpenAI Decisions GA shape.
 2. **Calibration:** stored-evaluation reports now compare decision ratings (including escalations) with human consensus: agreement, normalized error/bias, confidence buckets, ECE, suggested `minConfidence`, and interval Krippendorff’s α, exposed through REST, SDK, CLI and MCP. Next: gold-standard sets per rubric, judge drift reports, per-rubric cost/latency stats.
-3. Postgres dialect for `@verdict/db` (pg-core schema mirroring the SQLite plan); idempotency keys; queue-backed async with retries (Cloudflare Queues on Workers).
+3. Postgres dialect for `@verdict/db` (pg-core schema mirroring the SQLite plan); queue-backed async with retries (Cloudflare Queues on Workers).
 4. Richer evidence: PDF page renders and video frames for media-capable decision models, audio transcription provider hooks.
 5. Rubric versioning + migration of past evaluations; rubric templates library (hiring, grants, essays, hackathons, RFPs, model evals, ticket triage).
 6. Human-rater UI kit (hosted task inbox) and SSO-aware rater identities; blind mode (strip names/brands from state).

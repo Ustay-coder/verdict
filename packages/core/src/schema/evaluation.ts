@@ -67,6 +67,7 @@ export type EvaluationStatus = "queued" | "running" | "pending_human" | "complet
 export interface Evaluation {
   id: string;
   tenantId?: string;
+  idempotencyKey?: string;
   rubricId?: string;
   /** Frozen snapshot — re-aggregation always uses this copy. */
   rubric: Rubric;

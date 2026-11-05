@@ -164,3 +164,56 @@ it("presents choice fields and pre-screen abort results", async () => {
   expect(aborted).toMatchObject({ status: "completed", checks: [{ id: "topic", probability: 0.1, passed: false, action: "abort" }], criteria: [{ status: "excluded", ratings: [] }], aggregate: { passed: false }, usage: { decisionCalls: 1 } });
   expect(aborted.aggregate.score).toBeUndefined();
 });
+
+const idempotentBody = { rubric: { name: "Retry", defaultJudge: { type: "decision", provider: "mock" }, criteria: [{ id: "a", name: "A" }] }, inputs: [{ type: "text", text: "hello" }] };
+
+it("replays evaluation requests, ignores response flags, and exposes the key", async () => {
+  const { call } = mk();
+  const post = (body: unknown) => call("/v1/evaluations", { method: "POST", headers: { "idempotency-key": "retry" }, body: JSON.stringify(body) });
+  const first = await post(idempotentBody);
+  expect(first.status).toBe(201);
+  const evaluation = await first.json();
+  const second = await post({ ...idempotentBody, includeEvidence: true });
+  expect(second.status).toBe(200);
+  expect(second.headers.get("Idempotency-Replayed")).toBe("true");
+  expect((await second.json()).id).toBe(evaluation.id);
+  expect((await (await call(`/v1/evaluations/${evaluation.id}`)).json()).idempotencyKey).toBe("retry");
+  const conflict = await post({ ...idempotentBody, metadata: { changed: true } });
+  expect(conflict.status).toBe(409);
+  expect((await conflict.json()).error.type).toBe("idempotency_conflict");
+});
+
+it("rejects empty and over-long idempotency keys", async () => {
+  const { call } = mk();
+  for (const key of ["", "a".repeat(256)]) {
+    expect((await call("/v1/evaluations", { method: "POST", headers: { "Idempotency-Key": key }, body: JSON.stringify(idempotentBody) })).status).toBe(400);
+    expect((await call("/v1/batches", { method: "POST", headers: { "Idempotency-Key": key }, body: JSON.stringify({ rubric: idempotentBody.rubric, subjects: [{ inputs: idempotentBody.inputs }] }) })).status).toBe(400);
+  }
+});
+
+it("replays batches and conflicts on changed batch bodies", async () => {
+  const { call } = mk();
+  const body = { rubric: idempotentBody.rubric, subjects: [{ name: "one", inputs: idempotentBody.inputs }, { name: "two", inputs: idempotentBody.inputs }] };
+  const post = (value: unknown) => call("/v1/batches", { method: "POST", headers: { "Idempotency-Key": "batch" }, body: JSON.stringify(value) });
+  const first = await post(body);
+  expect(first.status).toBe(201);
+  const original = await first.json();
+  const second = await post(body);
+  expect(second.status).toBe(200);
+  expect(second.headers.get("Idempotency-Replayed")).toBe("true");
+  expect(await second.json()).toEqual(original);
+  expect((await post({ ...body, metadata: { changed: true } })).status).toBe(409);
+});
+
+it("returns stored summaries for async replays and propagates conflicts", async () => {
+  const { call } = mk();
+  const post = (body: unknown) => call("/v1/evaluations", { method: "POST", headers: { "Idempotency-Key": "async" }, body: JSON.stringify(body) });
+  const first = await post({ ...idempotentBody, async: true });
+  expect(first.status).toBe(202);
+  const initial = await first.json();
+  const replay = await post({ ...idempotentBody, async: true });
+  expect(replay.status).toBe(200);
+  expect(replay.headers.get("Idempotency-Replayed")).toBe("true");
+  expect(await replay.json()).toMatchObject({ id: initial.id, url: initial.url });
+  expect((await post({ ...idempotentBody, async: true, name: "different" })).status).toBe(409);
+});

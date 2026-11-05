@@ -3,7 +3,7 @@ import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 import { HTTPException } from "hono/http-exception";
 import { z } from "zod";
-import { calibrate, Aggregation, Engine, NotFoundError, Rubric, Subject, ValidationError, newId, parseRubric, loadRubricText, type Evaluation } from "@verdict/core";
+import { ConflictError, calibrate, Aggregation, Engine, NotFoundError, Rubric, Subject, ValidationError, newId, parseRubric, loadRubricText, type Evaluation } from "@verdict/core";
 
 export interface Auth {
   /** Map an API key to a tenant id, or undefined to reject. Return "" for single-tenant open mode. */
@@ -51,7 +51,7 @@ export function present(ev: Evaluation, { evidence = false, ratings = true } = {
 export function createApp({ engine, auth = envAuth(), keys, adminKey = (globalThis as { process?: { env?: Record<string, string> } }).process?.env?.VERDICT_ADMIN_KEY, allowAsync = true, log = false }: AppOptions) {
   const app = new Hono<Env>();
   if (log) app.use(logger());
-  app.use("*", cors());
+  app.use("*", cors({ exposeHeaders: ["Idempotency-Replayed"] }));
 
   app.get("/", (c) => c.json({ name: "verdict", version: "0.1.0", docs: "/v1/openapi.json" }));
   app.get("/v1/health", (c) => c.json({ ok: true }));
@@ -92,6 +92,7 @@ export function createApp({ engine, auth = envAuth(), keys, adminKey = (globalTh
     if (err instanceof HTTPException) return c.json({ error: { type: "http", message: err.message } }, err.status);
     if (err instanceof z.ZodError) return c.json({ error: { type: "validation", message: "invalid request", issues: err.issues } }, 400);
     if (err instanceof NotFoundError) return c.json({ error: { type: "not_found", message: err.message } }, 404);
+    if (err instanceof ConflictError) return c.json({ error: { type: "idempotency_conflict", message: err.message } }, 409);
     if (err instanceof ValidationError) return c.json({ error: { type: "validation", message: err.message } }, 400);
     const message = (err as Error).message ?? "internal error";
     const status = /duplicate|unknown|requires|must/i.test(message) ? 400 : 500;
@@ -147,10 +148,26 @@ export function createApp({ engine, auth = envAuth(), keys, adminKey = (globalTh
   });
 
   app.post("/v1/evaluations", async (c) => {
-    const body = EvaluateBody.parse(await c.req.json());
+    const raw = await c.req.json();
+    const body = EvaluateBody.parse(raw);
+    const idempotencyKey = readIdempotencyKey(c.req.raw);
+    const fingerprintBody = Object.fromEntries(["rubric", "subject", "inputs", "name", "metadata", "webhook"].filter(k => k in raw).map(k => [k, raw[k]]));
     const subject = body.subject ?? { name: body.name, inputs: body.inputs ?? [] };
     if (!subject.inputs?.length) throw new ValidationError("provide `subject.inputs` or `inputs`");
     const req = { rubric: body.rubric as string | Record<string, unknown>, subject, tenantId: tenant(c), metadata: body.metadata, webhook: body.webhook };
+    if (idempotencyKey !== undefined) {
+      const keyed = { ...req, idempotencyKey, fingerprintBody };
+      if (body.async && allowAsync) {
+        const result = await new Promise<{ evaluation: Evaluation; replayed: boolean }>((resolve, reject) => {
+          engine.evaluateIdempotent({ ...keyed, onStarted: evaluation => resolve({ evaluation, replayed: false }) }).then(resolve, reject);
+        });
+        if (result.replayed) c.header("Idempotency-Replayed", "true");
+        return c.json({ id: result.evaluation.id, status: result.replayed ? result.evaluation.status : "queued", url: `/v1/evaluations/${result.evaluation.id}` }, result.replayed ? 200 : 202);
+      }
+      const { evaluation, replayed } = await engine.evaluateIdempotent(keyed);
+      if (replayed) c.header("Idempotency-Replayed", "true");
+      return c.json(present(evaluation, { evidence: body.includeEvidence }), replayed ? 200 : evaluation.status === "failed" ? 422 : 201);
+    }
     if (body.async && allowAsync) {
       // Resolve the rubric now so a bad reference fails synchronously, then run in the background.
       await engine.resolveRubric(req.rubric, req.tenantId);
@@ -194,9 +211,17 @@ export function createApp({ engine, auth = envAuth(), keys, adminKey = (globalTh
 
   /* ---------- batches (leaderboards) ---------- */
   app.post("/v1/batches", async (c) => {
-    const body = z.object({ rubric: z.union([z.string(), Rubric]), subjects: z.array(Subject).min(1), metadata: z.record(z.string(), z.unknown()).optional(), webhook: z.string().url().optional() }).parse(await c.req.json());
-    const { evaluations, ranking } = await engine.evaluateBatch(body.rubric as string | Record<string, unknown>, body.subjects, { tenantId: tenant(c), metadata: body.metadata, webhook: body.webhook });
-    return c.json({ ranking, evaluations: evaluations.map((e) => present(e, { ratings: false })) }, 201);
+    const raw = await c.req.json();
+    const idempotencyKey = readIdempotencyKey(c.req.raw);
+    const body = z.object({ rubric: z.union([z.string(), Rubric]), subjects: z.array(Subject).min(1), metadata: z.record(z.string(), z.unknown()).optional(), webhook: z.string().url().optional() }).parse(raw);
+    const opts = { tenantId: tenant(c), metadata: body.metadata, webhook: body.webhook };
+    const fingerprintBody = Object.fromEntries(["rubric", "subjects", "metadata", "webhook"].filter(k => k in raw).map(k => [k, raw[k]]));
+    const result = idempotencyKey === undefined
+      ? { ...await engine.evaluateBatch(body.rubric, body.subjects, opts), replayed: false }
+      : await engine.evaluateBatchIdempotent(body.rubric, body.subjects, { ...opts, idempotencyKey, fingerprintBody });
+    const { evaluations, ranking, replayed } = result;
+    if (replayed) c.header("Idempotency-Replayed", "true");
+    return c.json({ ranking, evaluations: evaluations.map((e) => present(e, { ratings: false })) }, replayed ? 200 : 201);
   });
 
   return app;
@@ -207,6 +232,11 @@ async function readRubricBody(req: Request): Promise<unknown> {
   const text = await req.text();
   if (ct.includes("yaml") || ct.includes("text/plain")) return loadRubricText(text);
   return JSON.parse(text);
+}
+
+function readIdempotencyKey(req: Request): string | undefined {
+  const key = req.headers.get("Idempotency-Key");
+  return key === null ? undefined : z.string().min(1).max(255).parse(key);
 }
 
 const openapi = {
@@ -220,12 +250,12 @@ const openapi = {
     "/v1/rubrics/validate": { post: { summary: "Validate a rubric without storing it" } },
     "/v1/rubrics/{id}": { get: { summary: "Get rubric" }, put: { summary: "Replace rubric" }, delete: { summary: "Delete rubric" } },
     "/v1/rubrics/{id}/calibration": { get: { summary: "Calibration report (`?target=0.8&buckets=5&limit=1000`)" } },
-    "/v1/evaluations": { post: { summary: "Evaluate a subject (sync; `async:true` for 202)" }, get: { summary: "List evaluations" } },
+    "/v1/evaluations": { post: { summary: "Evaluate a subject (sync; `async:true` for 202). Optional Idempotency-Key header (1–255 chars); replay 200, conflict 409, TTL 24h" }, get: { summary: "List evaluations" } },
     "/v1/evaluations/{id}": { get: { summary: "Get evaluation (`?evidence=true` for full text)" } },
     "/v1/evaluations/{id}/scores": { post: { summary: "Submit a human score for a pending criterion" } },
     "/v1/evaluations/{id}/aggregate": { post: { summary: "Re-aggregate with a different aggregation config (no re-judging)" } },
     "/v1/tasks": { get: { summary: "Pending human-rating tasks (`?rater=`)" } },
-    "/v1/batches": { post: { summary: "Evaluate many subjects against one rubric and rank them" } },
+    "/v1/batches": { post: { summary: "Evaluate many subjects against one rubric and rank them. Optional Idempotency-Key header (1–255 chars); replay 200, conflict 409, TTL 24h" } },
     "/v1/admin/keys": { post: { summary: "Create an API key for a tenant (admin)" }, get: { summary: "List a tenant's keys (admin, `?tenant=`)" } },
     "/v1/admin/keys/{id}": { delete: { summary: "Revoke a key (admin)" } },
   },

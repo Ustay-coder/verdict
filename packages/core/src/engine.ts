@@ -1,4 +1,4 @@
-import { createHmac } from "node:crypto";
+import { fingerprint } from "./idempotency.js";
 import { Aggregation, parseRubric, type Criterion, type JudgeSpec, type Rubric } from "./schema/rubric.js";
 import { Subject, type Evidence } from "./schema/subject.js";
 import type { AggregateResult, CriterionResult, Evaluation, Rating } from "./schema/evaluation.js";
@@ -8,6 +8,7 @@ import { aggregateCriteria, aggregateRatings, coerceScore, criterionScale, norma
 import { MemoryStore, type Store, type StoredRubric } from "./store/index.js";
 
 export interface EngineOptions {
+  idempotencyTtlMs?: number;
   store?: Store;
   env?: (name: string) => string | undefined;
   fetch?: typeof fetch;
@@ -27,6 +28,9 @@ export type EngineEvent =
   | { type: "evaluation.failed"; evaluation: Evaluation };
 
 export interface EvaluateRequest {
+  idempotencyKey?: string;
+  /** Original transport body, before defaults or shorthand expansion. */
+  fingerprintBody?: unknown;
   /** Inline rubric or the id of a stored rubric. */
   rubric: Rubric | Record<string, unknown> | string;
   subject: Subject | Record<string, unknown>;
@@ -56,6 +60,7 @@ export function newId(prefix: string) {
 
 export class Engine {
   readonly store: Store;
+  private idempotencyTtlMs: number;
   private env: (n: string) => string | undefined;
   private fetchImpl: typeof fetch;
   private ingestOptions: IngestOptions;
@@ -64,6 +69,7 @@ export class Engine {
   private onEvent?: (e: EngineEvent) => void;
 
   constructor(opts: EngineOptions = {}) {
+    this.idempotencyTtlMs = opts.idempotencyTtlMs ?? 86_400_000;
     this.store = opts.store ?? new MemoryStore();
     this.env = opts.env ?? ((n) => (globalThis as { process?: { env: Record<string, string | undefined> } }).process?.env[n]);
     this.fetchImpl = opts.fetch ?? globalThis.fetch;
@@ -107,31 +113,13 @@ export class Engine {
   async evaluate(req: EvaluateRequest): Promise<Evaluation> {
     const started = Date.now();
     const { rubric, rubricId } = await this.resolveRubric(req.rubric, req.tenantId);
-    const subject = Subject.parse(req.subject);
-    const now = new Date().toISOString();
-    const ev: Evaluation = {
-      id: req.id ?? newId("eval"),
-      tenantId: req.tenantId,
-      rubricId,
-      rubric,
-      subject,
-      evidence: [],
-      status: "running",
-      criteria: [],
-      aggregate: emptyAggregate(rubric),
-      pendingTasks: [],
-      usage: { decisionCalls: 0, llmCalls: 0, inputTokens: 0, outputTokens: 0, durationMs: 0 },
-      metadata: req.metadata,
-      webhook: req.webhook,
-      createdAt: now,
-      updatedAt: now,
-    };
+    const ev = initialEvaluation(req, rubric, rubricId);
     await this.store.putEvaluation(ev);
     this.onEvent?.({ type: "evaluation.started", evaluation: ev });
     req.onStarted?.(ev);
 
     try {
-      ev.evidence = await ingest(subject, this.ingestOptions);
+      ev.evidence = await ingest(ev.subject, this.ingestOptions);
     } catch (e) {
       ev.status = "failed";
       ev.error = `ingestion failed: ${(e as Error).message}`;
@@ -220,11 +208,67 @@ export class Engine {
   async evaluateBatch(rubricRef: EvaluateRequest["rubric"], subjects: Array<Subject | Record<string, unknown>>, opts: Omit<EvaluateRequest, "rubric" | "subject"> = {}) {
     const { rubric } = await this.resolveRubric(rubricRef, opts.tenantId);
     const evaluations = await mapLimit(subjects, Math.max(1, Math.floor(this.concurrency / 2)), (subject) => this.evaluate({ ...opts, rubric, subject }));
-    const ranking = evaluations
-      .map((e, i) => ({ rank: 0, evaluationId: e.id, subject: e.subject.name ?? e.subject.id ?? `#${i + 1}`, score: e.aggregate.score, grade: e.aggregate.grade, passed: e.aggregate.passed, status: e.status }))
-      .sort((a, b) => (b.score ?? -Infinity) - (a.score ?? -Infinity))
-      .map((r, i) => ({ ...r, rank: i + 1 }));
+    const ranking = rankEvaluations(evaluations);
     return { evaluations, ranking };
+  }
+
+  async evaluateIdempotent(req: EvaluateRequest & { idempotencyKey: string }) {
+    const result = await this.runIdempotent(req, "evaluation", [req.subject]);
+    return { evaluation: result.evaluations[0]!, replayed: result.replayed };
+  }
+
+  async evaluateBatchIdempotent(rubric: EvaluateRequest["rubric"], subjects: Array<Subject | Record<string, unknown>>, opts: Omit<EvaluateRequest, "rubric" | "subject"> & { idempotencyKey: string }) {
+    const result = await this.runIdempotent({ ...opts, rubric, subject: {} }, "batch", subjects);
+    return { ...result, ranking: rankEvaluations(result.evaluations) };
+  }
+
+  private async runIdempotent(req: EvaluateRequest & { idempotencyKey: string }, targetType: "evaluation" | "batch", subjects: Array<Subject | Record<string, unknown>>) {
+    if (req.idempotencyKey.length < 1 || req.idempotencyKey.length > 255) throw new ValidationError("Idempotency key must contain 1–255 characters");
+    const lockKey = JSON.stringify([req.tenantId ?? "", req.idempotencyKey]);
+    let locks = idempotencyLocks.get(this.store);
+    if (!locks) { locks = new Map(); idempotencyLocks.set(this.store, locks); }
+    const previous = locks.get(lockKey) ?? Promise.resolve();
+    let release!: () => void;
+    const lock = new Promise<void>(resolve => { release = resolve; });
+    locks.set(lockKey, lock);
+    await previous;
+    try {
+      const body = req.fingerprintBody ?? (targetType === "evaluation"
+        ? { rubric: req.rubric, subject: req.subject, metadata: req.metadata, webhook: req.webhook }
+        : { rubric: req.rubric, subjects, metadata: req.metadata, webhook: req.webhook });
+      const hash = await fingerprint(body);
+      for (;;) {
+        const record = await this.store.getIdempotency(req.tenantId, req.idempotencyKey);
+        if (record && Date.parse(record.expiresAt) > Date.now()) {
+          const ids = record.targetType === "evaluation" ? [record.targetId!] : record.evaluationIds!;
+          const evaluations = await Promise.all(ids.map(id => this.store.getEvaluation(id, req.tenantId)));
+          if (evaluations.every((e): e is Evaluation => !!e)) {
+            if (record.fingerprint !== hash || record.targetType !== targetType) throw new ConflictError("Idempotency key already used for a different request");
+            return { evaluations, replayed: true };
+          }
+        }
+        // Validate everything before reserving ids. No ingestion or judges run here.
+        const { rubric, rubricId } = await this.resolveRubric(req.rubric, req.tenantId);
+        subjects.forEach(subject => Subject.parse(subject));
+        const ids = subjects.map(() => newId("eval"));
+        const recordToStore = { tenantId: req.tenantId, key: req.idempotencyKey, fingerprint: hash, targetType,
+          targetId: targetType === "evaluation" ? ids[0] : undefined, evaluationIds: targetType === "batch" ? ids : undefined,
+          createdAt: new Date().toISOString(), expiresAt: new Date(Date.now() + this.idempotencyTtlMs).toISOString() };
+        const initial = subjects.map((subject, i) => initialEvaluation({ ...req, subject, id: ids[i] }, rubric, rubricId));
+        if (this.store.reserveIdempotency) {
+          if (!await this.store.reserveIdempotency(recordToStore, initial)) continue;
+        } else {
+          await this.store.putIdempotency(recordToStore);
+          for (const evaluation of initial) await this.store.putEvaluation(evaluation);
+        }
+        release();
+        const evaluations = await mapLimit(subjects, Math.max(1, Math.floor(this.concurrency / 2)), (subject, i) => this.evaluate({ ...req, rubric, subject, id: ids[i] }));
+        return { evaluations, replayed: false };
+      }
+    } finally {
+      release();
+      if (locks.get(lockKey) === lock) locks.delete(lockKey);
+    }
   }
 
   /** Human rater submits a score for a pending criterion. */
@@ -329,7 +373,11 @@ export class Engine {
     if (!ev.webhook) return;
     const body = JSON.stringify({ type: `evaluation.${ev.status}`, data: ev });
     const headers: Record<string, string> = { "content-type": "application/json", "user-agent": "verdict-webhooks/0.1" };
-    if (this.webhookSecret) headers["verdict-signature"] = `sha256=${createHmac("sha256", this.webhookSecret).update(body).digest("hex")}`;
+    if (this.webhookSecret) {
+      const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(this.webhookSecret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+      const signature = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(body));
+      headers["verdict-signature"] = `sha256=${Array.from(new Uint8Array(signature), b => b.toString(16).padStart(2, "0")).join("")}`;
+    }
     try { await this.fetchImpl(ev.webhook, { method: "POST", headers, body }); } catch { /* webhook failures never fail the evaluation */ }
   }
 }
@@ -372,3 +420,35 @@ function ratingBaseFor(u: { criterion: Criterion; judge: Judge }): Omit<Rating, 
 
 export class NotFoundError extends Error { status = 404; }
 export class ValidationError extends Error { status = 400; }
+
+export function rankEvaluations(evaluations: Evaluation[]) {
+  return evaluations
+      .map((e, i) => ({ rank: 0, evaluationId: e.id, subject: e.subject.name ?? e.subject.id ?? `#${i + 1}`, score: e.aggregate.score, grade: e.aggregate.grade, passed: e.aggregate.passed, status: e.status }))
+      .sort((a, b) => (b.score ?? -Infinity) - (a.score ?? -Infinity))
+      .map((r, i) => ({ ...r, rank: i + 1 }));
+}
+export class ConflictError extends Error { status = 409; }
+
+const idempotencyLocks = new WeakMap<Store, Map<string, Promise<void>>>();
+
+function initialEvaluation(req: EvaluateRequest, rubric: Rubric, rubricId?: string): Evaluation {
+  const now = new Date().toISOString();
+  return {
+    id: req.id ?? newId("eval"),
+    idempotencyKey: req.idempotencyKey,
+    tenantId: req.tenantId,
+    rubricId,
+    rubric,
+    subject: Subject.parse(req.subject),
+    evidence: [],
+    status: "running",
+    criteria: [],
+    aggregate: emptyAggregate(rubric),
+    pendingTasks: [],
+    usage: { decisionCalls: 0, llmCalls: 0, inputTokens: 0, outputTokens: 0, durationMs: 0 },
+    metadata: req.metadata,
+    webhook: req.webhook,
+    createdAt: now,
+    updatedAt: now,
+  };
+}

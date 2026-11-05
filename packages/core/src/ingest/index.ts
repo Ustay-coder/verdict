@@ -1,5 +1,3 @@
-import { readFile } from "node:fs/promises";
-import { basename, extname } from "node:path";
 import { htmlToText } from "html-to-text";
 import type { Evidence, Input, Subject } from "../schema/subject.js";
 
@@ -59,6 +57,7 @@ registerIngestor("json", async (input, i, o) => {
 
 /* ---------- file ---------- */
 export async function extractFromBuffer(buf: Uint8Array, filename = "", mimeType = ""): Promise<{ text: string; json?: unknown; warnings?: string[] }> {
+  const { extname } = await import("node:path");
   const ext = extname(filename).toLowerCase();
   const mt = mimeType.toLowerCase();
   if (mt.includes("pdf") || ext === ".pdf") {
@@ -84,6 +83,8 @@ registerIngestor("file", async (input, i, o) => {
   if (input.base64) buf = Uint8Array.from(Buffer.from(input.base64, "base64"));
   else if (input.path) {
     if (!o.allowLocalFiles) throw new Error("local file paths are disabled; send base64 content instead");
+    const { readFile } = await import("node:fs/promises");
+    const { basename } = await import("node:path");
     buf = new Uint8Array(await readFile(input.path));
     name ||= basename(input.path);
   } else throw new Error("file input needs `path` or `base64`");

@@ -85,12 +85,16 @@ export function createMcpServer(opts: McpOptions = {}) {
       rubric: z.union([z.string(), z.record(z.string(), z.unknown())]),
       inputs: z.array(InputSchema).min(1),
       name: z.string().optional().describe("Subject name for reports"),
+      idempotencyKey: z.string().min(1).max(255).optional(),
       metadata: z.record(z.string(), z.unknown()).optional(),
     },
-  }, async ({ rubric, inputs, name, metadata }) => {
+  }, async ({ rubric, inputs, name, metadata, idempotencyKey }) => {
     const r = typeof rubric === "string" ? rubric : parseRubric(rubric);
-    if (client) return text(summarize(await client.evaluations.create({ rubric: r, inputs: inputs as never, name, metadata })));
-    return text(summarize(await engine!.evaluate({ rubric: r, subject: { name, inputs: inputs as never }, metadata })));
+    const result = idempotencyKey
+      ? client ? await client.evaluations.createIdempotent({ rubric: r, inputs: inputs as never, name, metadata }, idempotencyKey)
+        : await engine!.evaluateIdempotent({ rubric: r, subject: { name, inputs: inputs as never }, metadata, idempotencyKey })
+      : { evaluation: client ? await client.evaluations.create({ rubric: r, inputs: inputs as never, name, metadata }) : await engine!.evaluate({ rubric: r, subject: { name, inputs: inputs as never }, metadata }), replayed: false };
+    return text({ ...summarize(result.evaluation as unknown as Evaluation), replayed: result.replayed });
   });
 
   server.registerTool("compare", {
@@ -98,12 +102,15 @@ export function createMcpServer(opts: McpOptions = {}) {
     description: "Evaluate several subjects against one rubric and return a ranking (leaderboard).",
     inputSchema: {
       rubric: z.union([z.string(), z.record(z.string(), z.unknown())]),
+      idempotencyKey: z.string().min(1).max(255).optional(),
       subjects: z.array(z.object({ name: z.string(), inputs: z.array(InputSchema).min(1) })).min(2),
     },
-  }, async ({ rubric, subjects }) => {
+  }, async ({ rubric, subjects, idempotencyKey }) => {
     const r = typeof rubric === "string" ? rubric : parseRubric(rubric);
-    if (client) return text((await client.batches.create({ rubric: r, subjects: subjects as never })).ranking);
-    return text((await engine!.evaluateBatch(r, subjects as never)).ranking);
+    const result = idempotencyKey
+      ? client ? await client.batches.createIdempotent({ rubric: r, subjects: subjects as never }, idempotencyKey) : await engine!.evaluateBatchIdempotent(r, subjects as never, { idempotencyKey })
+      : { ...await (client ? client.batches.create({ rubric: r, subjects: subjects as never }) : engine!.evaluateBatch(r, subjects as never)), replayed: false };
+    return text({ ranking: result.ranking, replayed: result.replayed });
   });
 
   server.registerTool("get_evaluation", { title: "Get evaluation", description: "Fetch an evaluation by id (status, scores, rationales, pending human tasks).", inputSchema: { id: z.string() } }, async ({ id }) => {

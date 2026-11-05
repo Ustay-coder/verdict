@@ -81,3 +81,51 @@ describe("DrizzleStore on SQLite (same schema as D1)", () => {
     expect(list.map((e) => e.subject.name)).toEqual(["three", "two"]);
   });
 });
+
+it("round-trips and upserts idempotency records with exact tenant scoping", async () => {
+  const { store, sqlite } = await fromSqliteFile(":memory:");
+  try {
+    const record = { key: "retry", fingerprint: "abc", targetType: "evaluation" as const, targetId: "eval_1", createdAt: new Date().toISOString(), expiresAt: new Date(Date.now() + 86400000).toISOString() };
+    await store.putIdempotency(record);
+    expect(await store.getIdempotency(undefined, "retry")).toEqual(record);
+    expect(await store.getIdempotency("other", "retry")).toBeUndefined();
+    const updated = { ...record, fingerprint: "def", targetType: "batch" as const, targetId: undefined, evaluationIds: ["eval_2", "eval_3"] };
+    await store.putIdempotency(updated);
+    expect(await store.getIdempotency(undefined, "retry")).toEqual(updated);
+    const tenantRecord = { ...record, tenantId: "other" };
+    await store.putIdempotency(tenantRecord);
+    expect(await store.getIdempotency("other", "retry")).toEqual(tenantRecord);
+    expect(await store.getIdempotency(undefined, "retry")).toEqual(updated);
+  } finally { sqlite.close(); }
+});
+
+it("atomically reserves one run across independent database connections and recovers missing targets", async () => {
+  const { mkdtemp, rm } = await import("node:fs/promises");
+  const { tmpdir } = await import("node:os");
+  const { join } = await import("node:path");
+  const dir = await mkdtemp(join(tmpdir(), "verdict-db-idempotency-"));
+  const first = await fromSqliteFile(join(dir, "test.sqlite"));
+  const second = await fromSqliteFile(join(dir, "test.sqlite"));
+  try {
+    const request = { rubric, subject: { inputs: [{ type: "text", text: "x" }] }, idempotencyKey: "concurrent", tenantId: "t1" };
+    let starts = 0;
+    const engines = [first, second].map(h => new Engine({ store: h.store, onEvent: e => { if (e.type === "evaluation.started") starts++; } }));
+    const results = await Promise.all(engines.map(e => e.evaluateIdempotent(request)));
+    expect(results[0]!.evaluation.id).toBe(results[1]!.evaluation.id);
+    expect(results.map(r => r.replayed).sort()).toEqual([false, true]);
+    expect(starts).toBe(1);
+    first.sqlite.prepare("delete from evaluations where id = ?").run(results[0]!.evaluation.id);
+    const next = await engines[1]!.evaluateIdempotent(request);
+    expect(next.replayed).toBe(false);
+    expect(next.evaluation.id).not.toBe(results[0]!.evaluation.id);
+    const batch = await engines[0]!.evaluateBatchIdempotent(rubric, [request.subject, request.subject], { idempotencyKey: "batch", tenantId: "t1" });
+    const replay = await engines[1]!.evaluateBatchIdempotent(rubric, [request.subject, request.subject], { idempotencyKey: "batch", tenantId: "t1" });
+    expect(replay.replayed).toBe(true);
+    expect(replay.ranking).toEqual(batch.ranking);
+    first.sqlite.prepare("delete from evaluations where id = ?").run(batch.evaluations[1]!.id);
+    expect((await engines[1]!.evaluateBatchIdempotent(rubric, [request.subject, request.subject], { idempotencyKey: "batch", tenantId: "t1" })).replayed).toBe(false);
+  } finally {
+    first.sqlite.close(); second.sqlite.close();
+    await rm(dir, { recursive: true, force: true });
+  }
+});
