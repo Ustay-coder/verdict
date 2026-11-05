@@ -4,7 +4,7 @@ import { createApp, envAuth, type Auth, type KeyManager } from "./app.js";
 
 /**
  * Node server. Storage, in order of preference:
- *   --database / VERDICT_DATABASE=<file.sqlite>  → Drizzle on better-sqlite3 (same schema + migrations as D1), DB-backed API keys
+ *   --database / VERDICT_DATABASE=<file.sqlite|postgres://…> → SQLite or Postgres, DB-backed API keys
  *   --data-dir / VERDICT_DATA_DIR=<dir>           → JSON files
  *   (none)                                        → memory
  */
@@ -16,9 +16,11 @@ export async function startServer(opts: { port?: number; dataDir?: string; datab
   let auth: Auth = envAuth();
   let keys: KeyManager | undefined;
   if (database) {
-    const { fromSqliteFile } = await import("@verdict/db/sqlite");
+    const open = /^postgres(ql)?:\/\//.test(database)
+      ? (await import("@verdict/db/postgres")).fromPostgres
+      : (await import("@verdict/db/sqlite")).fromSqliteFile;
     // Env keys stay valid as a bootstrap, but open mode (no VERDICT_API_KEYS) must not bypass the DB keys.
-    const h = await fromSqliteFile(database, process.env.VERDICT_API_KEYS ? envAuth() : undefined);
+    const h = await open(database, process.env.VERDICT_API_KEYS ? envAuth() : undefined);
     store = h.store; auth = h.auth; keys = h.auth;
   } else store = dataDir ? new FileStore(dataDir) : new MemoryStore();
   const queue = new MemoryQueue();
@@ -26,7 +28,7 @@ export async function startServer(opts: { port?: number; dataDir?: string; datab
   queue.engine = engine;
   const app = createApp({ engine, auth, keys, log: process.env.VERDICT_LOG !== "0" });
   const server = serve({ fetch: app.fetch, port }, (info) => {
-    const storeName = database ? `sqlite:${database}` : dataDir ? `file:${dataDir}` : "memory";
+    const storeName = database ? (/^postgres(ql)?:\/\//.test(database) ? "postgres" : `sqlite:${database}`) : dataDir ? `file:${dataDir}` : "memory";
     console.log(`verdict api listening on http://localhost:${info.port}  (store: ${storeName}, auth: ${database ? "db + env keys" : process.env.VERDICT_API_KEYS ? "env keys" : "open"}${process.env.VERDICT_ADMIN_KEY && keys ? ", admin on" : ""})`);
   });
   process.once("SIGTERM", () => {

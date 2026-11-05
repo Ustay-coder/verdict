@@ -72,6 +72,24 @@ curl -s localhost:8787/v1/evaluations -H "authorization: Bearer sk_live_abc" -H 
   -d '{"rubric":{"name":"kw","criteria":[{"id":"k","name":"Mentions pricing","judge":{"type":"benchmark","method":"keywords","keywords":["pricing","plans"]}}]},"inputs":[{"type":"url","url":"https://example.com"}]}'
 ```
 
+### Storage
+
+Use a SQLite file (`--database ./verdict.sqlite`), Cloudflare D1 (`fromD1(env.DB)`), or a Postgres URL for self-hosting, Supabase, Neon or RDS. API keys stay hashed in the database. Both Node backends apply their migrations on startup.
+
+```bash
+VERDICT_DATABASE=postgres://user:password@localhost:5432/verdict pnpm verdict serve
+pnpm verdict keys create --database postgres://user:password@localhost:5432/verdict --tenant acme --name ci
+
+# Generate migrations after updating both schemas:
+pnpm --filter @verdict/db db:generate
+pnpm --filter @verdict/db db:generate:pg
+# Apply Postgres migrations explicitly (build first):
+DATABASE_URL=postgres://user:password@localhost:5432/verdict pnpm --filter @verdict/db db:migrate:pg
+# D1:
+pnpm --filter @verdict/db db:migrate:local
+pnpm --filter @verdict/db db:migrate:remote
+```
+
 ### SDK
 
 ```ts

@@ -1,6 +1,8 @@
 import { eq } from "drizzle-orm";
-import { apiKeys } from "./schema/sqlite.js";
+import { apiKeys as sqliteApiKeys } from "./schema/sqlite.js";
 import type { SqliteDb } from "./store.js";
+import type { PgDb } from "./dialects.js";
+import type { apiKeys as pgApiKeys } from "./schema/pg.js";
 
 /** Structurally identical to @verdict/api's `Auth` — kept local so db does not depend on api. */
 export interface KeyAuth { resolve(apiKey: string | undefined): Promise<string | undefined> | string | undefined }
@@ -17,17 +19,24 @@ function randomKey(prefix = "vk_live_") {
 
 /** API keys stored hashed in the `api_keys` table. `fallback` lets env-configured keys keep working (bootstrap). */
 export class DrizzleAuth implements KeyAuth {
-  constructor(private db: SqliteDb, private fallback?: KeyAuth) {}
+  private db: SqliteDb;
+  private apiKeys: typeof sqliteApiKeys;
+  constructor(db: SqliteDb | PgDb, private fallback?: KeyAuth, apiKeys: typeof sqliteApiKeys | typeof pgApiKeys = sqliteApiKeys) {
+    // Both drivers expose these same select/insert/update operations. Keep the
+    // dialect type bridge here, while preserving typed rows in the shared logic.
+    this.db = db as unknown as SqliteDb;
+    this.apiKeys = apiKeys as unknown as typeof sqliteApiKeys;
+  }
 
   async resolve(key: string | undefined): Promise<string | undefined> {
     if (!key) return await this.fallback?.resolve(key);
     const hash = await sha256Hex(key);
-    const rows = await this.db.select({ id: apiKeys.id, tenantId: apiKeys.tenantId, revokedAt: apiKeys.revokedAt }).from(apiKeys).where(eq(apiKeys.keyHash, hash)).limit(1);
+    const rows = await this.db.select({ id: this.apiKeys.id, tenantId: this.apiKeys.tenantId, revokedAt: this.apiKeys.revokedAt }).from(this.apiKeys).where(eq(this.apiKeys.keyHash, hash)).limit(1);
     const row = rows[0];
     if (!row) return await this.fallback?.resolve(key);
     if (row.revokedAt) return undefined;
     // Fire-and-forget touch; never block auth on it.
-    void Promise.resolve(this.db.update(apiKeys).set({ lastUsedAt: new Date().toISOString() }).where(eq(apiKeys.id, row.id))).catch(() => {});
+    void Promise.resolve(this.db.update(this.apiKeys).set({ lastUsedAt: new Date().toISOString() }).where(eq(this.apiKeys.id, row.id))).catch(() => {});
     return row.tenantId;
   }
 
@@ -36,18 +45,18 @@ export class DrizzleAuth implements KeyAuth {
     const key = randomKey();
     const id = `key_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
     const prefix = key.slice(0, 12);
-    await this.db.insert(apiKeys).values({ id, tenantId, name, keyHash: await sha256Hex(key), prefix, createdAt: new Date().toISOString() });
+    await this.db.insert(this.apiKeys).values({ id, tenantId, name, keyHash: await sha256Hex(key), prefix, createdAt: new Date().toISOString() });
     return { id, key, prefix };
   }
 
   async revokeKey(id: string, tenantId?: string): Promise<boolean> {
-    const rows = await this.db.select({ tenantId: apiKeys.tenantId }).from(apiKeys).where(eq(apiKeys.id, id)).limit(1);
+    const rows = await this.db.select({ tenantId: this.apiKeys.tenantId }).from(this.apiKeys).where(eq(this.apiKeys.id, id)).limit(1);
     if (!rows[0] || (tenantId !== undefined && rows[0].tenantId !== tenantId)) return false;
-    await this.db.update(apiKeys).set({ revokedAt: new Date().toISOString() }).where(eq(apiKeys.id, id));
+    await this.db.update(this.apiKeys).set({ revokedAt: new Date().toISOString() }).where(eq(this.apiKeys.id, id));
     return true;
   }
 
   async listKeys(tenantId: string) {
-    return this.db.select({ id: apiKeys.id, name: apiKeys.name, prefix: apiKeys.prefix, createdAt: apiKeys.createdAt, lastUsedAt: apiKeys.lastUsedAt, revokedAt: apiKeys.revokedAt }).from(apiKeys).where(eq(apiKeys.tenantId, tenantId));
+    return this.db.select({ id: this.apiKeys.id, name: this.apiKeys.name, prefix: this.apiKeys.prefix, createdAt: this.apiKeys.createdAt, lastUsedAt: this.apiKeys.lastUsedAt, revokedAt: this.apiKeys.revokedAt }).from(this.apiKeys).where(eq(this.apiKeys.tenantId, tenantId));
   }
 }

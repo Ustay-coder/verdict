@@ -1,5 +1,5 @@
 /**
- * Drizzle schema — SQLite dialect (Cloudflare D1 today; the same table plan is mirrored for Postgres in `pg.ts` later).
+ * Drizzle schema — SQLite dialect (Cloudflare D1 and local files; mirrored for Postgres in `pg.ts`).
  *
  * Design: documents (rubric / evaluation) are stored as JSON blobs — their shapes are owned by the zod schemas in
  * @verdict/core and evolve quickly. Columns exist only for what we query or report on: tenant, status, score, timestamps,

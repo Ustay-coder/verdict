@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { Engine } from "@verdict/core";
 import { fromSqliteFile } from "../src/sqlite.js";
-import { ratings } from "../src/schema/sqlite.js";
+import { backends } from "./backends.js";
+import { eq } from "drizzle-orm";
 
 const rubric = {
   name: "db test",
@@ -15,11 +16,10 @@ const rubric = {
   aggregation: { grades: [{ label: "good", min: 50 }, { label: "bad", min: 0 }] },
 };
 
-describe("DrizzleStore on SQLite (same schema as D1)", () => {
+describe.each(backends)("DrizzleStore on $name", ({ open }) => {
   it("applies migrations idempotently and round-trips rubrics with tenant scoping", async () => {
-    const { store, db } = await fromSqliteFile(":memory:");
-    const { applyMigrations } = await import("../src/sqlite.js");
-    await applyMigrations(db); // second run is a no-op
+    const { store, migrate } = await open();
+    await migrate(); // second run is a no-op
     const engine = new Engine({ store });
     const r = await engine.createRubric(rubric, "t1");
     expect((await store.getRubric(r.id, "t1"))?.name).toBe("db test");
@@ -32,10 +32,10 @@ describe("DrizzleStore on SQLite (same schema as D1)", () => {
     expect(await store.deleteRubric(r.id, "t2")).toBe(false);
     expect(await store.deleteRubric(r.id, "t1")).toBe(true);
     expect(await store.getRubric(r.id)).toBeUndefined();
-  });
+  }, 30000);
 
   it("persists evaluations, indexed columns, denormalized ratings, and human submissions", async () => {
-    const { store, db } = await fromSqliteFile(":memory:");
+    const { store, db, tables: { ratings } } = await open();
     const engine = new Engine({ store });
     const r = await engine.createRubric(rubric, "t1");
     const ev = await engine.evaluate({ rubric: r.id, tenantId: "t1", subject: { name: "S", inputs: [{ type: "text", text: "x marks the spot" }] } });
@@ -70,7 +70,7 @@ describe("DrizzleStore on SQLite (same schema as D1)", () => {
   });
 
   it("orders listings newest first and honours limit", async () => {
-    const { store } = await fromSqliteFile(":memory:");
+    const { store } = await open();
     const engine = new Engine({ store });
     const r = { name: "k", criteria: [{ id: "k", name: "k", judge: { type: "benchmark", method: "keywords", keywords: ["a"] } }] };
     for (const n of ["one", "two", "three"]) {
@@ -80,11 +80,9 @@ describe("DrizzleStore on SQLite (same schema as D1)", () => {
     const list = await store.listEvaluations({ limit: 2 });
     expect(list.map((e) => e.subject.name)).toEqual(["three", "two"]);
   });
-});
 
-it("round-trips and upserts idempotency records with exact tenant scoping", async () => {
-  const { store, sqlite } = await fromSqliteFile(":memory:");
-  try {
+  it("round-trips and upserts idempotency records with exact tenant scoping", async () => {
+    const { store } = await open();
     const record = { key: "retry", fingerprint: "abc", targetType: "evaluation" as const, targetId: "eval_1", createdAt: new Date().toISOString(), expiresAt: new Date(Date.now() + 86400000).toISOString() };
     await store.putIdempotency(record);
     expect(await store.getIdempotency(undefined, "retry")).toEqual(record);
@@ -96,7 +94,57 @@ it("round-trips and upserts idempotency records with exact tenant scoping", asyn
     await store.putIdempotency(tenantRecord);
     expect(await store.getIdempotency("other", "retry")).toEqual(tenantRecord);
     expect(await store.getIdempotency(undefined, "retry")).toEqual(updated);
-  } finally { sqlite.close(); }
+  });
+
+
+  it("replays concurrent requests and batches across store instances", async () => {
+    const { store, db, tables } = await open();
+    const { DrizzleStore, PgStore } = await import("../src/store.js");
+    const { schema } = await import("../src/schema/sqlite.js");
+    const other = tables === schema ? new DrizzleStore(db) : new PgStore(db as unknown as import("../src/dialects.js").PgDb);
+    let starts = 0;
+    const engines = [store, other].map(store => new Engine({ store, onEvent: e => { if (e.type === "evaluation.started") starts++; } }));
+    const request = { rubric, subject: { inputs: [{ type: "text", text: "x" }] }, idempotencyKey: "concurrent", tenantId: "t1" };
+    const results = await Promise.all(engines.map(e => e.evaluateIdempotent(request)));
+    expect(results[0]!.evaluation.id).toBe(results[1]!.evaluation.id);
+    expect(results.map(r => r.replayed).sort()).toEqual([false, true]);
+    expect(starts).toBe(1);
+    await db.delete(tables.evaluations).where(eq(tables.evaluations.id, results[0]!.evaluation.id));
+    const next = await engines[1]!.evaluateIdempotent(request);
+    expect(next.replayed).toBe(false);
+    expect(next.evaluation.id).not.toBe(results[0]!.evaluation.id);
+    const batch = await engines[0]!.evaluateBatchIdempotent(rubric, [request.subject, request.subject], { idempotencyKey: "batch", tenantId: "t1" });
+    const replay = await engines[1]!.evaluateBatchIdempotent(rubric, [request.subject, request.subject], { idempotencyKey: "batch", tenantId: "t1" });
+    expect(replay.replayed).toBe(true);
+    expect(replay.ranking).toEqual(batch.ranking);
+    await db.delete(tables.evaluations).where(eq(tables.evaluations.id, batch.evaluations[1]!.id));
+    expect((await engines[1]!.evaluateBatchIdempotent(rubric, [request.subject, request.subject], { idempotencyKey: "batch", tenantId: "t1" })).replayed).toBe(false);
+  });
+
+  it("reserves once, recovers expired and deleted targets, and retains indexed values", async () => {
+    const { store, db, tables } = await open();
+    const engine = new Engine({ store });
+    const e = await engine.evaluate({ rubric, tenantId: "t1", subject: { inputs: [{ type: "text", text: "x" }] } });
+    const r = { tenantId: "t1", key: "reserve", fingerprint: "abc", targetType: "evaluation" as const, targetId: "reserved", createdAt: e.createdAt, expiresAt: new Date(Date.now() + 60000).toISOString() };
+    const initial = { ...e, id: r.targetId };
+    expect(await store.reserveIdempotency(r, [initial])).toBe(true);
+    expect(await store.reserveIdempotency(r, [initial])).toBe(false);
+    const retry = { ...r, targetId: "retry" };
+    expect(await store.reserveIdempotency(retry, [{ ...e, id: retry.targetId }])).toBe(false);
+    await store.putIdempotency({ ...r, expiresAt: "2000-01-01T00:00:00.000Z" });
+    expect(await store.reserveIdempotency(retry, [{ ...e, id: retry.targetId }])).toBe(true);
+    await db.delete(tables.evaluations).where(eq(tables.evaluations.id, retry.targetId));
+    const recovered = { ...r, targetId: "recovered" };
+    expect(await store.reserveIdempotency(recovered, [{ ...e, id: recovered.targetId }])).toBe(true);
+    const batch = { ...r, key: "batch", targetType: "batch" as const, targetId: undefined, evaluationIds: ["b1", "b2"] };
+    expect(await store.reserveIdempotency(batch, batch.evaluationIds.map(id => ({ ...e, id })))).toBe(true);
+    expect(await store.reserveIdempotency({ ...batch, evaluationIds: ["c1", "c2"] }, [])).toBe(false);
+    await db.delete(tables.evaluations).where(eq(tables.evaluations.id, "b2"));
+    expect(await store.reserveIdempotency({ ...batch, evaluationIds: ["c1", "c2"] }, ["c1", "c2"].map(id => ({ ...e, id })))).toBe(true);
+    const [row] = await db.select().from(tables.evaluations).where(eq(tables.evaluations.id, e.id));
+    expect(row?.passed).toBe(e.aggregate.passed ?? null);
+    expect(row?.score).toBe(e.aggregate.score ?? null);
+  });
 });
 
 it("atomically reserves one run across independent database connections and recovers missing targets", async () => {

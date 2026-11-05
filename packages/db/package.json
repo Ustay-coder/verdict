@@ -1,7 +1,7 @@
 {
   "name": "@verdict/db",
   "version": "0.1.0",
-  "description": "Verdict persistence on Drizzle ORM \u2014 Cloudflare D1 (SQLite) now, Postgres next.",
+  "description": "Verdict persistence on Drizzle ORM \u2014 SQLite, Cloudflare D1 and Postgres.",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -21,6 +21,10 @@
     "./sqlite": {
       "types": "./dist/sqlite.d.ts",
       "import": "./dist/sqlite.js"
+    },
+    "./postgres": {
+      "types": "./dist/postgres.d.ts",
+      "import": "./dist/postgres.js"
     }
   },
   "files": [
@@ -33,7 +37,9 @@
     "test": "vitest run",
     "db:generate": "drizzle-kit generate",
     "db:migrate:local": "wrangler d1 migrations apply verdict --local",
-    "db:migrate:remote": "wrangler d1 migrations apply verdict --remote"
+    "db:migrate:remote": "wrangler d1 migrations apply verdict --remote",
+    "db:generate:pg": "drizzle-kit generate --config drizzle.pg.config.ts",
+    "db:migrate:pg": "node --input-type=module -e 'const { fromPostgres } = await import(\"./dist/postgres.js\"); const h = await fromPostgres(process.env.DATABASE_URL); await h.close();'"
   },
   "dependencies": {
     "@verdict/core": "workspace:*",
@@ -41,10 +47,13 @@
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^5.20261104.1",
+    "@electric-sql/pglite": "^0.5.15",
     "@types/better-sqlite3": "^7.6.13",
+    "@types/pg": "^8.23.1",
     "drizzle-kit": "^0.31.11"
   },
   "optionalDependencies": {
-    "better-sqlite3": "^13.0.3"
+    "better-sqlite3": "^13.0.3",
+    "pg": "^8.23.1"
   }
 }
