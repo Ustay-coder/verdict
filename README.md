@@ -157,6 +157,19 @@ Auth: `Authorization: Bearer <key>`; keys map to tenants via `VERDICT_API_KEYS="
 
 Secrets never live in rubrics: judges reference them with `apiKeyEnv: MY_KEY_VAR`.
 
+## Developing with Codex CLI (ChatGPT subscription, OAuth)
+
+Implementation work on this repo is meant to run through [OpenAI Codex CLI](https://github.com/openai/codex) authenticated with your ChatGPT plan rather than an API key:
+
+```bash
+scripts/setup-codex.sh            # installs codex, sets preferred_auth_method = "chatgpt", runs `codex login`
+scripts/setup-codex.sh --device   # headless machines: device-code login
+codex login status                # should say logged in via ChatGPT
+codex                             # start from the repo root; AGENTS.md carries the project rules
+```
+
+`AGENTS.md` is the agent-facing guide (invariants, build/test commands, package layering). `~/.codex/config.toml` is written with `preferred_auth_method = "chatgpt"`, so usage is billed to the subscription; keep `OPENAI_API_KEY` unset in the shell you run Codex from.
+
 ## Repository layout
 
 ```
