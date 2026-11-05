@@ -6,7 +6,7 @@ vendor's official documentation. Keep this honest: update the status column when
 | Provider | Endpoint | Request | Response | Verified |
 | --- | --- | --- | --- | --- |
 | `typesafe` (Jev) | `POST https://api.typesafe.ai/v1/systemone`, `Authorization: Bearer $TYPESAFE_API_KEY` | `{ model, state, questions }` | `{ model, answers, usage }` | **Live** (2026-11-05, `jev-1.14.0`) + official API reference |
-| `cloudflare` (Clef) | `POST https://api.cloudflare.com/client/v4/accounts/{id}/ai/run/@cf/cloudflare/clef[-flash]`, `Authorization: Bearer $CLOUDFLARE_API_TOKEN` | `{ model: "clef"\|"clef-flash", state, questions, images? }` | `{ success, result: { model, answers, usage } }` | Official model page (request schema, pricing, limits); live call pending a token |
+| `cloudflare` (Clef) | `POST https://api.cloudflare.com/client/v4/accounts/{id}/ai/run/@cf/cloudflare/clef[-flash]`, `Authorization: Bearer $CLOUDFLARE_API_TOKEN` | `{ model: "clef"\|"clef-flash", state, questions, images? }` | `{ success, result: { model, answers, usage } }` | **Live** (2026-11-05, `clef-flash`, 0.40 s, HTTP 200) + official model pages |
 | `openrouter` | `POST https://openrouter.ai/api/alpha/decisions` | System One shape, `model: typesafe/jev-1.13` | System One shape | Public write-ups only |
 | `openai` (Decisions API) | `POST https://api.openai.com/v1/decisions` | `noul` sent as `predicate` | parsed defensively (`noul` / `predicate` / `probability`) | Public write-ups only (beta) |
 | `systemone` | `baseUrl` + `/systemone` | System One shape | System One shape | By construction (same as Jev) |
@@ -50,6 +50,20 @@ Notes that matter for the engine:
 - `usage.output_tokens` is reported but free; `input_tokens` is billable. Both are added to the evaluation's usage.
 - Models listed by `GET /v1/models`: `jev-latest` (currently 1.14.0) and `jev-preview`. Pin a version in production rubrics once TypeSafe exposes dated ids; log `answers.model` (Verdict stores it in `rating.raw.model`).
 - Limits (Jev public docs): 64k tokens per request, 32k for state + longest question, score 2–10 levels, choice ≤255 options, text-only state.
+
+## Clef-flash response (verbatim from a live call, `packages/core/test/fixtures/cloudflare-clef-flash-response.json`)
+
+Same System One shape inside a `result` envelope; `score` is fractional (probability-weighted index), `choice` carries per-option probabilities, `output_tokens` is 0:
+
+```json
+{ "result": { "model": "clef-flash",
+    "answers": { "urgency": { "type": "score", "score": 2.916, "legend": { "0": "…", "3": "…" }, "probabilities": { "0": 0.0062, "1": 0.0055, "2": 0.0545, "3": 0.9338 }, "confidence": 0.8335 },
+                 "needs_engineer": { "type": "noul", "noul": 0.843 },
+                 "team": { "type": "choice", "choice": "engineering", "probabilities": { "support": 0.0179, "engineering": 0.9722, "billing": 0.0099 }, "confidence": 0.9183 } },
+    "usage": { "input_tokens": 370, "output_tokens": 0 } }, "success": true, "errors": [], "messages": [] }
+```
+
+Token permissions verified for this: **Workers AI → Read** is sufficient for inference; D1 → Edit, Workers Scripts → Edit, Account Settings → Read and User Details → Read cover wrangler (D1 create / migrations, deploy).
 
 ## Clef specifics (Workers AI model pages, 2026-11)
 

@@ -6,6 +6,7 @@ import { stats } from "../src/ingest/index.js";
 import { Engine } from "../src/engine.js";
 import { readFileSync } from "node:fs";
 import jevFixture from "./fixtures/typesafe-systemone-response.json" with { type: "json" };
+import clefFixture from "./fixtures/cloudflare-clef-flash-response.json" with { type: "json" };
 void readFileSync;
 
 const rubric = parseRubric({
@@ -129,6 +130,34 @@ describe("decision judge", () => {
     expect(n.probabilities).toEqual({ no: 0.29, yes: 0.71 });
     expect(ctxs[0]!.usage.inputTokens).toBe(480);
     expect(ctxs[0]!.usage.outputTokens).toBe(71);
+  });
+
+  it("parses a real Clef-flash response (fixture captured live): result envelope, fractional score index, choice probabilities", async () => {
+    const f: typeof fetch = async () => new Response(JSON.stringify(clefFixture));
+    const triage = parseRubric({
+      name: "triage", scale: { type: "numeric", min: 0, max: 3 },
+      criteria: [
+        { id: "urgency", name: "Urgency", levels: [{ value: 0, label: "none", description: "nothing broken" }, { value: 1, label: "low", description: "workaround" }, { value: 2, label: "high", description: "degraded" }, { value: 3, label: "critical", description: "outage" }] },
+        { id: "needs_engineer", name: "Needs engineer", scale: { type: "binary", labels: ["no", "yes"] } },
+        { id: "team", name: "Team", choices: { support: "General help", engineering: "Bugs and outages", billing: "Invoices" } },
+      ],
+    });
+    const env = (n: string) => ({ CLOUDFLARE_ACCOUNT_ID: "acc1", CLOUDFLARE_API_TOKEN: "t" } as Record<string, string>)[n];
+    const mk = (id: string): JudgeContext => ({ rubric: triage, criterion: triage.criteria.find((x) => x.id === id)!, scale: triage.criteria.find((x) => x.id === id)!.scale ?? triage.scale, evidence: [{ inputIndex: 0, kind: "text", label: "t", tags: [], text: "down", stats: stats("down") }], evaluationId: "e", env, fetch: f, usage: { decisionCalls: 0, llmCalls: 0, inputTokens: 0, outputTokens: 0 } });
+    const j = new DecisionJudge({ type: "decision", provider: "cloudflare", model: "@cf/cloudflare/clef-flash", onLowConfidence: "accept", escalateTo: [] });
+    const ctxs = [mk("urgency"), mk("needs_engineer"), mk("team")];
+    ctxs.forEach((x) => (x.usage = ctxs[0]!.usage));
+    const m = await j.rateMany(ctxs);
+    const u = m.get("urgency")![0]!;
+    expect(u.status).toBe("scored");
+    expect(u.score).toBeCloseTo(0.0062 * 0 + 0.0055 * 1 + 0.0545 * 2 + 0.9338 * 3, 2);
+    expect(u.confidence).toBeCloseTo(0.8335);
+    expect(m.get("needs_engineer")![0]!.probabilities).toEqual({ no: 0.157, yes: 0.843 });
+    const t = m.get("team")![0]!;
+    expect(t.choice).toBe("engineering");
+    expect(t.probabilities!.engineering).toBeCloseTo(0.9722);
+    expect(t.score).toBeUndefined(); // no values → reported, excluded from totals
+    expect(ctxs[0]!.usage.inputTokens).toBe(370);
   });
 
   it("truncates oversized state to the model's budget and records it", async () => {
