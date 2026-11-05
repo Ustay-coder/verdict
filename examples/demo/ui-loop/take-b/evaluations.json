@@ -1,0 +1,476 @@
+{
+ "agentSeconds": 289,
+ "edits": [
+  79.597,
+  80.874,
+  82.021,
+  83.382,
+  84.999,
+  86.157,
+  88.34,
+  89.505,
+  90.649,
+  91.909,
+  92.849,
+  93.866,
+  95.534,
+  100.906,
+  101.873,
+  103.066,
+  103.965,
+  105.06,
+  106.14,
+  117.405,
+  118.912,
+  120.178,
+  122.148,
+  143.853,
+  144.735,
+  145.701,
+  146.649,
+  147.563,
+  148.401,
+  149.238,
+  150.108,
+  151.163,
+  152.057,
+  153.015,
+  153.853,
+  154.745,
+  155.629,
+  156.568,
+  157.476,
+  158.337,
+  159.236,
+  160.171,
+  161.01,
+  161.82,
+  162.659,
+  163.713,
+  164.758,
+  165.755,
+  190.54,
+  191.704,
+  192.653,
+  193.61,
+  194.597,
+  195.645,
+  196.594,
+  198.013,
+  202.629,
+  234.96,
+  236.785,
+  239.187,
+  240.127,
+  241.259,
+  242.884,
+  245.629,
+  247.069,
+  248.941,
+  250.148,
+  251.448,
+  252.992,
+  255.528,
+  257.281,
+  258.224,
+  267.762,
+  271.79,
+  276.387,
+  278.15,
+  279.849,
+  280.847,
+  281.804,
+  282.904,
+  284.096,
+  285.503,
+  286.458,
+  290.109,
+  291.402
+ ],
+ "evaluations": [
+  {
+   "src": 57.875,
+   "name": "baseline",
+   "score": 27,
+   "grade": "rework",
+   "state": 0,
+   "criteria": [
+    {
+     "id": "template_look",
+     "name": "Not a generic AI template",
+     "n": 0.11275000000000002,
+     "rationale": "cloudflare/@cf/cloudflare/clef distribution: generic=80% unstyled=0% mixed=17% distinctive=3%"
+    },
+    {
+     "id": "craft",
+     "name": "Visual craft",
+     "n": 0.84975,
+     "rationale": "cloudflare/@cf/cloudflare/clef distribution: unstyled=4% uneven=23% polished=74%"
+    },
+    {
+     "id": "focus",
+     "name": "One clear focal point",
+     "n": 0.45799999999999996,
+     "rationale": "cloudflare/@cf/cloudflare/clef distribution: competing=39% noisy=30% calm=31%"
+    },
+    {
+     "id": "numbers_true",
+     "name": "Every figure matches data.json",
+     "n": 1,
+     "rationale": "typesafe/jev-1.14.0 distribution: no=35% yes=65%"
+    },
+    {
+     "id": "contrast",
+     "name": "Text contrast (WCAG AA)",
+     "n": 0.9495,
+     "rationale": "94/99 text elements pass WCAG AA"
+    },
+    {
+     "id": "decoration",
+     "name": "Decorative effects",
+     "n": 0,
+     "rationale": "43 decorative effects (gradients, glass, glows); 2 are free"
+    },
+    {
+     "id": "motion",
+     "name": "No ambient animation",
+     "n": 0,
+     "rationale": "8 infinite animations"
+    },
+    {
+     "id": "type_scale",
+     "name": "Type scale (\u2264 5 sizes)",
+     "n": 0,
+     "rationale": "12 font sizes: 11, 12, 13, 14, 15, 18, 19, 20, 22, 28, 36, 44 px"
+    },
+    {
+     "id": "palette",
+     "name": "Palette (\u2264 2 hue families)",
+     "n": 0,
+     "rationale": "7 saturated hue families (240\u00b0, 330\u00b0, 180\u00b0, 30\u00b0, 150\u00b0, 300\u00b0, 60\u00b0)"
+    }
+   ],
+   "draft": "evaluated/step0.html"
+  },
+  {
+   "src": 111.66,
+   "name": "rewrite 1: decoration",
+   "score": 42,
+   "grade": "rework",
+   "state": 19,
+   "criteria": [
+    {
+     "id": "template_look",
+     "name": "Not a generic AI template",
+     "n": 0.20900000000000002,
+     "rationale": "cloudflare/@cf/cloudflare/clef distribution: generic=69% unstyled=0% mixed=20% distinctive=11%"
+    },
+    {
+     "id": "craft",
+     "name": "Visual craft",
+     "n": 0.8915,
+     "rationale": "cloudflare/@cf/cloudflare/clef distribution: unstyled=3% uneven=17% polished=81%"
+    },
+    {
+     "id": "focus",
+     "name": "One clear focal point",
+     "n": 0.6675,
+     "rationale": "cloudflare/@cf/cloudflare/clef distribution: competing=22% noisy=22% calm=56%"
+    },
+    {
+     "id": "numbers_true",
+     "name": "Every figure matches data.json",
+     "n": 1,
+     "rationale": "typesafe/jev-1.14.0 distribution: no=30% yes=70%"
+    },
+    {
+     "id": "contrast",
+     "name": "Text contrast (WCAG AA)",
+     "n": 0.9495,
+     "rationale": "94/99 text elements pass WCAG AA"
+    },
+    {
+     "id": "decoration",
+     "name": "Decorative effects",
+     "n": 1,
+     "rationale": "1 decorative effects (gradients, glass, glows); 2 are free"
+    },
+    {
+     "id": "motion",
+     "name": "No ambient animation",
+     "n": 0,
+     "rationale": "5 infinite animations"
+    },
+    {
+     "id": "type_scale",
+     "name": "Type scale (\u2264 5 sizes)",
+     "n": 0,
+     "rationale": "12 font sizes: 11, 12, 13, 14, 15, 18, 19, 20, 22, 28, 36, 44 px"
+    },
+    {
+     "id": "palette",
+     "name": "Palette (\u2264 2 hue families)",
+     "n": 0,
+     "rationale": "6 saturated hue families (240\u00b0, 30\u00b0, 150\u00b0, 180\u00b0, 330\u00b0, 60\u00b0)"
+    }
+   ],
+   "draft": "evaluated/step1.html"
+  },
+  {
+   "src": 128.719,
+   "name": "rewrite 2: motion",
+   "score": 42,
+   "grade": "rework",
+   "state": 23,
+   "criteria": [
+    {
+     "id": "template_look",
+     "name": "Not a generic AI template",
+     "n": 0.16299999999999998,
+     "rationale": "cloudflare/@cf/cloudflare/clef distribution: generic=74% unstyled=0% mixed=19% distinctive=7%"
+    },
+    {
+     "id": "craft",
+     "name": "Visual craft",
+     "n": 0.8734999999999999,
+     "rationale": "cloudflare/@cf/cloudflare/clef distribution: unstyled=3% uneven=20% polished=78%"
+    },
+    {
+     "id": "focus",
+     "name": "One clear focal point",
+     "n": 0.58175,
+     "rationale": "cloudflare/@cf/cloudflare/clef distribution: competing=31% noisy=22% calm=47%"
+    },
+    {
+     "id": "numbers_true",
+     "name": "Every figure matches data.json",
+     "n": 1,
+     "rationale": "typesafe/jev-1.14.0 distribution: no=29% yes=71%"
+    },
+    {
+     "id": "contrast",
+     "name": "Text contrast (WCAG AA)",
+     "n": 0.9495,
+     "rationale": "94/99 text elements pass WCAG AA"
+    },
+    {
+     "id": "decoration",
+     "name": "Decorative effects",
+     "n": 1,
+     "rationale": "0 decorative effects (gradients, glass, glows); 2 are free"
+    },
+    {
+     "id": "motion",
+     "name": "No ambient animation",
+     "n": 1,
+     "rationale": "0 infinite animations"
+    },
+    {
+     "id": "type_scale",
+     "name": "Type scale (\u2264 5 sizes)",
+     "n": 0,
+     "rationale": "12 font sizes: 11, 12, 13, 14, 15, 18, 19, 20, 22, 28, 36, 44 px"
+    },
+    {
+     "id": "palette",
+     "name": "Palette (\u2264 2 hue families)",
+     "n": 0,
+     "rationale": "6 saturated hue families (240\u00b0, 30\u00b0, 150\u00b0, 180\u00b0, 330\u00b0, 60\u00b0)"
+    }
+   ],
+   "draft": "evaluated/step2.html"
+  },
+  {
+   "src": 170.797,
+   "name": "rewrite 3: type_scale",
+   "score": 48,
+   "grade": "rework",
+   "state": 48,
+   "criteria": [
+    {
+     "id": "template_look",
+     "name": "Not a generic AI template",
+     "n": 0.22049999999999997,
+     "rationale": "cloudflare/@cf/cloudflare/clef distribution: generic=68% unstyled=1% mixed=19% distinctive=13%"
+    },
+    {
+     "id": "craft",
+     "name": "Visual craft",
+     "n": 0.88025,
+     "rationale": "cloudflare/@cf/cloudflare/clef distribution: unstyled=3% uneven=19% polished=79%"
+    },
+    {
+     "id": "focus",
+     "name": "One clear focal point",
+     "n": 0.611,
+     "rationale": "cloudflare/@cf/cloudflare/clef distribution: competing=29% noisy=19% calm=52%"
+    },
+    {
+     "id": "numbers_true",
+     "name": "Every figure matches data.json",
+     "n": 1,
+     "rationale": "typesafe/jev-1.14.0 distribution: no=33% yes=67%"
+    },
+    {
+     "id": "contrast",
+     "name": "Text contrast (WCAG AA)",
+     "n": 0.9395,
+     "rationale": "93/99 text elements pass WCAG AA"
+    },
+    {
+     "id": "decoration",
+     "name": "Decorative effects",
+     "n": 1,
+     "rationale": "0 decorative effects (gradients, glass, glows); 2 are free"
+    },
+    {
+     "id": "motion",
+     "name": "No ambient animation",
+     "n": 1,
+     "rationale": "0 infinite animations"
+    },
+    {
+     "id": "type_scale",
+     "name": "Type scale (\u2264 5 sizes)",
+     "n": 1,
+     "rationale": "5 font sizes: 12, 14, 18, 28, 40 px"
+    },
+    {
+     "id": "palette",
+     "name": "Palette (\u2264 2 hue families)",
+     "n": 0,
+     "rationale": "6 saturated hue families (240\u00b0, 30\u00b0, 150\u00b0, 180\u00b0, 330\u00b0, 60\u00b0)"
+    }
+   ],
+   "draft": "evaluated/step3.html"
+  },
+  {
+   "src": 207.889,
+   "name": "rewrite 4: palette",
+   "score": 51,
+   "grade": "rework",
+   "state": 57,
+   "criteria": [
+    {
+     "id": "template_look",
+     "name": "Not a generic AI template",
+     "n": 0.16999999999999998,
+     "rationale": "cloudflare/@cf/cloudflare/clef distribution: generic=74% unstyled=1% mixed=17% distinctive=8%"
+    },
+    {
+     "id": "craft",
+     "name": "Visual craft",
+     "n": 0.875,
+     "rationale": "cloudflare/@cf/cloudflare/clef distribution: unstyled=3% uneven=19% polished=78%"
+    },
+    {
+     "id": "focus",
+     "name": "One clear focal point",
+     "n": 0.6585,
+     "rationale": "cloudflare/@cf/cloudflare/clef distribution: competing=24% noisy=21% calm=56%"
+    },
+    {
+     "id": "numbers_true",
+     "name": "Every figure matches data.json",
+     "n": 1,
+     "rationale": "typesafe/jev-1.14.0 distribution: no=32% yes=68%"
+    },
+    {
+     "id": "contrast",
+     "name": "Text contrast (WCAG AA)",
+     "n": 0.9495,
+     "rationale": "94/99 text elements pass WCAG AA"
+    },
+    {
+     "id": "decoration",
+     "name": "Decorative effects",
+     "n": 1,
+     "rationale": "0 decorative effects (gradients, glass, glows); 2 are free"
+    },
+    {
+     "id": "motion",
+     "name": "No ambient animation",
+     "n": 1,
+     "rationale": "0 infinite animations"
+    },
+    {
+     "id": "type_scale",
+     "name": "Type scale (\u2264 5 sizes)",
+     "n": 1,
+     "rationale": "5 font sizes: 12, 14, 18, 28, 40 px"
+    },
+    {
+     "id": "palette",
+     "name": "Palette (\u2264 2 hue families)",
+     "n": 1,
+     "rationale": "2 saturated hue families (240\u00b0, 150\u00b0)"
+    }
+   ],
+   "draft": "evaluated/step4.html"
+  },
+  {
+   "src": 298.112,
+   "name": "rewrite 5: template_look",
+   "score": 92,
+   "grade": "ship it",
+   "state": 85,
+   "criteria": [
+    {
+     "id": "template_look",
+     "name": "Not a generic AI template",
+     "n": 0.9570000000000001,
+     "rationale": "cloudflare/@cf/cloudflare/clef distribution: generic=2% unstyled=1% mixed=3% distinctive=94%"
+    },
+    {
+     "id": "craft",
+     "name": "Visual craft",
+     "n": 0.9237500000000001,
+     "rationale": "cloudflare/@cf/cloudflare/clef distribution: unstyled=2% uneven=12% polished=86%"
+    },
+    {
+     "id": "focus",
+     "name": "One clear focal point",
+     "n": 0.93225,
+     "rationale": "cloudflare/@cf/cloudflare/clef distribution: competing=5% noisy=4% calm=91%"
+    },
+    {
+     "id": "numbers_true",
+     "name": "Every figure matches data.json",
+     "n": 1,
+     "rationale": "typesafe/jev-1.14.0 distribution: no=28% yes=72%"
+    },
+    {
+     "id": "contrast",
+     "name": "Text contrast (WCAG AA)",
+     "n": 1,
+     "rationale": "99/99 text elements pass WCAG AA"
+    },
+    {
+     "id": "decoration",
+     "name": "Decorative effects",
+     "n": 1,
+     "rationale": "0 decorative effects (gradients, glass, glows); 2 are free"
+    },
+    {
+     "id": "motion",
+     "name": "No ambient animation",
+     "n": 1,
+     "rationale": "0 infinite animations"
+    },
+    {
+     "id": "type_scale",
+     "name": "Type scale (\u2264 5 sizes)",
+     "n": 1,
+     "rationale": "5 font sizes: 12, 14, 18, 28, 40 px"
+    },
+    {
+     "id": "palette",
+     "name": "Palette (\u2264 2 hue families)",
+     "n": 0.75,
+     "rationale": "3 saturated hue families (0\u00b0, 120\u00b0, 30\u00b0)"
+    }
+   ],
+   "draft": "evaluated/step5.html"
+  }
+ ]
+}
