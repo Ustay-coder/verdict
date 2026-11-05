@@ -45,6 +45,35 @@ Humans may submit labels (`"excellent"`, `"pass"`) or numbers; LLMs are told the
   group: Business             # reporting label
 ```
 
+### Choice criteria
+
+```yaml
+- id: team
+  name: Owning team
+  choices: { support: General help, engineering: Bugs and outages, billing: Invoices and payments }
+  # values: { support: 0, engineering: 10, billing: 5 }
+```
+
+Declare 2–255 options with identifier keys (`[a-zA-Z_][a-zA-Z0-9_]*`). `choices` cannot coexist with `levels`. Without `values`, the scale is ignored and the criterion is reported but excluded from totals, regardless of weight or missing policy. Optional `values` must cover every option with a raw score within the criterion scale; gates require values. Decision judges send a `choice` question and keep its option probabilities and confidence, including confidence escalation. Humans submit the option id as `score`; LLM judges return `choice`; benchmarks return an error. Results report the majority choice (ties follow declaration order) and mean option probabilities.
+
+## Pre-screen checks
+
+```yaml
+checks:
+  - id: on_topic
+    question: Is this a real support ticket?
+    criteria: { true: A customer issue or request, false: Spam or unrelated text }
+    expect: true
+    threshold: 0.5
+    action: abort
+    message: Not a support ticket
+checksJudge: { type: ref, ref: jev }
+```
+
+Checks run after ingestion and before criterion judging, in one decision request. `checksJudge` defaults to `defaultJudge` and must resolve to a decision judge. `criteria` is optional; `expect` defaults to true, `threshold` to 0.5, and `action` to flag. A check passes when `(P(true) >= threshold) == expect`.
+
+`flag` records only; `fail` continues scoring and adds a failing `check:<id>` aggregate gate; `abort` completes with all criteria excluded, no score, and `passed: false`. Results appear in evaluation `checks` with id, probability, passed, action, and optional message. Provider errors record null probability and an error, and behave as flags unless action is abort, which completes with an evaluation error. Reaggregation preserves check results and fail gates without calling judges.
+
 ## Judges
 
 ### `decision` — decision models (default)
@@ -53,7 +82,7 @@ Humans may submit labels (`"excellent"`, `"pass"`) or numbers; LLMs are told the
   model: jev-latest, baseUrl: https://…, apiKeyEnv: MY_KEY,
   instructions: "Extra guidance merged into every question",
   minConfidence: 0.35, onLowConfidence: accept | human | error, escalateTo: [alice, bob],
-  options: { accountId: "…", … } }
+  options: { stateCharLimit: 80000, accountId: "…", request: { images: [] } } }   # only options.request is sent to the provider
 ```
 How a criterion becomes a question:
 - numeric / ordinal scale → `score` question whose ordered `criteria` are the criterion's **levels** (`levels` → `anchors` → ordinal labels → auto-buckets). The answer's per-level probabilities give an expected value on the scale (`Σ p_i · value_i`), snapped to `step` / ordinal values; `probabilities` and `confidence` are stored on the rating.
@@ -129,7 +158,7 @@ aggregation:
   passThreshold: 70           # passed = all gates pass AND score >= threshold
   precision: 2
 ```
-Formula variables for each criterion `x`: `x` (raw score), `x_n` (0..1), `x_w` (weight), `x_present` (1 if scored). Functions: `min max sum avg abs round floor ceil sqrt log exp pow clamp scale if`; operators `+ - * / % ^`, comparisons, `and or not`, `cond ? a : b`. A formula result in 0..1 is rescaled to `normalize`; otherwise it is treated as 0..100.
+Formula variables for each criterion `x`: `x` (raw score), `x_n` (0..1), `x_w` (weight), `x_present` (1 if numerically scored). Choices also expose `x_<option>` (1 for the majority option, otherwise 0) and `x_p_<option>` (mean probability). Functions: `min max sum avg abs round floor ceil sqrt log exp pow clamp scale if`; operators `+ - * / % ^`, comparisons, `and or not`, `cond ? a : b`. A formula result in 0..1 is rescaled to `normalize`; otherwise it is treated as 0..100.
 
 Any evaluation can be re-aggregated later with a different block (`POST /v1/evaluations/:id/aggregate`, `verdict reaggregate`, MCP `reaggregate`) — judges are not re-run.
 

@@ -10,7 +10,7 @@ Rubric scoring is a *bounded judgement*, not text generation. A new class of mod
 | --- | --- | --- |
 | `score` | Position on an ordered rubric of 2–10 described levels | Every numeric / ordinal criterion. Levels come from `criterion.levels`, else `anchors`, else ordinal labels, else auto-buckets of the scale. Expected value over level values → raw score; per-level probabilities kept. |
 | `noul` | Probability that a proposition is true | Binary criteria (gates, safety, presence checks). |
-| `choice` | One option out of up to 255 | Reserved for routing-style criteria (not yet exposed in rubrics). |
+| `choice` | One option out of up to 255 | Routing / categorisation via criterion `choices`; optional `values` map options to scores. |
 
 Consequences for the design:
 - **One request per rubric.** Questions fan out over a shared `state`; extra questions add tokens, not latency. The engine batches every criterion that uses an identical decision-judge spec and the same evidence into a single call (`Judge.rateMany` + `batchKey`). A 10-criterion rubric is one ~200 ms request instead of 10 LLM calls.
@@ -78,6 +78,8 @@ Two layers, both configurable:
 ### Evaluation lifecycle
 `running → completed | pending_human | failed`. Human submissions move `pending_human → completed`. Webhooks fire on `completed`/`failed` (HMAC-signed). `reaggregate` never touches judges: it re-runs layer 1 + 2 on stored ratings — cheap what-if analysis and policy changes after the fact.
 
+**Checks.** After ingestion, rubric pre-screen checks run as one batch of noul questions before criterion judges. Failures flag, fail the aggregate, or abort with excluded criteria. Provider errors continue as flags, except abort checks complete with an evaluation error. Stored check results and fail gates survive reaggregation.
+
 ### Ingestion
 `ingest/index.ts` registry keyed by input type. Built-ins: text, json, file (PDF via `unpdf`, HTML via `html-to-text`, JSON, everything else as text; path or base64), url (HTML→text, JSON, PDF), youtube (public caption tracks + description; auto-generated captions flagged; swap in a paid provider with `youtubeTranscript`). `registerIngestor(type, fn)` replaces any of them (e.g. route `url` through a headless browser or Firecrawl). Evidence carries stats (chars/words/lines) used by benchmarks and a `truncated` flag. Criteria can see a subset of evidence through `inputs: [tag|label]`.
 
@@ -106,7 +108,7 @@ Two layers, both configurable:
 - **Embedded**: import `@verdict/core` directly in your own service and skip HTTP.
 
 ## Roadmap
-1. **Decision-model depth:** `choice` criteria (routing / categorisation as rubric items), pre-screen `checks` (noul guardrails such as "is this input adversarial / off-topic" that gate the whole evaluation), per-provider verified fixtures once official docs are reachable from CI, Clef media state on Workers AI, OpenAI Decisions GA shape.
+1. **Decision-model depth:** per-provider verified fixtures once official docs are reachable from CI, Clef media state on Workers AI, OpenAI Decisions GA shape.
 2. **Calibration:** stored-evaluation reports now compare decision ratings (including escalations) with human consensus: agreement, normalized error/bias, confidence buckets, ECE, suggested `minConfidence`, and interval Krippendorff’s α, exposed through REST, SDK, CLI and MCP. Next: gold-standard sets per rubric, judge drift reports, per-rubric cost/latency stats.
 3. Postgres dialect for `@verdict/db` (pg-core schema mirroring the SQLite plan); idempotency keys; queue-backed async with retries (Cloudflare Queues on Workers).
 4. Richer evidence: PDF page renders and video frames for media-capable decision models, audio transcription provider hooks.

@@ -1,9 +1,20 @@
-# Pure decision-model rubric: support-ticket triage. One ~200 ms call answers all four criteria; code applies the policy.
+# Pure decision-model rubric: support-ticket triage. One batched call answers the criteria after pre-screening; code applies the policy.
 name: Support ticket triage
 language: en
 scale: { type: numeric, min: 0, max: 3 }
 defaultJudge: { type: decision, provider: typesafe, model: jev-latest, minConfidence: 0.3, onLowConfidence: human, escalateTo: [support_lead] }
+# Pre-screen: one noul request before any criterion is judged; `abort` skips the criteria entirely (no cost).
+checks:
+  - id: on_topic
+    question: Is the state a real support ticket (not spam, a test, or empty)?
+    criteria: { true: A customer describing an issue or request, false: Spam or unrelated text }
+    expect: true
+    action: abort
+    message: Not a support ticket
 criteria:
+  - id: team
+    name: Owning team
+    choices: { support: General help and how-to questions, engineering: "Bugs, errors and outages", billing: Invoices and payments }
   - id: urgency
     name: Urgency
     weight: 3

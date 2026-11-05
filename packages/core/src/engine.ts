@@ -3,7 +3,7 @@ import { Aggregation, parseRubric, type Criterion, type JudgeSpec, type Rubric }
 import { Subject, type Evidence } from "./schema/subject.js";
 import type { AggregateResult, CriterionResult, Evaluation, Rating } from "./schema/evaluation.js";
 import { ingest, type IngestOptions } from "./ingest/index.js";
-import { buildJudge, newRatingId, type Judge, type JudgeContext } from "./judges/index.js";
+import { DecisionJudge, type SystemOneQuestion, buildJudge, newRatingId, type Judge, type JudgeContext } from "./judges/index.js";
 import { aggregateCriteria, aggregateRatings, coerceScore, criterionScale, normalizeScore } from "./aggregate/index.js";
 import { MemoryStore, type Store, type StoredRubric } from "./store/index.js";
 
@@ -142,6 +142,35 @@ export class Engine {
       return ev;
     }
 
+    if (rubric.checks?.length) {
+      const judge = buildJudge(rubric.checksJudge ?? rubric.defaultJudge, rubric) as DecisionJudge;
+      const criterion = rubric.criteria[0]!;
+      const ctx: JudgeContext = { rubric, criterion, scale: criterionScale(rubric, criterion), evidence: ev.evidence, evaluationId: ev.id, env: this.env, fetch: this.fetchImpl, signal: req.signal, usage: ev.usage };
+      const questions: Record<string, SystemOneQuestion> = Object.fromEntries(rubric.checks.map(c => [c.id, { type: "noul", instructions: c.question, criteria: c.criteria }]));
+      try {
+        const res = await judge.ask(ctx, questions);
+        ev.checks = rubric.checks.map(c => {
+          const probability = res.answers[c.id]?.noul;
+          if (typeof probability !== "number" || !Number.isFinite(probability) || probability < 0 || probability > 1) return { id: c.id, probability: null, passed: false, action: c.action, message: c.message, error: `invalid answer for check ${c.id}` };
+          return { id: c.id, probability, passed: (probability >= c.threshold) === c.expect, action: c.action, message: c.message };
+        });
+      } catch (e) {
+        ev.checks = rubric.checks.map(c => ({ id: c.id, probability: null, passed: false, action: c.action, message: c.message, error: (e as Error).message }));
+      }
+      if (ev.checks.some(c => !c.passed && c.action === "abort")) {
+        ev.criteria = rubric.criteria.map(c => ({ criterionId: c.id, name: c.name, weight: c.weight, group: c.group, status: "excluded", ratings: [], pending: 0 }));
+        ev.aggregate = { ...emptyAggregate(rubric), partial: false, passed: false, excluded: rubric.criteria.map(c => c.id) };
+        ev.status = "completed";
+        ev.error = ev.checks.find(c => c.action === "abort" && c.error)?.error;
+        applyChecks(ev);
+        ev.usage.durationMs = Date.now() - started;
+        ev.updatedAt = new Date().toISOString();
+        await this.store.putEvaluation(ev);
+        this.onEvent?.({ type: "evaluation.completed", evaluation: ev });
+        await this.deliverWebhook(ev);
+        return ev;
+      }
+    }
     const usage = ev.usage;
     const ratingsByCriterion = new Map<string, Rating[]>();
     const expected = new Map<string, number>();
@@ -212,12 +241,15 @@ export class Engine {
     if (allowed.length && !allowed.includes(s.raterId)) throw new ValidationError(`rater ${s.raterId} is not allowed for ${s.criterionId} (allowed: ${allowed.join(", ")})`);
     if (result.ratings.some((r) => r.status === "scored" && r.judgeType === "human" && r.raterId === s.raterId)) throw new ValidationError(`rater ${s.raterId} already scored ${s.criterionId}`);
     const slot = pending.find((r) => r.raterId === s.raterId) ?? pending.find((r) => /#\d+$/.test(r.raterId)) ?? pending[0]!;
-    const score = coerceScore(s.score, scale);
+    const choice = criterion.choices ? String(s.score) : undefined;
+    if (choice !== undefined && !Object.hasOwn(criterion.choices!, choice)) throw new ValidationError(`unknown choice ${choice}`);
+    const score = choice !== undefined ? criterion.values?.[choice] : coerceScore(s.score, scale);
     Object.assign(slot, {
       status: "scored",
       raterId: s.raterId,
       score,
-      normalized: normalizeScore(score, scale),
+      choice,
+      normalized: score === undefined ? undefined : normalizeScore(score, scale),
       confidence: s.confidence ?? 1,
       rationale: s.rationale,
       createdAt: new Date().toISOString(),
@@ -242,9 +274,10 @@ export class Engine {
     const rubric: Rubric = { ...ev.rubric, aggregation: merged };
     const criteria = rubric.criteria.map((c) => {
       const prev = ev.criteria.find((r) => r.criterionId === c.id)!;
-      return aggregateRatings(rubric, c, prev.ratings, prev.ratings.length);
+      return prev.status === "excluded" ? prev : aggregateRatings(rubric, c, prev.ratings, prev.ratings.length);
     });
     const next: Evaluation = { ...ev, rubric, criteria, aggregate: aggregateCriteria(rubric, criteria, merged), updatedAt: new Date().toISOString() };
+    applyChecks(next);
     if (persist) await this.store.putEvaluation(next);
     return next;
   }
@@ -281,6 +314,7 @@ export class Engine {
 
   private finalize(ev: Evaluation) {
     ev.aggregate = aggregateCriteria(ev.rubric, ev.criteria);
+    applyChecks(ev);
     ev.pendingTasks = ev.criteria.flatMap((c) =>
       c.ratings.filter((r) => r.status === "pending" && r.judgeType === "human").map((r) => ({ criterionId: c.criterionId, raterId: /#\d+$/.test(r.raterId) ? undefined : r.raterId, allowedRaters: (r.raw?.allowedRaters as string[] | undefined)?.length ? (r.raw?.allowedRaters as string[]) : undefined, instructions: r.raw?.instructions as string | undefined })),
     );
@@ -297,6 +331,21 @@ export class Engine {
     const headers: Record<string, string> = { "content-type": "application/json", "user-agent": "verdict-webhooks/0.1" };
     if (this.webhookSecret) headers["verdict-signature"] = `sha256=${createHmac("sha256", this.webhookSecret).update(body).digest("hex")}`;
     try { await this.fetchImpl(ev.webhook, { method: "POST", headers, body }); } catch { /* webhook failures never fail the evaluation */ }
+  }
+}
+
+function applyChecks(ev: Evaluation) {
+  for (const check of ev.checks ?? []) {
+    if (!check.passed && check.action === "fail" && !check.error) {
+      ev.aggregate.gates.push({ criterion: `check:${check.id}`, passed: false, message: check.message });
+      ev.aggregate.passed = false;
+    }
+    if (!check.passed && check.action === "abort") {
+      ev.aggregate.score = undefined;
+      ev.aggregate.raw = undefined;
+      ev.aggregate.passed = false;
+      ev.aggregate.partial = false;
+    }
   }
 }
 

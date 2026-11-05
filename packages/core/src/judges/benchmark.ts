@@ -16,6 +16,7 @@ export class BenchmarkJudge implements Judge {
   async rate(ctx: JudgeContext): Promise<Rating[]> {
     const base = ratingBase(ctx, this);
     try {
+      if (ctx.criterion.choices) throw new Error("benchmark judges cannot answer choice criteria");
       const { normalized, rationale, raw } = await this.compute(ctx);
       const n = clamp(normalized, 0, 1);
       return [{ ...base, status: "scored", normalized: n, score: denormalizeScore(n, ctx.scale), confidence: 1, rationale, raw }];

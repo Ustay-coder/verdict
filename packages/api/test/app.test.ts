@@ -145,3 +145,22 @@ describe("api", () => {
     expect(body.ranking[0].subject).toBe("high");
   });
 });
+
+it("presents choice fields and pre-screen abort results", async () => {
+  const { call } = mk();
+  const rubric = {
+    name: "Routing", defaultJudge: { type: "decision", provider: "mock", options: { choice: "engineering", noul: 0.9 } },
+    criteria: [{ id: "team", name: "Team", choices: { support: "Help", engineering: "Bugs" } }],
+    checks: [{ id: "topic", question: "Real ticket?", action: "abort" }],
+  };
+  const evaluate = async (noul: number) => {
+    const res = await call("/v1/evaluations", { method: "POST", body: JSON.stringify({ rubric: { ...rubric, defaultJudge: { ...rubric.defaultJudge, options: { choice: "engineering", noul } } }, inputs: [{ type: "text", text: "Bugs" }] }) });
+    expect(res.status).toBe(201);
+    return res.json();
+  };
+  const good = await evaluate(0.9);
+  expect(good.criteria[0]).toMatchObject({ choice: "engineering", choices: { engineering: 1 }, ratings: [expect.objectContaining({ choice: "engineering" })] });
+  const aborted = await evaluate(0.1);
+  expect(aborted).toMatchObject({ status: "completed", checks: [{ id: "topic", probability: 0.1, passed: false, action: "abort" }], criteria: [{ status: "excluded", ratings: [] }], aggregate: { passed: false }, usage: { decisionCalls: 1 } });
+  expect(aborted.aggregate.score).toBeUndefined();
+});

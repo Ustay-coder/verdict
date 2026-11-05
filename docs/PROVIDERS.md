@@ -44,6 +44,8 @@ vendor's official documentation. Keep this honest: update the status column when
 
 Notes that matter for the engine:
 - `score` is the probability-weighted level **index** (0-based, may be fractional). `probabilities` and `legend` are objects keyed by the index as a string, in level order. Verdict maps the distribution onto the criterion's level **values** (expected value), so a 1/3/5 anchor set yields a 1–5 score, not an index.
+- Pre-screen checks are plain `noul` questions, batched in one request before criterion scoring.
+- Choice answers use an option id in `choice` and an object keyed by option id in `probabilities`.
 - `noul` has no `confidence`; Verdict derives `|2p − 1|`.
 - `usage.output_tokens` is reported but free; `input_tokens` is billable. Both are added to the evaluation's usage.
 - Models listed by `GET /v1/models`: `jev-latest` (currently 1.14.0) and `jev-preview`. Pin a version in production rubrics once TypeSafe exposes dated ids; log `answers.model` (Verdict stores it in `rating.raw.model`).
@@ -53,7 +55,7 @@ Notes that matter for the engine:
 
 - Body **requires** `model: "clef"` or `"clef-flash"` — the selector, not the `@cf/…` id. Verdict derives it from the model id (`options.selector` overrides).
 - `questions`: 1–64 entries; ids match `[A-Za-z0-9_.-]{1,100}` (criterion ids satisfy this).
-- `images`: up to 4 embedded PNG/JPEG/WebP (≤4 MiB and 16 MP each; 8 MiB decoded total; 13 MiB body). Pass via `options.images`. Remote URLs are not accepted.
+- `images`: up to 4 embedded PNG/JPEG/WebP (≤4 MiB and 16 MP each; 8 MiB decoded total; 13 MiB body). Pass via `options.request.images` (only `options.request` reaches the provider body). Remote URLs are not accepted.
 - Context: clef 65,536 tokens; clef-flash 24,576 tokens. Long text state is **truncated by the model** to fit — Verdict truncates first, to its own budget, so the cut is visible (`rating.raw.stateTruncated`).
 - Pricing: clef $0.24 / M input tokens; clef-flash $0.038 / M; no output charge; media billed as input tokens (32×32 px per token, ≤1,024 per image).
 - Zero data retention; multimodal (vision).

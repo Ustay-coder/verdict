@@ -8,7 +8,8 @@ type Spec = z.infer<typeof LlmSpec>;
 
 /** What every LLM judge must return. Shared across providers as a JSON schema. */
 export const JudgementSchema = z.object({
-  score: z.number().describe("The score on the criterion's scale, exactly as instructed"),
+  choice: z.string().optional(),
+  score: z.number().default(0).describe("The score on the criterion's scale, exactly as instructed"),
   confidence: z.number().min(0).max(1).describe("How confident you are in this score, 0..1"),
   rationale: z.string().describe("2-5 sentences explaining the score against the anchors"),
   quotes: z.array(z.string()).describe("Short verbatim quotes from the inputs that support the score (max 5)"),
@@ -21,6 +22,7 @@ export const JUDGEMENT_JSON_SCHEMA = {
   required: ["score", "confidence", "rationale", "quotes"],
   properties: {
     score: { type: "number" },
+    choice: { type: "string" },
     confidence: { type: "number", minimum: 0, maximum: 1 },
     rationale: { type: "string" },
     quotes: { type: "array", items: { type: "string" } },
@@ -90,7 +92,7 @@ export function buildSystemPrompt(ctx: JudgeContext, extra?: string): string {
     criterion.description ?? "",
     ``,
     `## Scale`,
-    `Score must be ${describeScale(scale)}.`,
+    criterion.choices ? `Return the chosen option id in choice. Options: ${JSON.stringify(criterion.choices)}. Set score to 0; Verdict maps the choice to its value.` : `Score must be ${describeScale(scale)}.`,
     anchors ? `\n## Anchors (what each level looks like)\n${anchors}` : undefined,
     ``,
     `## Rules`,
@@ -134,6 +136,15 @@ export class LlmJudge implements Judge {
         ctx.usage.llmCalls++;
         ctx.usage.inputTokens += s.usage?.inputTokens ?? 0;
         ctx.usage.outputTokens += s.usage?.outputTokens ?? 0;
+      }
+      if (ctx.criterion.choices) {
+        const options = Object.keys(ctx.criterion.choices);
+        for (const s of samples) if (!s.judgement.choice || !Object.hasOwn(ctx.criterion.choices, s.judgement.choice)) throw new Error("invalid LLM choice");
+        const counts = options.map(o => samples.filter(s => s.judgement.choice === o).length);
+        const choice = options[counts.indexOf(Math.max(...counts))]!;
+        const best = samples.find(s => s.judgement.choice === choice)!;
+        const score = ctx.criterion.values?.[choice];
+        return [{ ...base, status: "scored", choice, score, normalized: score === undefined ? undefined : normalizeScore(score, ctx.scale), confidence: best.judgement.confidence, rationale: best.judgement.rationale, quotes: best.judgement.quotes, probabilities: Object.fromEntries(options.map((o, i) => [o, counts[i]! / samples.length])) }];
       }
       const scores = samples.map((s) => snapToScale(s.judgement.score, ctx.scale));
       const score = samples.length === 1 ? scores[0]! : snapToScale(median([...scores].sort((a, b) => a - b)), ctx.scale);
@@ -276,7 +287,7 @@ export const httpProvider: LlmProviderAdapter = {
     });
     if (!res.ok) throw new Error(`http judge -> HTTP ${res.status}: ${(await res.text()).slice(0, 300)}`);
     const data = (await res.json()) as Partial<Judgement> & { usage?: { inputTokens?: number; outputTokens?: number }; model?: string };
-    const judgement = JudgementSchema.parse({ score: data.score, confidence: data.confidence ?? 0.5, rationale: data.rationale ?? "", quotes: data.quotes ?? [] });
+    const judgement = JudgementSchema.parse({ choice: data.choice, score: data.score, confidence: data.confidence ?? 0.5, rationale: data.rationale ?? "", quotes: data.quotes ?? [] });
     return { judgement, model: data.model, usage: { inputTokens: data.usage?.inputTokens ?? 0, outputTokens: data.usage?.outputTokens ?? 0 }, raw: data };
   },
 };
@@ -297,7 +308,7 @@ export const mockProvider: LlmProviderAdapter = {
       const len = Math.min(1, text.length / 2000) * 0.5;
       score = lo + (hi - lo) * (0.2 + mention + len);
     }
-    return { judgement: { score, confidence: 0.5, rationale: `mock judgement for ${ctx.criterion.id}`, quotes: [] }, model: "mock", usage: { inputTokens: Math.ceil((req.system.length + req.user.length) / 4), outputTokens: 50 } };
+    return { judgement: { choice: ctx.criterion.choices ? String(o.choice ?? Object.keys(ctx.criterion.choices)[0]) : undefined, score, confidence: 0.5, rationale: `mock judgement for ${ctx.criterion.id}`, quotes: [] }, model: "mock", usage: { inputTokens: Math.ceil((req.system.length + req.user.length) / 4), outputTokens: 50 } };
   },
 };
 

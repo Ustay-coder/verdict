@@ -96,6 +96,7 @@ export function buildQuestion(ctx: JudgeContext, levels: Level[], extra?: string
     `Criterion "${criterion.name}"${criterion.description ? `: ${criterion.description}` : ""}.`,
     extra,
   ].filter(Boolean).join(" ");
+  if (criterion.choices) return { type: "choice", instructions: head, criteria: criterion.choices };
   if (ctx.scale.type === "binary") {
     const [no, yes] = levels;
     return { type: "noul", instructions: `${head} Is the input "${yes!.label}" for this criterion?`, criteria: { true: yes!.description, false: no!.description } };
@@ -126,6 +127,14 @@ export function answerToScore(answer: SystemOneAnswer, levels: Level[], scale: S
   const score = snapToScale(expected, scale);
   const probabilities = Object.fromEntries(levels.map((l, i) => [l.label, r4(probs ? probs[i]! : i === Math.round(answer.score ?? 0) ? 1 : 0)]));
   return { score, normalized: normalizeScore(expected, scale), probabilities, confidence: answer.confidence ?? (probs ? concentration(probs) : 0.5) };
+}
+
+export function answerToChoice(answer: SystemOneAnswer, c: Criterion, scale: Scale) {
+  const choice = answer.choice;
+  if (!choice || !Object.hasOwn(c.choices!, choice)) throw new Error("invalid decision choice");
+  const probabilities = Object.fromEntries(Object.keys(c.choices!).map(o => [o, answer.probabilities && !Array.isArray(answer.probabilities) ? answer.probabilities[o] ?? 0 : o === choice ? 1 : 0]));
+  const score = c.values?.[choice];
+  return { choice, score, normalized: score === undefined ? undefined : normalizeScore(score, scale), probabilities, confidence: answer.confidence ?? concentration(Object.values(probabilities)) };
 }
 
 const r4 = (x: number) => Math.round(x * 10000) / 10000;
@@ -162,6 +171,17 @@ export class DecisionJudge implements Judge {
   /** Only judges with an identical spec share a request (model, thresholds, options, ...). */
   batchKey() { return `decision|${JSON.stringify(this.spec)}`; }
 
+  async ask(ctx: JudgeContext, questions: Record<string, SystemOneQuestion>): Promise<DecisionResponse> {
+    const provider = getDecisionProvider(this.spec.provider);
+    const limit = typeof this.spec.options?.stateCharLimit === "number" ? this.spec.options.stateCharLimit : defaultStateCharLimit(this.spec.provider, this.spec.model);
+    const { stateCharLimit: _limit, ...options } = this.spec.options ?? {};
+    ctx.usage.decisionCalls++;
+    const res = await provider.decide({ model: this.spec.model, state: renderEvidence(ctx.evidence).slice(0, limit), questions, baseUrl: this.spec.baseUrl, apiKey: this.spec.apiKeyEnv ? ctx.env(this.spec.apiKeyEnv) : undefined, options }, ctx);
+    ctx.usage.inputTokens += res.usage?.inputTokens ?? 0;
+    ctx.usage.outputTokens += res.usage?.outputTokens ?? 0;
+    return res;
+  }
+
   async rate(ctx: JudgeContext): Promise<Rating[]> {
     const m = await this.rateMany([ctx]);
     return m.get(ctx.criterion.id) ?? [];
@@ -185,15 +205,11 @@ export class DecisionJudge implements Judge {
     let state = renderEvidence(first.evidence);
     const stateTruncated = state.length > limit;
     if (stateTruncated) state = `${state.slice(0, limit)}\n[... state truncated to fit the model context ...]`;
-    const { stateCharLimit: _l, ...providerOptions } = this.spec.options ?? {};
     const started = Date.now();
     let res: DecisionResponse;
     try {
-      res = await provider.decide({ model: this.spec.model, state, questions, baseUrl: this.spec.baseUrl, apiKey: this.spec.apiKeyEnv ? first.env(this.spec.apiKeyEnv) : undefined, options: providerOptions }, first);
+      res = await this.ask(first, questions);
     } catch (e) { return errorAll(`${provider.name}: ${(e as Error).message}`); }
-    first.usage.decisionCalls++;
-    first.usage.inputTokens += res.usage?.inputTokens ?? 0;
-    first.usage.outputTokens += res.usage?.outputTokens ?? 0;
     const latencyMs = Date.now() - started;
 
     for (const c of ctxs) {
@@ -202,11 +218,11 @@ export class DecisionJudge implements Judge {
       if (!answer) { out.set(c.criterion.id, [{ ...base, status: "error", error: `no answer for question ${c.criterion.id}` }]); continue; }
       try {
         const levels = levelsBy.get(c.criterion.id)!;
-        const { score, normalized, probabilities, confidence } = answerToScore(answer, levels, c.scale);
+        const { choice, score, normalized, probabilities, confidence } = c.criterion.choices ? answerToChoice(answer, c.criterion, c.scale) : { ...answerToScore(answer, levels, c.scale), choice: undefined };
         const low = this.spec.minConfidence !== undefined && confidence < this.spec.minConfidence;
         const dist = Object.entries(probabilities).map(([k, v]) => `${k}=${(v * 100).toFixed(0)}%`).join(" ");
         const rating: Rating = {
-          ...base, status: "scored", score, normalized, confidence, probabilities,
+          ...base, status: "scored", choice, score, normalized, confidence, probabilities,
           rationale: `${provider.name}${res.model ? `/${res.model}` : ""} distribution: ${dist}${low ? ` (low confidence ${confidence.toFixed(2)} < ${this.spec.minConfidence})` : ""}`,
           raw: { provider: provider.name, model: res.model ?? this.spec.model, question: questions[c.criterion.id], answer, levels, latencyMs, lowConfidence: low, stateChars: state.length, stateTruncated },
         };
@@ -225,6 +241,15 @@ export class DecisionJudge implements Judge {
 /* Providers                                                           */
 /* ------------------------------------------------------------------ */
 
+/**
+ * Judge `options` are Verdict-level knobs (stateCharLimit, accountId, selector, mock knobs such as level/noul/choice).
+ * Only `options.request` is merged verbatim into the provider request body (e.g. Clef `images`).
+ */
+function requestExtras(options?: Record<string, unknown>): Record<string, unknown> {
+  const extra = options?.request;
+  return extra && typeof extra === "object" && !Array.isArray(extra) ? (extra as Record<string, unknown>) : {};
+}
+
 async function postJson(ctx: JudgeContext, url: string, body: unknown, headers: Record<string, string>) {
   const res = await ctx.fetch(url, { method: "POST", signal: ctx.signal, headers: { "content-type": "application/json", ...headers }, body: JSON.stringify(body) });
   const text = await res.text();
@@ -240,7 +265,7 @@ function systemOneAdapter(name: string, defaults: { baseUrl?: string; keyEnv: st
       if (!base) throw new Error(`${name} provider needs judge.baseUrl`);
       const key = req.apiKey ?? ctx.env(defaults.keyEnv);
       const model = req.model ?? ctx.env(`VERDICT_${name.toUpperCase()}_MODEL`) ?? defaults.model;
-      const data = await postJson(ctx, `${base}${defaults.path ?? "/systemone"}`, { model, state: req.state, questions: req.questions, ...(req.options ?? {}) }, key ? { authorization: `Bearer ${key}` } : {});
+      const data = await postJson(ctx, `${base}${defaults.path ?? "/systemone"}`, { model, state: req.state, questions: req.questions, ...requestExtras(req.options) }, key ? { authorization: `Bearer ${key}` } : {});
       const d = defaults.unwrap ? defaults.unwrap(data) : data;
       const usage = d.usage as { input_tokens?: number; output_tokens?: number } | undefined;
       return { answers: (d.answers ?? {}) as Record<string, SystemOneAnswer>, model: (d.model as string) ?? model, usage: { inputTokens: usage?.input_tokens ?? 0, outputTokens: usage?.output_tokens ?? 0 }, raw: data };
@@ -272,8 +297,8 @@ export const cloudflareDecisionProvider: DecisionProviderAdapter = {
     const base = req.baseUrl?.replace(/\/$/, "") ?? (account ? `https://api.cloudflare.com/client/v4/accounts/${account}/ai/run` : undefined);
     if (!base) throw new Error("cloudflare provider needs CLOUDFLARE_ACCOUNT_ID (or judge.baseUrl pointing at an AI Gateway)");
     if (!token) throw new Error("cloudflare provider needs CLOUDFLARE_API_TOKEN (Workers AI: Read)");
-    const { accountId: _a, selector, ...rest } = req.options ?? {};
-    const body = { model: (selector as string | undefined) ?? model.split("/").pop(), state: req.state, questions: req.questions, ...rest };
+    const selector = req.options?.selector as string | undefined;
+    const body = { model: selector ?? model.split("/").pop(), state: req.state, questions: req.questions, ...requestExtras(req.options) };
     const data = await postJson(ctx, `${base}/${model}`, body, { authorization: `Bearer ${token}` });
     if (data.success === false) throw new Error(`cloudflare error: ${JSON.stringify(data.errors)}`);
     const d = (data.result ?? data) as Record<string, unknown>;
@@ -293,7 +318,7 @@ export const openaiDecisionsProvider: DecisionProviderAdapter = {
     const key = req.apiKey ?? ctx.env("OPENAI_API_KEY");
     const model = req.model ?? ctx.env("VERDICT_OPENAI_DECISIONS_MODEL") ?? "gpt-6-luna";
     const questions = Object.fromEntries(Object.entries(req.questions).map(([id, q]) => [id, q.type === "noul" ? { type: "predicate", instructions: q.instructions, criteria: q.criteria } : q]));
-    const data = await postJson(ctx, `${base}/decisions`, { model, state: req.state, questions, ...(req.options ?? {}) }, key ? { authorization: `Bearer ${key}` } : {});
+    const data = await postJson(ctx, `${base}/decisions`, { model, state: req.state, questions, ...requestExtras(req.options) }, key ? { authorization: `Bearer ${key}` } : {});
     const answers: Record<string, SystemOneAnswer> = {};
     for (const [id, a] of Object.entries((data.answers ?? data.decisions ?? {}) as Record<string, Record<string, unknown>>)) {
       answers[id] = { ...(a as SystemOneAnswer), noul: (a.noul ?? a.predicate ?? a.probability) as number | undefined };
@@ -310,12 +335,20 @@ export const mockDecisionProvider: DecisionProviderAdapter = {
     const answers: Record<string, SystemOneAnswer> = {};
     const o = req.options ?? {};
     for (const [id, q] of Object.entries(req.questions)) {
+      if (q.type === "choice") {
+        const words = new Set(req.state.toLowerCase().match(/\w+/g) ?? []);
+        const options = Object.keys(q.criteria);
+        const hits = options.map(o => (q.criteria[o] ?? "").toLowerCase().match(/\w+/g)?.filter(w => words.has(w)).length ?? 0);
+        const choice = typeof o.choice === "string" ? o.choice : options[hits.indexOf(Math.max(...hits))]!;
+        answers[id] = { type: "choice", choice, probabilities: Object.fromEntries(options.map(k => [k, k === choice ? 1 : 0])), confidence: 1 };
+        continue;
+      }
       if (q.type === "noul") {
-        const p = typeof o.noul === "number" ? o.noul : typeof o.normalized === "number" ? o.normalized : /\b(yes|pass|present)\b/i.test(req.state) ? 0.9 : 0.2;
+        const p = typeof o.noul === "number" ? o.noul : typeof o.normalized === "number" ? o.normalized : /\b(lorem ipsum|test message|spam)\b/i.test(req.state) ? 0.1 : /\b(yes|pass|present)\b/i.test(req.state) ? 0.9 : 0.75;
         answers[id] = { type: "noul", noul: p };
         continue;
       }
-      const n = q.type === "score" ? q.criteria.length : Object.keys(q.criteria).length;
+      const n = q.criteria.length;
       let probs: number[];
       if (Array.isArray(o.probabilities) && o.probabilities.length === n) probs = o.probabilities as number[];
       else {
@@ -325,7 +358,7 @@ export const mockDecisionProvider: DecisionProviderAdapter = {
         probs = probs.map((p) => p / sum);
       }
       const score = probs.reduce((s, p, i) => s + p * i, 0);
-      answers[id] = { type: "score", score, probabilities: probs, confidence: (Math.max(...probs) - 1 / n) / (1 - 1 / n), legend: q.type === "score" ? q.criteria : Object.keys(q.criteria) };
+      answers[id] = { type: "score", score, probabilities: probs, confidence: (Math.max(...probs) - 1 / n) / (1 - 1 / n), legend: q.criteria };
     }
     return { answers, model: "mock-decision", usage: { inputTokens: Math.ceil(req.state.length / 4) + 50 * Object.keys(req.questions).length, outputTokens: 0 } };
   },

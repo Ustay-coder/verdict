@@ -63,7 +63,10 @@ export const DecisionJudgeSpec = z.object({
   onLowConfidence: z.enum(["accept", "human", "error"]).default("accept"),
   /** Human raters allowed to take over when onLowConfidence = human (empty = anyone). */
   escalateTo: z.array(z.string()).default([]),
-  /** Provider passthrough (e.g. Cloudflare account id, request overrides). */
+  /**
+   * Verdict-level knobs: `stateCharLimit`, Cloudflare `accountId` / `selector`, mock knobs (`level`, `noul`, `choice`, ...).
+   * Only `options.request` is merged verbatim into the provider request body (e.g. Clef `images`).
+   */
   options: z.record(z.string(), z.unknown()).optional(),
 });
 
@@ -244,6 +247,8 @@ export const Criterion = z.object({
    * Explicit ordered rubric levels (worst → best) for decision models. Each level maps to a value on the scale.
    * Derived automatically from `anchors` / ordinal labels / binary when omitted (2–10 levels).
    */
+  choices: z.record(z.string().regex(/^[a-zA-Z_][a-zA-Z0-9_]*$/), z.string()).refine(v => Object.keys(v).length >= 2 && Object.keys(v).length <= 255, "choices requires 2–255 options").optional(),
+  values: z.record(z.string(), z.number()).optional(),
   levels: z.array(z.object({ value: z.number(), label: z.string().optional(), description: z.string() })).min(2).max(10).optional(),
   /** Judge(s) for this criterion; falls back to rubric.defaultJudge. Multiple = independent ratings. */
   judge: z.union([JudgeSpec, z.array(JudgeSpec)]).optional(),
@@ -270,6 +275,16 @@ export const Rubric = z.object({
   scale: Scale.default({ type: "numeric", min: 0, max: 10 }),
   judges: z.record(z.string(), JudgeSpec).default({}),
   defaultJudge: JudgeSpec.default({ type: "decision", provider: "typesafe", onLowConfidence: "accept", escalateTo: [] } as JudgeSpec),
+  checks: z.array(z.object({
+    id: z.string().regex(/^[a-zA-Z_][a-zA-Z0-9_]*$/),
+    question: z.string(),
+    criteria: z.object({ true: z.string(), false: z.string() }).optional(),
+    expect: z.boolean().default(true),
+    threshold: z.number().min(0).max(1).default(0.5),
+    action: z.enum(["abort", "fail", "flag"]).default("flag"),
+    message: z.string().optional(),
+  })).optional(),
+  checksJudge: JudgeSpec.optional(),
   criteria: z.array(Criterion).min(1),
   aggregation: Aggregation.prefault({}),
   metadata: z.record(z.string(), z.unknown()).optional(),
@@ -288,8 +303,22 @@ export function parseRubric(input: unknown): Rubric {
   for (const c of rubric.criteria) {
     if (ids.has(c.id)) throw new Error(`duplicate criterion id: ${c.id}`);
     ids.add(c.id);
+    if (c.choices && c.levels) throw new Error(`${c.id}: choices and levels conflict`);
+    if (c.values) {
+      if (!c.choices) throw new Error(`${c.id}: values requires choices`);
+      for (const [key, value] of Object.entries(c.values)) {
+        if (!Object.hasOwn(c.choices, key)) throw new Error(`${c.id}: values key ${key} not in choices`);
+        const scale = c.scale ?? rubric.scale;
+        const vals = scale.type === "ordinal" ? scale.values ?? scale.labels.map((_, i) => i) : undefined;
+        const lo = scale.type === "numeric" ? scale.min : vals ? Math.min(...vals) : 0;
+        const hi = scale.type === "numeric" ? scale.max : vals ? Math.max(...vals) : 1;
+        if (value < lo || value > hi) throw new Error(`${c.id}: value outside scale`);
+      }
+      if (Object.keys(c.choices).some(k => !Object.hasOwn(c.values!, k))) throw new Error(`${c.id}: values must cover every choice`);
+    }
   }
   for (const g of rubric.aggregation.gates) {
+    if (rubric.criteria.some(c => c.id === g.criterion && c.choices && !c.values)) throw new Error("choice gates require values");
     if (!ids.has(g.criterion)) throw new Error(`gate references unknown criterion: ${g.criterion}`);
   }
   if (rubric.aggregation.method === "formula" && !rubric.aggregation.formula) {
@@ -303,6 +332,19 @@ export function parseRubric(input: unknown): Rubric {
   for (const c of rubric.criteria) {
     const js = Array.isArray(c.judge) ? c.judge : c.judge ? [c.judge] : [];
     js.forEach((j, i) => checkRef(j, `criteria.${c.id}.judge[${i}]`));
+  }
+  if (rubric.checks?.length || rubric.checksJudge) {
+    let spec = rubric.checksJudge ?? rubric.defaultJudge;
+    const seen = new Set<string>();
+    while (spec.type === "ref") {
+      if (seen.has(spec.ref)) throw new Error("checksJudge: cyclic reference");
+      seen.add(spec.ref);
+      const target = rubric.judges[spec.ref];
+      if (!target) throw new Error("checksJudge: unknown judge ref");
+      spec = target;
+    }
+    if (spec.type !== "decision") throw new Error("checksJudge must resolve to a decision judge");
+    if (new Set(rubric.checks?.map(c => c.id)).size !== (rubric.checks?.length ?? 0)) throw new Error("duplicate check id");
   }
   return rubric;
 }

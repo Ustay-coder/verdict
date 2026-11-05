@@ -43,7 +43,7 @@ export function renderReport(ev: Evaluation): string {
   lines.push("");
   const w = Math.max(...ev.criteria.map((c) => c.name.length), 8);
   for (const c of ev.criteria) {
-    const s = typeof c.score === "number" ? `${fmt(c.score, 2)} (${fmt((c.normalized ?? 0) * 100, 0)}%)` : c.status;
+    const s = c.choice ? `${c.criterionId}: ${c.choice} (${fmt((c.choices?.[c.choice] ?? 0) * 100, 0)}%)` : typeof c.score === "number" ? `${fmt(c.score, 2)} (${fmt((c.normalized ?? 0) * 100, 0)}%)` : c.status;
     lines.push(`  ${c.name.padEnd(w)}  w=${c.weight}  ${s}${c.pending ? `  [${c.pending} pending]` : ""}${c.gate && !c.gate.passed ? "  GATE FAILED" : ""}`);
     const r = c.ratings.find((x) => x.rationale);
     if (r?.rationale) lines.push(`  ${"".padEnd(w)}  ${r.rationale.replace(/\s+/g, " ").slice(0, 160)}${typeof r.confidence === "number" ? `  [conf ${r.confidence.toFixed(2)}]` : ""}`);
@@ -295,6 +295,7 @@ export function mockify(rubric: Rubric): Rubric {
     ...rubric,
     judges: Object.fromEntries(Object.entries(rubric.judges).map(([k, v]) => [k, walk(v)])),
     defaultJudge: walk(rubric.defaultJudge),
+    checksJudge: rubric.checksJudge ? walk(rubric.checksJudge) : undefined,
     criteria: rubric.criteria.map((c) => ({ ...c, judge: Array.isArray(c.judge) ? c.judge.map(walk) : walk(c.judge) })),
   });
 }

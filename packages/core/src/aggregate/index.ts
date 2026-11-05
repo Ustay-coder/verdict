@@ -111,7 +111,7 @@ export function aggregateRatings(
   expected: number,
 ): CriterionResult {
   const scale = criterionScale(rubric, criterion);
-  const scored = ratings.filter((r) => r.status === "scored" && typeof r.score === "number");
+  const scored = ratings.filter((r) => r.status === "scored" && (typeof r.score === "number" || (criterion.choices && r.choice !== undefined)));
   const pendingCount = Math.max(0, expected - scored.length - ratings.filter((r) => r.status === "error").length);
   const method = criterion.rater ?? rubric.aggregation.rater;
   const base: CriterionResult = {
@@ -123,6 +123,13 @@ export function aggregateRatings(
     ratings,
     pending: pendingCount,
   };
+  if (criterion.choices && scored.length) {
+    const options = Object.keys(criterion.choices);
+    const counts = options.map(o => scored.filter(r => r.choice === o).length);
+    base.choice = options[counts.indexOf(Math.max(...counts))];
+    base.choices = Object.fromEntries(options.map(o => [o, mean(scored.map(r => r.probabilities?.[o] ?? (r.choice === o ? 1 : 0)))]));
+    if (!criterion.values) return { ...base, status: pendingCount > 0 ? "pending" : "scored" };
+  }
   if (!scored.length) {
     const allErrored = ratings.length > 0 && ratings.every((r) => r.status === "error");
     return { ...base, status: allErrored ? "error" : pendingCount > 0 ? "pending" : "error" };
@@ -159,6 +166,7 @@ export function aggregateCriteria(rubric: Rubric, results: CriterionResult[], ag
   const excluded: string[] = [];
   for (const r of results) {
     const c = byId.get(r.criterionId)!;
+    if (c.choices && !c.values) { excluded.push(r.criterionId); continue; }
     if (typeof r.normalized === "number") {
       if (c.weight === 0) excluded.push(r.criterionId); else included.push(r);
       continue;
@@ -170,7 +178,7 @@ export function aggregateCriteria(rubric: Rubric, results: CriterionResult[], ag
   }
 
   const empty: AggregateResult = { method: aggregation.method, range: outRange(aggregation), gates, partial, included: included.map((r) => r.criterionId), excluded };
-  if (!included.length) return empty;
+  if (!included.length && aggregation.method !== "formula") return empty;
 
   let raw: number;
   let natural: [number, number];
@@ -202,6 +210,10 @@ export function aggregateCriteria(rubric: Rubric, results: CriterionResult[], ag
         scope[`${c.id}_n`] = has ? r.normalized! : 0;
         scope[`${c.id}_w`] = c.weight;
         scope[`${c.id}_present`] = has ? 1 : 0;
+        for (const option of Object.keys(c.choices ?? {})) {
+          scope[`${c.id}_${option}`] = r.choice === option ? 1 : 0;
+          scope[`${c.id}_p_${option}`] = r.choices?.[option] ?? 0;
+        }
       }
       raw = evaluateExpression(aggregation.formula!, scope);
       // A formula is assumed to yield 0..1 unless it is obviously on a wider range.

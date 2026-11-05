@@ -11,6 +11,7 @@ export interface Rating {
   judgeType: "decision" | "llm" | "human" | "benchmark" | "panel";
   status: RatingStatus;
   /** Score in the criterion's own units (e.g. 0..10, or ordinal index). */
+  choice?: string;
   score?: number;
   /** Score mapped to 0..1. */
   normalized?: number;
@@ -34,8 +35,10 @@ export interface CriterionResult {
   group?: string;
   status: "scored" | "pending" | "error" | "excluded";
   /** Aggregated across raters. */
+  choice?: string;
   score?: number;
   normalized?: number;
+  choices?: Record<string, number>;
   ratings: Rating[];
   /** Ratings still expected (e.g. human raters not yet submitted). */
   pending: number;
@@ -74,6 +77,7 @@ export interface Evaluation {
   aggregate: AggregateResult;
   /** Human tasks waiting on input. */
   pendingTasks: Array<{ criterionId: string; raterId?: string; allowedRaters?: string[]; instructions?: string }>;
+  checks?: Array<{ id: string; probability: number | null; passed: boolean; action: "abort" | "fail" | "flag"; message?: string; error?: string }>;
   error?: string;
   usage: { decisionCalls: number; llmCalls: number; inputTokens: number; outputTokens: number; durationMs: number };
   metadata?: Record<string, unknown>;
