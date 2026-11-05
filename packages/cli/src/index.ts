@@ -2,7 +2,7 @@ import { readFile, writeFile } from "node:fs/promises";
 import { basename, resolve } from "node:path";
 import { Command } from "commander";
 import YAML from "yaml";
-import { Engine, FileStore, MemoryStore, loadRubricText, parseRubric, youtubeId, type Evaluation, type Input, type Rubric } from "@verdict/core";
+import { calibrate, Engine, FileStore, MemoryStore, loadRubricText, parseRubric, youtubeId, type Evaluation, type Input, type Rubric } from "@verdict/core";
 import { Verdict } from "@verdict/sdk";
 
 const dataDir = () => process.env.VERDICT_DATA_DIR ?? resolve(process.cwd(), ".verdict");
@@ -182,6 +182,20 @@ export function buildCli() {
       const ranking = api ? (await api.batches.create({ rubric: rubric as never, subjects })).ranking : (await localEngine().evaluateBatch(rubric, subjects)).ranking;
       if (o.json) console.log(JSON.stringify(ranking, null, 2));
       else for (const r of ranking) console.log(`${String(r.rank).padStart(3)}. ${r.subject.padEnd(24)} ${fmt(r.score, 2).padStart(7)}  ${r.grade ?? ""} ${r.passed === undefined ? "" : r.passed ? "PASS" : "FAIL"}  ${r.status !== "completed" ? r.status : ""}`);
+    });
+
+  program.command("calibrate <rubricId>").description("compare decision confidence with human scores")
+    .option("--target <number>", "target agreement", "0.8").option("--buckets <number>", "confidence bins", "5").option("--json")
+    .action(async (rubricId, o) => {
+      const options = { target: Number(o.target), buckets: Number(o.buckets) };
+      const api = remote();
+      const engine = api ? undefined : localEngine();
+      if (engine) await engine.resolveRubric(rubricId);
+      const report = api ? await api.rubrics.calibration(rubricId, options)
+        : calibrate(await engine!.store.listEvaluations({ rubricId, limit: 1000 }), options);
+      if (o.json) { console.log(JSON.stringify(report, null, 2)); return; }
+      console.table([...report.criteria.map((c) => ({ criterion: c.criterionId, n: c.n, agreement: c.agreement, MAE: c.meanAbsError, ECE: c.ece, suggestedMinConfidence: c.suggestedMinConfidence })),
+        { criterion: "overall", n: report.overall.n, agreement: report.overall.agreement, MAE: report.overall.meanAbsError, ECE: report.overall.ece, suggestedMinConfidence: report.overall.suggestedMinConfidence }]);
     });
 
   program.command("get <id>").description("show a stored evaluation").option("--json").action(async (id, o) => {

@@ -6,6 +6,8 @@ Think "Resend for evaluation": one small, well-typed API that every product with
 
 **Built on decision models, not chat models.** A rubric is a set of typed questions. Decision models ("System One" models: TypeSafe **Jev**, Cloudflare **Clef** / Clef-flash, OpenAI **Decisions API**, Inception Mercury Decide, …) take a `state` plus typed questions and return calibrated probabilities over the allowed answers in ~100–500 ms, with no prose to parse, at a fraction of LLM cost. Verdict turns every criterion into one `score` (ordered rubric levels) or `noul` (yes/no probability) question and answers the **whole rubric in a single request**. Generative LLMs remain available as an optional judge where you need a written rationale.
 
+**Calibration.** Compare stored decision ratings (including escalations) with human consensus using `verdict calibrate <rubricId>`, `rubrics.calibration(id)` in the SDK, or the MCP `calibration_report` tool. Reports include agreement, normalized error and bias, confidence buckets, ECE, human inter-rater alpha, and a suggested `minConfidence` (default target agreement 0.8). A threshold is suggested only when every populated bucket at or above it meets the target with at least three pairs (empty buckets are skipped); empty metrics and uncomputable alpha are null. Bins include their lower bound; confidence 1 belongs to the last bin. Local tools use up to 1,000 stored evaluations; REST/SDK accept `limit`.
+
 ```
 POST /v1/evaluations
 {
@@ -155,6 +157,7 @@ Full reference: [docs/RUBRICS.md](docs/RUBRICS.md). Design and extension points:
 | `GET` | `/v1/tasks?rater=` | Pending human tasks |
 | `POST` | `/v1/batches` | Many subjects, one rubric → ranking |
 | `POST/GET/DELETE` | `/v1/admin/keys[/:id]` | Create / list (`?tenant=`) / revoke API keys. Needs `VERDICT_ADMIN_KEY` and a database store. |
+| `GET` | `/v1/rubrics/:id/calibration?target=0.8&buckets=5&limit=1000` | Decision confidence calibration against humans |
 | `GET` | `/v1/openapi.json`, `/v1/health` | Discovery |
 
 Auth: `Authorization: Bearer <key>`. With a database store, keys live hashed in the `api_keys` table (create them via `/v1/admin/keys` or `verdict keys create`); `VERDICT_API_KEYS="key:tenant,..."` adds bootstrap keys, and with no database and no env keys the API runs open as a single tenant. Errors: `{ "error": { "type": "validation|not_found|http|internal", "message", "issues?" } }`. Webhooks carry `verdict-signature: sha256=<hmac>` when `VERDICT_WEBHOOK_SECRET` is set.

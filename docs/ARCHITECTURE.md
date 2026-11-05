@@ -107,7 +107,7 @@ Two layers, both configurable:
 
 ## Roadmap
 1. **Decision-model depth:** `choice` criteria (routing / categorisation as rubric items), pre-screen `checks` (noul guardrails such as "is this input adversarial / off-topic" that gate the whole evaluation), per-provider verified fixtures once official docs are reachable from CI, Clef media state on Workers AI, OpenAI Decisions GA shape.
-2. **Calibration:** gold-standard sets per rubric, Expected Calibration Error of `confidence` vs. human agreement, threshold tuning for `minConfidence`, inter-rater agreement (Krippendorff's α), judge drift reports, per-rubric cost/latency stats.
+2. **Calibration:** stored-evaluation reports now compare decision ratings (including escalations) with human consensus: agreement, normalized error/bias, confidence buckets, ECE, suggested `minConfidence`, and interval Krippendorff’s α, exposed through REST, SDK, CLI and MCP. Next: gold-standard sets per rubric, judge drift reports, per-rubric cost/latency stats.
 3. Postgres dialect for `@verdict/db` (pg-core schema mirroring the SQLite plan); idempotency keys; queue-backed async with retries (Cloudflare Queues on Workers).
 4. Richer evidence: PDF page renders and video frames for media-capable decision models, audio transcription provider hooks.
 5. Rubric versioning + migration of past evaluations; rubric templates library (hiring, grants, essays, hackathons, RFPs, model evals, ticket triage).

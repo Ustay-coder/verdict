@@ -3,7 +3,7 @@ import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 import { HTTPException } from "hono/http-exception";
 import { z } from "zod";
-import { Aggregation, Engine, NotFoundError, Rubric, Subject, ValidationError, newId, parseRubric, loadRubricText, type Evaluation } from "@verdict/core";
+import { calibrate, Aggregation, Engine, NotFoundError, Rubric, Subject, ValidationError, newId, parseRubric, loadRubricText, type Evaluation } from "@verdict/core";
 
 export interface Auth {
   /** Map an API key to a tenant id, or undefined to reject. Return "" for single-tenant open mode. */
@@ -116,6 +116,16 @@ export function createApp({ engine, auth = envAuth(), keys, adminKey = (globalTh
     if (!r) throw new NotFoundError(`rubric ${c.req.param("id")} not found`);
     return c.json(r);
   });
+  app.get("/v1/rubrics/:id/calibration", async (c) => {
+    const rubricId = c.req.param("id"), tenantId = tenant(c);
+    if (!(await engine.store.getRubric(rubricId, tenantId))) throw new NotFoundError(`rubric ${rubricId} not found`);
+    const options = z.object({
+      target: z.coerce.number().min(0).max(1).default(0.8),
+      buckets: z.coerce.number().int().min(1).max(1000).default(5),
+      limit: z.coerce.number().int().min(1).default(1000),
+    }).parse(c.req.query());
+    return c.json(calibrate(await engine.store.listEvaluations({ tenantId, rubricId, limit: options.limit }), options));
+  });
   app.put("/v1/rubrics/:id", async (c) => c.json(await engine.updateRubric(c.req.param("id"), await readRubricBody(c.req.raw), tenant(c))));
   app.delete("/v1/rubrics/:id", async (c) => {
     if (!(await engine.store.deleteRubric(c.req.param("id"), tenant(c)))) throw new NotFoundError(`rubric ${c.req.param("id")} not found`);
@@ -209,6 +219,7 @@ const openapi = {
     "/v1/rubrics": { post: { summary: "Create rubric (JSON or YAML body)" }, get: { summary: "List rubrics" } },
     "/v1/rubrics/validate": { post: { summary: "Validate a rubric without storing it" } },
     "/v1/rubrics/{id}": { get: { summary: "Get rubric" }, put: { summary: "Replace rubric" }, delete: { summary: "Delete rubric" } },
+    "/v1/rubrics/{id}/calibration": { get: { summary: "Calibration report (`?target=0.8&buckets=5&limit=1000`)" } },
     "/v1/evaluations": { post: { summary: "Evaluate a subject (sync; `async:true` for 202)" }, get: { summary: "List evaluations" } },
     "/v1/evaluations/{id}": { get: { summary: "Get evaluation (`?evidence=true` for full text)" } },
     "/v1/evaluations/{id}/scores": { post: { summary: "Submit a human score for a pending criterion" } },

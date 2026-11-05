@@ -115,6 +115,26 @@ describe("api", () => {
     expect((await noAdmin.request("/v1/admin/keys", { headers: { authorization: "Bearer x" } })).status).toBe(404);
   });
 
+  it("returns tenant-scoped calibration reports and validates query options", async () => {
+    const { engine, call } = mk();
+    const rubric = await engine.createRubric({ name: "Calibration", scale: { type: "numeric", min: 0, max: 1 },
+      criteria: [{ id: "q", name: "Q", judge: { type: "decision", provider: "mock", options: { probabilities: [0.5, 0.5] },
+        minConfidence: 1, onLowConfidence: "human" }, levels: [{ value: 0, description: "bad" }, { value: 1, description: "good" }] }] }, "t1");
+    const ev = await engine.evaluate({ rubric: rubric.id, tenantId: "t1", subject: { inputs: [{ type: "text", text: "test" }] } });
+    await engine.submitScore(ev.id, { criterionId: "q", raterId: "me", score: 1 }, "t1");
+    const response = await call(`/v1/rubrics/${rubric.id}/calibration?target=0.8&buckets=2&limit=1000`);
+    expect(response.status).toBe(200);
+    const report = await response.json();
+    expect(report.overall.n).toBe(1);
+    expect(report.overall.evaluations).toBe(1);
+    expect(report.criteria[0].criterionId).toBe("q");
+    expect(report.overall.buckets).toHaveLength(2);
+    expect((await call("/v1/rubrics/missing/calibration")).status).toBe(404);
+    expect((await call(`/v1/rubrics/${rubric.id}/calibration`, {}, "sk_other")).status).toBe(404);
+    for (const query of ["buckets=0", "target=2", "limit=-1", "buckets=1.5", "target=nope"])
+      expect((await call(`/v1/rubrics/${rubric.id}/calibration?${query}`)).status).toBe(400);
+  });
+
   it("ranks batches", async () => {
     const { call } = mk();
     const res = await call("/v1/batches", { method: "POST", body: JSON.stringify({

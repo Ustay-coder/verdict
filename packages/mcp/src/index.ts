@@ -1,6 +1,6 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import { Engine, FileStore, MemoryStore, loadRubricText, parseRubric, type Evaluation } from "@verdict/core";
+import { calibrate, Engine, FileStore, MemoryStore, loadRubricText, parseRubric, type Evaluation } from "@verdict/core";
 import { Verdict } from "@verdict/sdk";
 
 /**
@@ -68,6 +68,15 @@ export function createMcpServer(opts: McpOptions = {}) {
 
   server.registerTool("list_rubrics", { title: "List rubrics", description: "List stored rubrics.", inputSchema: {} }, async () =>
     text(client ? (await client.rubrics.list()).data.map((r) => ({ id: r.id, name: r.name, criteria: r.criteria.length })) : (await engine!.store.listRubrics()).map((r) => ({ id: r.id, name: r.name, criteria: r.criteria.length }))));
+
+  server.registerTool("calibration_report", {
+    title: "Calibration report", description: "Compare decision confidence against human consensus on stored evaluations.",
+    inputSchema: { rubricId: z.string(), target: z.number().min(0).max(1).optional(), buckets: z.number().int().min(1).max(1000).optional() },
+  }, async ({ rubricId, ...options }) => {
+    if (client) return text(await client.rubrics.calibration(rubricId, options));
+    await engine!.resolveRubric(rubricId);
+    return text(calibrate(await engine!.store.listEvaluations({ rubricId, limit: 1000 }), options));
+  });
 
   server.registerTool("evaluate", {
     title: "Evaluate",

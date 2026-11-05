@@ -1,4 +1,4 @@
-import type { Aggregation, Evaluation, Input, Rubric, RubricInput, Subject } from "@verdict/core";
+import type { CalibrationReport, Aggregation, Evaluation, Input, Rubric, RubricInput, Subject } from "@verdict/core";
 
 export interface VerdictOptions {
   apiKey?: string;
@@ -65,6 +65,8 @@ export class Verdict {
   }
 
   rubrics = {
+    calibration: (id: string, options: { target?: number; buckets?: number; limit?: number } = {}) =>
+      this.request<CalibrationReport>("GET", `/v1/rubrics/${encodeURIComponent(id)}/calibration?${new URLSearchParams(Object.entries(options).filter(([, v]) => v !== undefined).map(([k, v]) => [k, String(v)]))}`),
     create: (rubric: RubricInput | string) => typeof rubric === "string" ? this.request<Rubric & { id: string }>("POST", "/v1/rubrics", rubric, "application/yaml") : this.request<Rubric & { id: string }>("POST", "/v1/rubrics", rubric),
     validate: (rubric: RubricInput | string) => this.request<{ valid: boolean; rubric?: Rubric; error?: unknown }>("POST", "/v1/rubrics/validate", rubric, typeof rubric === "string" ? "application/yaml" : "application/json"),
     get: (id: string) => this.request<Rubric & { id: string }>("GET", `/v1/rubrics/${id}`),
