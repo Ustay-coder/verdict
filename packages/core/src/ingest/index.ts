@@ -186,7 +186,7 @@ registerIngestor("youtube", async (input, i, o) => {
 
 /* ---------- entry point ---------- */
 export async function ingest(subject: Subject, options: IngestOptions = {}): Promise<Evidence[]> {
-  const opts = { maxChars: 200_000, fetch: globalThis.fetch, allowLocalFiles: false, timeoutMs: 20_000, ...options };
+  const opts = { maxChars: 200_000, fetch: ((input, init) => globalThis.fetch(input, init)) as typeof fetch, allowLocalFiles: false, timeoutMs: 20_000, ...options };
   return Promise.all(
     subject.inputs.map(async (input, i) => {
       const fn = registry.get(input.type);

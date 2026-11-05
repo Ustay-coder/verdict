@@ -43,7 +43,7 @@ export class Verdict {
   constructor(opts: VerdictOptions = {}) {
     this.apiKey = opts.apiKey ?? (globalThis as { process?: { env?: Record<string, string> } }).process?.env?.VERDICT_API_KEY;
     this.baseUrl = (opts.baseUrl ?? (globalThis as { process?: { env?: Record<string, string> } }).process?.env?.VERDICT_API_URL ?? "http://localhost:8787").replace(/\/$/, "");
-    this.f = opts.fetch ?? globalThis.fetch;
+    this.f = opts.fetch ?? ((input, init) => globalThis.fetch(input, init)); // bound call: Workers reject a detached fetch
     this.timeoutMs = opts.timeoutMs ?? 600_000;
   }
 

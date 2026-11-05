@@ -81,7 +81,8 @@ export class Engine {
     this.idempotencyTtlMs = opts.idempotencyTtlMs ?? 86_400_000;
     this.store = opts.store ?? new MemoryStore();
     this.env = opts.env ?? ((n) => (globalThis as { process?: { env: Record<string, string | undefined> } }).process?.env[n]);
-    this.fetchImpl = opts.fetch ?? globalThis.fetch;
+    // Never store the bare global: Workers throw "Illegal invocation" when fetch is called with a foreign `this`.
+    this.fetchImpl = opts.fetch ?? ((input, init) => globalThis.fetch(input, init));
     this.ingestOptions = { fetch: this.fetchImpl, ...opts.ingest };
     this.concurrency = opts.concurrency ?? 8;
     this.webhookSecret = opts.webhookSecret ?? this.env("VERDICT_WEBHOOK_SECRET");
