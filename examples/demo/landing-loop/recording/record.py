@@ -12,15 +12,14 @@ cwd, out, prompt_file = sys.argv[1], sys.argv[2], sys.argv[3]
 cols, rows = (int(sys.argv[4]), int(sys.argv[5])) if len(sys.argv) > 5 else (100, 30)
 prompt = " ".join(open(prompt_file).read().split())
 HARD_TIMEOUT = 40 * 60
-DONE = "SCORE HISTORY"
+DONE = os.environ.get("REC_DONE", "SCORE HISTORY")   # "*" = the first finished assistant turn
 STARTUP_WAIT = 12          # seconds before typing: lets the verdict MCP server connect
 config_dir = os.environ.get("CLAUDE_CONFIG_DIR", os.path.expanduser("~/.claude"))
 
-argv = ["claude",
-        "--mcp-config", ".mcp.json", "--strict-mcp-config",
-        "--tools", "Read,Edit,Write",
-        "--allowedTools", "Read", "Edit", "Write", "mcp__verdict",
-        "--permission-mode", "acceptEdits"]
+TOOLS = os.environ.get("REC_TOOLS", "Read,Edit,Write")
+ALLOWED = os.environ.get("REC_ALLOWED", "Read Edit Write mcp__verdict").split()
+MCP = ["--mcp-config", ".mcp.json"] if os.path.exists(os.path.join(cwd, ".mcp.json")) else []
+argv = ["claude", *MCP, "--strict-mcp-config", "--tools", TOOLS, "--allowedTools", *ALLOWED, "--permission-mode", "acceptEdits"]
 
 # A fresh, independent session: don't inherit this container's session identity or its sync channels,
 # and keep transcripts on (they land in the isolated CLAUDE_CONFIG_DIR).
@@ -81,7 +80,7 @@ def transcript_done():
             m = e.get("message") or {}
             if e.get("type") == "assistant" and m.get("stop_reason") == "end_turn":
                 txt = "".join(b.get("text", "") for b in m.get("content", []) if isinstance(b, dict))
-                if DONE in txt:
+                if DONE == "*" or DONE in txt:
                     return True
     return False
 

@@ -1,0 +1,105 @@
+# SaaS dashboard design review: the rubric behind the "generic → deliberate" UI video (examples/demo/ui-loop).
+# Three kinds of judges look at the same page:
+#   - Clef sees the screenshot (url input with `screenshot: true`, tagged `ui`)
+#   - Jev reads the page text next to data.json (tagged `data`) and checks the figures
+#   - a render-audit scorer measures the DOM (examples/demo/ui-loop/audit/server.mjs on :7788)
+# Evaluate with:  -i ui=http://127.0.0.1:8766/ --screenshot -i data=data.json
+name: SaaS dashboard design
+version: "1"
+description: Does this analytics dashboard look deliberately designed, read at a glance, and tell the truth about its data?
+context: |
+  You are a senior product designer reviewing an analytics dashboard. Generic AI aesthetics (dark purple glow,
+  gradients everywhere, glass cards, gradient text, colored icon tiles, ambient animation) earn no credit.
+  Reward deliberate, legible, data-first design. Most dashboards should land in the middle.
+language: en
+scale: { type: numeric, min: 1, max: 5 }
+
+judges:
+  jev:  { type: decision, provider: typesafe, model: jev-latest }
+  clef: { type: decision, provider: cloudflare, model: "@cf/cloudflare/clef" }
+defaultJudge: { type: ref, ref: clef }
+
+criteria:
+  # ---- seen in the screenshot (Clef, vision) ----
+  - id: template_look
+    name: Not a generic AI template
+    group: Looks
+    weight: 3
+    inputs: [ui]
+    levels:
+      - { value: 1, label: generic, description: "Looks like a generic AI-generated template: dark purple/blue/pink gradients, glowing accents, glass cards, gradient text, colored icon tiles" }
+      - { value: 2, label: unstyled, description: "No design at all: default browser styles, plain lists, no layout; not a template, but not designed either" }
+      - { value: 3, label: mixed, description: "Some deliberate choices, but template effects (glows, gradients, glass) still dominate" }
+      - { value: 5, label: distinctive, description: "Restrained, purposeful palette with one accent, plain surfaces, content-first; nothing decorative for its own sake" }
+  - id: craft
+    name: Visual craft
+    group: Looks
+    weight: 2
+    inputs: [ui]
+    levels:
+      - { value: 1, label: unstyled, description: "Default browser look or barely styled; no visible layout system" }
+      - { value: 3, label: uneven, description: "Competent but uneven: inconsistent spacing, alignment or type sizes" }
+      - { value: 5, label: polished, description: "Aligned grid, consistent spacing, clear type hierarchy, charts that are easy to read" }
+  - id: focus
+    name: One clear focal point
+    group: Looks
+    weight: 2
+    inputs: [ui]
+    levels:
+      - { value: 1, label: competing, description: "Everything competes for attention: many saturated colors, glows and equal-weight cards" }
+      - { value: 3, label: noisy, description: "There is a focal point, but decoration pulls the eye away from it" }
+      - { value: 5, label: calm, description: "The eye lands on the key number first, then reads the rest in order" }
+
+  # ---- read from the page text (Jev) ----
+  - id: numbers_true
+    name: Every figure matches data.json
+    group: Truth
+    weight: 1.5
+    judge: { type: ref, ref: jev }
+    inputs: [ui, data]
+    scale: { type: binary, labels: [no, yes] }
+    anchors:
+      yes: "Every figure on the page appears in data.json or is a simple derivation of it (sum, share, change, rounding); chart axis ticks excepted"
+      no: "Some figure on the page is missing from data.json or contradicts it"
+
+  # ---- measured on the rendered DOM (audit scorer) ----
+  - id: contrast
+    name: Text contrast (WCAG AA)
+    group: Measured
+    weight: 1.5
+    inputs: [ui]
+    judge: { type: benchmark, method: http, url: "http://127.0.0.1:7788/audit/contrast" }
+  - id: decoration
+    name: Decorative effects
+    group: Measured
+    weight: 2
+    inputs: [ui]
+    judge: { type: benchmark, method: http, url: "http://127.0.0.1:7788/audit/decoration" }
+  - id: motion
+    name: No ambient animation
+    group: Measured
+    weight: 1
+    inputs: [ui]
+    judge: { type: benchmark, method: http, url: "http://127.0.0.1:7788/audit/motion" }
+  - id: type_scale
+    name: Type scale (≤ 5 sizes)
+    group: Measured
+    weight: 1
+    inputs: [ui]
+    judge: { type: benchmark, method: http, url: "http://127.0.0.1:7788/audit/type_scale" }
+  - id: palette
+    name: Palette (≤ 2 hue families)
+    group: Measured
+    weight: 1
+    inputs: [ui]
+    judge: { type: benchmark, method: http, url: "http://127.0.0.1:7788/audit/palette" }
+
+aggregation:
+  # Looks earn the points; measured checks can only take them away (a bare page that passes every check still scores low).
+  method: formula
+  formula: "(template_look_n * 3 + craft_n * 2 + focus_n * 2) / 7 * (0.55 + 0.45 * (contrast_n * 1.5 + decoration_n * 2 + motion_n + type_scale_n + palette_n) / 6.5)"
+  normalize: [0, 100]
+  precision: 0
+  gates: [{ criterion: numbers_true, min: 1, message: "A figure on the page doesn't match data.json" }]
+  grades: [{ label: ship it, min: 85 }, { label: almost, min: 65 }, { label: rework, min: 0 }]
+  passThreshold: 85

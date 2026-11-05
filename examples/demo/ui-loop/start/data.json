@@ -1,0 +1,34 @@
+{
+  "product": "Acme Pulse",
+  "note": "Fictional sample data for a demo.",
+  "period": "October 2026",
+  "kpis": {
+    "mrr_usd": 48200,
+    "mrr_change_pct": 4.1,
+    "active_accounts": 1284,
+    "active_accounts_change": 37,
+    "churn_rate_pct": 2.3,
+    "trial_to_paid_pct": 18.6
+  },
+  "weekly_signups": [
+    { "week": "Sep 8", "signups": 212 },
+    { "week": "Sep 15", "signups": 198 },
+    { "week": "Sep 22", "signups": 231 },
+    { "week": "Sep 29", "signups": 244 },
+    { "week": "Oct 6", "signups": 227 },
+    { "week": "Oct 13", "signups": 259 },
+    { "week": "Oct 20", "signups": 268 },
+    { "week": "Oct 27", "signups": 281 }
+  ],
+  "plans": [
+    { "plan": "Starter", "accounts": 702, "mrr_usd": 13860 },
+    { "plan": "Team", "accounts": 498, "mrr_usd": 24900 },
+    { "plan": "Business", "accounts": 84, "mrr_usd": 9440 }
+  ],
+  "recent_events": [
+    { "time": "Nov 4, 16:12", "account": "Northfield Labs", "event": "Upgraded Starter → Team" },
+    { "time": "Nov 4, 11:40", "account": "Kettle & Co", "event": "Started trial" },
+    { "time": "Nov 3, 09:05", "account": "Bramble Studio", "event": "Cancelled (reason: budget)" },
+    { "time": "Nov 2, 18:27", "account": "Osprey Freight", "event": "Added 12 seats" }
+  ]
+}
