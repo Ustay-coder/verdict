@@ -1,0 +1,167 @@
+# Dashboard design review v2: one criterion per principle (examples/demo/ui-loop/PRINCIPLES.md).
+# v1 (dashboard-design.yaml) judged surfaces and gave a restyled AI default 92. v2 asks whether the page answers
+# its operator's questions, encodes data well, and is free of first- AND second-order AI defaults.
+# Inputs:  -i ui=http://127.0.0.1:8766/ --screenshot  -i data=data.json  [-i brief=BRIEF.md]
+# Needs the render-audit scorer: node examples/demo/ui-loop/audit/server.mjs (port 7788).
+name: SaaS dashboard principles
+version: "2"
+description: Does this dashboard answer its operator's questions at a glance, with honest encodings and a look of its own?
+context: |
+  You review an analytics dashboard against established principles: Stephen Few (context, single screen, highlight
+  what matters, no decoration), Tufte (data-ink), Cleveland & McGill (position and length beat angle and area), NN/g
+  (preattentive cues), Refactoring UI (hierarchy by de-emphasis, design in grayscale first). You recognise AI-generated
+  defaults, first-order (purple/blue gradients, glass, glows, gradient text) and second-order "tasteful" ones (cream or
+  off-white with one terracotta/orange accent, near-black with one acid accent, tracked all-caps eyebrows, one accented
+  headline word, a row of identical KPI cards with icon tiles, a decorative donut). Most dashboards land in the middle.
+language: en
+scale: { type: numeric, min: 1, max: 5 }
+
+judges:
+  jev:  { type: decision, provider: typesafe, model: jev-latest }
+  clef: { type: decision, provider: cloudflare, model: "@cf/cloudflare/clef" }
+  audit_charts: { type: benchmark, method: http, url: "http://127.0.0.1:7788/audit/chart_types" }
+defaultJudge: { type: ref, ref: clef }
+
+criteria:
+  # ---------- purpose (Jev reads the page text next to data.json and the agent's brief) ----------
+  - id: questions
+    name: "P1 Answers the operator's questions"
+    group: Purpose
+    weight: 3
+    judge: { type: ref, ref: jev }
+    inputs: [ui, data, brief]
+    levels:
+      - { value: 1, label: inventory, description: "An inventory of every field in the data, with no point of view" }
+      - { value: 3, label: partial, description: "Shows what changed, but not whether that is good or bad, or what needs attention" }
+      - { value: 5, label: answers, description: "Says at once what changed, whether that is on track, and what needs attention, in that order" }
+  - id: context
+    name: "P2 Every figure has context"
+    group: Purpose
+    weight: 2
+    judge: { type: ref, ref: jev }
+    inputs: [ui, data]
+    levels:
+      - { value: 1, label: bare, description: "Headline figures stand alone, with no comparison" }
+      - { value: 3, label: some, description: "Some figures carry a comparison (previous period, trend, share), others do not" }
+      - { value: 5, label: all, description: "Every headline figure sits next to a comparison the data supports (previous period, trend, share), or says plainly that the data has none; no invented targets" }
+  - id: attention
+    name: "P3 What needs attention comes first"
+    group: Purpose
+    weight: 2
+    judge: { type: ref, ref: jev }
+    inputs: [ui, data]
+    levels:
+      - { value: 1, label: buried, description: "Notable events (a cancellation, churn) are absent or buried among routine items" }
+      - { value: 3, label: present, description: "Notable events are shown, but not set apart from routine information" }
+      - { value: 5, label: surfaced, description: "Items that need action are surfaced near the top and clearly marked; routine items are quiet" }
+  - id: numbers_true
+    name: Every figure derives from data.json
+    group: Purpose
+    weight: 0
+    # Deterministic: a decision model was a coin flip (0.43–0.51) on derived figures, so the scorer recomputes them.
+    inputs: [ui, data]
+    scale: { type: binary, labels: [no, yes] }
+    judge: { type: benchmark, method: http, url: "http://127.0.0.1:7788/audit/numbers_true" }
+
+  # ---------- encoding & layout (Clef sees the screenshot) ----------
+  - id: defaults
+    name: "P11 Free of AI defaults (first and second order)"
+    group: Look
+    weight: 3
+    inputs: [ui]
+    levels:
+      - { value: 1, label: first_order, description: "Purple/blue gradients, glass cards, glows, gradient text" }
+      - { value: 1.5, label: unstyled, description: "No design at all: default browser styles, plain lists, no layout; not a template, but not designed either" }
+      - { value: 2, label: second_order, description: "Tasteful AI default: cream or off-white with a single terracotta/orange accent, tracked all-caps labels, one accented headline word, a row of identical KPI cards, a decorative donut" }
+      - { value: 4, label: mostly_own, description: "A few default habits remain, but the look follows from the content" }
+      - { value: 5, label: own, description: "No recognisable template habits; every visual choice is explained by the data and its users" }
+  - id: chart_fit
+    name: "P5 Charts use position and length"
+    group: Look
+    weight: 2
+    inputs: [ui]
+    judge: { type: panel, combine: mean, judges: [{ type: ref, ref: clef }, { type: ref, ref: audit_charts }] }
+    levels:
+      - { value: 1, label: angle_area, description: "Key comparisons rely on angle or area (pie/donut, gauges, bubbles) or decorative charts" }
+      - { value: 2, label: text_only, description: "Comparisons that need a chart (a trend over weeks, a mix across plans) are shown only as text or lists" }
+      - { value: 3, label: mixed, description: "Some position/length charts, but at least one comparison uses a donut, pie or gauge" }
+      - { value: 5, label: position, description: "Every comparison uses aligned bars, lines or tables, directly labelled" }
+  - id: color_signal
+    name: "P7 Colour is a signal, not decoration"
+    group: Look
+    weight: 2
+    inputs: [ui]
+    levels:
+      - { value: 1, label: decorative, description: "Colour is spread everywhere for decoration; it carries no meaning" }
+      - { value: 3, label: partial, description: "Mostly restrained, but the accent decorates as often as it signals" }
+      - { value: 5, label: signal, description: "The page works in grayscale; colour appears only to flag status or what needs attention" }
+  - id: hierarchy
+    name: "P8 Hierarchy by importance"
+    group: Look
+    weight: 2
+    inputs: [ui]
+    levels:
+      - { value: 1, label: flat, description: "Everything has the same weight: equal cards and equal type compete" }
+      - { value: 3, label: some, description: "There is a lead element, but secondary information competes with it" }
+      - { value: 5, label: clear, description: "The most important answer is largest and first; secondary information is visibly de-emphasised" }
+  - id: at_a_glance
+    name: "P9 Answers fit the first screen"
+    group: Look
+    weight: 2
+    inputs: [ui]
+    levels:
+      - { value: 1, label: below, description: "The first screen is mostly header, decoration or a single chart; answers are below the fold" }
+      - { value: 3, label: partial, description: "Some answers are on the first screen, others need scrolling" }
+      - { value: 5, label: glance, description: "The first screen alone tells what changed, whether it is on track and what needs attention" }
+  - id: craft
+    name: "Designed, not default-styled (Few #13)"
+    group: Look
+    weight: 2
+    inputs: [ui]
+    levels:
+      - { value: 1, label: unstyled, description: "Default browser look or barely styled; no visible layout system" }
+      - { value: 3, label: uneven, description: "Competent but uneven: inconsistent spacing, alignment or type" }
+      - { value: 5, label: crafted, description: "Aligned grid, consistent spacing, deliberate type and a clear reading order" }
+  - id: data_ink
+    name: "P6 Data-ink, no chartjunk"
+    group: Look
+    weight: 1
+    inputs: [ui]
+    levels:
+      - { value: 1, label: junk, description: "Charts carry decoration: heavy gridlines, legends instead of labels, fills and markers that encode nothing" }
+      - { value: 3, label: some, description: "Mostly clean, with some non-data ink" }
+      - { value: 5, label: clean, description: "Direct labels, light or no gridlines, nothing on a chart that doesn't encode data" }
+
+  # ---------- measured on the rendered DOM ----------
+  - { id: redundancy, name: "P4 Each figure shown once", group: Measured, weight: 1, inputs: [ui], judge: { type: benchmark, method: http, url: "http://127.0.0.1:7788/audit/repeated_figures" } }
+  - { id: numerals, name: "P10 Tabular figures", group: Measured, weight: 1, inputs: [ui], judge: { type: benchmark, method: http, url: "http://127.0.0.1:7788/audit/numerals" } }
+  - { id: template_chrome, name: "P11 Template habits (eyebrows, accent words, icon tiles)", group: Measured, weight: 1.5, inputs: [ui], judge: { type: benchmark, method: http, url: "http://127.0.0.1:7788/audit/template_chrome" } }
+  - { id: decoration, name: "P6 Decorative effects", group: Measured, weight: 1.5, inputs: [ui], judge: { type: benchmark, method: http, url: "http://127.0.0.1:7788/audit/decoration" } }
+  - { id: motion, name: "No ambient animation", group: Measured, weight: 1, inputs: [ui], judge: { type: benchmark, method: http, url: "http://127.0.0.1:7788/audit/motion" } }
+  - { id: contrast, name: "Text contrast (WCAG AA)", group: Measured, weight: 1.5, inputs: [ui], judge: { type: benchmark, method: http, url: "http://127.0.0.1:7788/audit/contrast" } }
+  - { id: type_scale, name: "Type scale (≤ 5 sizes)", group: Measured, weight: 1, inputs: [ui], judge: { type: benchmark, method: http, url: "http://127.0.0.1:7788/audit/type_scale" } }
+  - { id: palette, name: "Palette (≤ 2 hue families)", group: Measured, weight: 1, inputs: [ui], judge: { type: benchmark, method: http, url: "http://127.0.0.1:7788/audit/palette" } }
+
+aggregation:
+  # Purpose and look earn the points; measured checks only take them away (a bare page that passes every check still scores low).
+  method: formula
+  formula: "(questions_n * 3 + context_n * 2 + attention_n * 2 + defaults_n * 3 + chart_fit_n * 2 + color_signal_n * 2 + hierarchy_n * 2 + at_a_glance_n * 2 + craft_n * 2 + data_ink_n) / 21 * (0.55 + 0.45 * (redundancy_n + numerals_n + template_chrome_n * 1.5 + decoration_n * 1.5 + motion_n + contrast_n * 1.5 + type_scale_n + palette_n) / 9.5)"
+  normalize: [0, 100]
+  precision: 0
+  # A floor on every principle: excelling at nine can't hide failing one.
+  gates:
+    - { criterion: numbers_true, min: 1, message: "A figure on the page doesn't match data.json" }
+    - { criterion: questions, min: 3, message: "P1: doesn't answer the operator's questions" }
+    - { criterion: context, min: 3, message: "P2: figures lack context" }
+    - { criterion: attention, min: 3, message: "P3: what needs attention isn't surfaced" }
+    - { criterion: defaults, min: 3, message: "P11: still an AI default" }
+    - { criterion: chart_fit, min: 3, message: "P5: comparisons rely on angle or area" }
+    - { criterion: color_signal, min: 3, message: "P7: colour decorates instead of signalling" }
+    - { criterion: hierarchy, min: 3, message: "P8: no hierarchy" }
+    - { criterion: at_a_glance, min: 3, message: "P9: answers are below the fold" }
+    - { criterion: craft, min: 3, message: "Not designed: default or uneven styling" }
+  # Calibrated ceiling: a hand-built page that follows every principle (examples/demo/ui-loop/calibration/principled)
+  # scores 78–82 with every gate passing. On taste criteria the judges spread probability over neighbouring levels,
+  # so expected values rarely exceed ~85. "Ship it" is set where that reference lands, and the gates do the rest.
+  grades: [{ label: ship it, min: 80 }, { label: almost, min: 60 }, { label: rework, min: 0 }]
+  passThreshold: 80

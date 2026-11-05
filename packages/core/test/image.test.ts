@@ -43,7 +43,7 @@ describe("image ingestion", () => {
     const [e] = await ingest({ inputs: [{ type: "url", url: "http://localhost:5173/", screenshot: { width: 1024 } }] }, {
       fetch: page, screenshot: async (url, o) => { calls.push([url, o]); return { data: bytes(PNG) }; },
     });
-    expect(calls).toEqual([["http://localhost:5173/", { width: 1024, height: 800, fullPage: false }]]);
+    expect(calls).toEqual([["http://localhost:5173/", { width: 1024, height: 800, fullPage: false, settleMs: 1500 }]]);
     expect(e!.text).toMatch(/revenue/i);
     expect(e!.text).toContain("[screenshot of http://localhost:5173/ attached: 3×2 PNG]");
     expect(evidenceImages(e!)).toHaveLength(1);

@@ -18,7 +18,7 @@ export interface IngestOptions {
   screenshot?: ScreenshotRenderer;
 }
 
-export type ScreenshotRenderer = (url: string, opts: Required<Omit<ScreenshotOptions, "fullPage">> & { fullPage: boolean }) => Promise<{ data: Uint8Array; mimeType?: string } | null>;
+export type ScreenshotRenderer = (url: string, opts: Required<ScreenshotOptions>) => Promise<{ data: Uint8Array; mimeType?: string } | null>;
 
 export type Ingestor = (input: Input, index: number, opts: Required<Pick<IngestOptions, "maxChars" | "fetch" | "allowLocalFiles" | "timeoutMs">> & IngestOptions) => Promise<Evidence>;
 
@@ -129,6 +129,7 @@ export async function playwrightScreenshot(): Promise<ScreenshotRenderer | undef
     try {
       const page = await browser.newPage({ viewport: { width: o.width, height: o.height }, deviceScaleFactor: 1 });
       await page.goto(url, { waitUntil: "networkidle", timeout: 20_000 });
+      if (o.settleMs) await page.waitForTimeout(o.settleMs);
       const data = await page.screenshot({ type: "png", fullPage: o.fullPage });
       return { data: new Uint8Array(data), mimeType: "image/png" };
     } finally { await browser.close(); }
@@ -142,7 +143,7 @@ export function lazyPlaywrightScreenshot(): ScreenshotRenderer {
     return r ? r(url, o) : null;
   };
 }
-type PwPage = { goto(u: string, o: unknown): Promise<unknown>; screenshot(o: unknown): Promise<Uint8Array> };
+type PwPage = { goto(u: string, o: unknown): Promise<unknown>; waitForTimeout(ms: number): Promise<void>; screenshot(o: unknown): Promise<Uint8Array> };
 
 registerIngestor("image", async (input, i, o) => {
   if (input.type !== "image") throw new Error("bad input");
@@ -252,7 +253,7 @@ registerIngestor("url", async (input, i, o) => {
   const e = make(input, i, text, { label: input.label ?? title ?? input.url, source: input.url, json }, o.maxChars);
   if (input.screenshot) {
     const so = typeof input.screenshot === "object" ? input.screenshot : {};
-    const shot = o.screenshot ? await o.screenshot(input.url, { width: so.width ?? 1280, height: so.height ?? 800, fullPage: so.fullPage ?? false }) : null;
+    const shot = o.screenshot ? await o.screenshot(input.url, { width: so.width ?? 1280, height: so.height ?? 800, fullPage: so.fullPage ?? false, settleMs: so.settleMs ?? 1500 }) : null;
     if (shot) {
       attachImages(e, [shot]);
       e.text += `\n\n[screenshot of ${input.url} attached: ${describeImage(e.images!.at(-1)!)}]`;

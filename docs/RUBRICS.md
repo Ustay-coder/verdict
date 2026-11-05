@@ -170,7 +170,7 @@ inputs:
   - { type: file, path: ./deck.pdf }                  # CLI / MCP local; API needs VERDICT_ALLOW_LOCAL_FILES=1
   - { type: file, base64: "...", filename: deck.pdf, mimeType: application/pdf }
   - { type: url, url: https://acme.example, tags: [site] }
-  - { type: url, url: http://localhost:5173/, screenshot: true }        # + screenshot ({ width, height, fullPage } optional)
+  - { type: url, url: http://localhost:5173/, screenshot: true }        # + screenshot ({ width, height, fullPage, settleMs } optional; settleMs defaults to 1500)
   - { type: image, path: ./dashboard.png, tags: [ui] }                  # PNG / JPEG / WebP, path or base64 (data URI ok)
   - { type: youtube, url: https://youtu.be/VIDEO, lang: en, tags: [video] }
 ```

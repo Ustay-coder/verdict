@@ -1,0 +1,60 @@
+# Phase 1 of the v2 routine (examples/demo/ui-loop/PRINCIPLES.md): score the design brief before any UI work.
+# Inputs:  -i brief=BRIEF.md  -i data=data.json
+name: Dashboard design brief
+version: "1"
+description: Is this brief specific enough to design a dashboard from, and honest about the data it has?
+context: |
+  You review a short design brief for an analytics dashboard, written before any UI work. A good brief names who
+  opens the dashboard and when, lists their questions in priority order, defines what counts as "needs attention"
+  using only the data available, and says what the page will leave out. It never invents targets or metrics that the
+  data does not contain.
+language: en
+scale: { type: numeric, min: 1, max: 5 }
+defaultJudge: { type: decision, provider: typesafe, model: jev-latest }
+criteria:
+  - id: audience
+    name: Names the user and the moment of use
+    weight: 1
+    inputs: [brief]
+    levels:
+      - { value: 1, label: none, description: "No user or vague ('stakeholders', 'the team')" }
+      - { value: 3, label: role, description: "Names a role but not when or why they open it" }
+      - { value: 5, label: moment, description: "Names a role and the moment of use (e.g. the founder's Monday check-in) and what they decide afterwards" }
+  - id: questions
+    name: Three questions, ranked, answerable from the data
+    weight: 3
+    inputs: [brief, data]
+    levels:
+      - { value: 1, label: none, description: "No questions, or generic goals ('show key metrics')" }
+      - { value: 3, label: unranked, description: "Questions are listed but unranked, vague, or not answerable from data.json" }
+      - { value: 5, label: ranked, description: "Three specific questions in priority order, each answerable from data.json" }
+  - id: attention
+    name: Defines what needs attention
+    weight: 2
+    inputs: [brief, data]
+    levels:
+      - { value: 1, label: none, description: "Says nothing about what should be flagged" }
+      - { value: 3, label: vague, description: "Mentions flagging problems without saying which ones" }
+      - { value: 5, label: defined, description: "Names concrete conditions from the data (e.g. any cancellation, the churn rate) and how they are flagged" }
+  - id: cuts
+    name: Says what the page leaves out
+    weight: 1
+    inputs: [brief]
+    levels:
+      - { value: 1, label: none, description: "No cuts: everything in the data will be shown" }
+      - { value: 5, label: cuts, description: "Names data or elements deliberately left out, and why" }
+  - id: honest
+    name: No invented targets or metrics
+    weight: 0
+    inputs: [brief, data]
+    scale: { type: binary, labels: [no, yes] }
+    anchors:
+      yes: "Every target, threshold or metric mentioned exists in data.json or is a stated rule (e.g. 'flag every cancellation')"
+      no: "Invents a target, budget, goal or metric that data.json does not contain"
+aggregation:
+  method: weighted_mean
+  normalize: [0, 100]
+  precision: 0
+  gates: [{ criterion: honest, min: 1, message: "The brief invents a target or metric" }]
+  grades: [{ label: ready, min: 80 }, { label: revise, min: 0 }]
+  passThreshold: 80

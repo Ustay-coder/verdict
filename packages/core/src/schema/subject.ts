@@ -5,6 +5,8 @@ export const ScreenshotOptions = z.object({
   width: z.number().int().min(320).max(2560).optional(),
   height: z.number().int().min(240).max(4096).optional(),
   fullPage: z.boolean().optional(),
+  /** Wait this long after load before capturing, so entrance and count-up animations finish (default 1500). */
+  settleMs: z.number().int().min(0).max(10_000).optional(),
 });
 export type ScreenshotOptions = z.infer<typeof ScreenshotOptions>;
 

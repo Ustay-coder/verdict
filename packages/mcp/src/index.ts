@@ -20,7 +20,7 @@ const InputSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("text"), text: z.string(), label: z.string().optional(), tags: z.array(z.string()).optional() }),
   z.object({ type: z.literal("json"), data: z.unknown(), label: z.string().optional(), tags: z.array(z.string()).optional() }),
   z.object({ type: z.literal("file"), path: z.string().optional(), base64: z.string().optional(), filename: z.string().optional(), mimeType: z.string().optional(), label: z.string().optional(), tags: z.array(z.string()).optional() }),
-  z.object({ type: z.literal("url"), url: z.string(), screenshot: z.union([z.boolean(), z.object({ width: z.number().optional(), height: z.number().optional(), fullPage: z.boolean().optional() })]).optional().describe("Also attach a screenshot for vision-capable judges (Clef)"), label: z.string().optional(), tags: z.array(z.string()).optional() }),
+  z.object({ type: z.literal("url"), url: z.string(), screenshot: z.union([z.boolean(), z.object({ width: z.number().optional(), height: z.number().optional(), fullPage: z.boolean().optional(), settleMs: z.number().optional() })]).optional().describe("Also attach a screenshot for vision-capable judges (Clef)"), label: z.string().optional(), tags: z.array(z.string()).optional() }),
   z.object({ type: z.literal("image"), path: z.string().optional(), base64: z.string().optional(), filename: z.string().optional(), mimeType: z.string().optional(), label: z.string().optional(), tags: z.array(z.string()).optional() }),
   z.object({ type: z.literal("youtube"), url: z.string(), label: z.string().optional(), tags: z.array(z.string()).optional(), lang: z.string().optional() }),
 ]);
