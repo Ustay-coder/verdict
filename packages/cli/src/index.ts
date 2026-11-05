@@ -46,13 +46,13 @@ export function renderReport(ev: Evaluation): string {
     const s = typeof c.score === "number" ? `${fmt(c.score, 2)} (${fmt((c.normalized ?? 0) * 100, 0)}%)` : c.status;
     lines.push(`  ${c.name.padEnd(w)}  w=${c.weight}  ${s}${c.pending ? `  [${c.pending} pending]` : ""}${c.gate && !c.gate.passed ? "  GATE FAILED" : ""}`);
     const r = c.ratings.find((x) => x.rationale);
-    if (r?.rationale) lines.push(`  ${"".padEnd(w)}  ${r.rationale.replace(/\s+/g, " ").slice(0, 160)}`);
+    if (r?.rationale) lines.push(`  ${"".padEnd(w)}  ${r.rationale.replace(/\s+/g, " ").slice(0, 160)}${typeof r.confidence === "number" ? `  [conf ${r.confidence.toFixed(2)}]` : ""}`);
     for (const e of c.ratings.filter((x) => x.status === "error")) lines.push(`  ${"".padEnd(w)}  error(${e.raterId}): ${e.error}`);
   }
   if (ev.pendingTasks.length) { lines.push(""); lines.push(`waiting on humans: ${ev.pendingTasks.map((t) => `${t.criterionId} (${t.raterId ?? (t.allowedRaters ? `one of ${t.allowedRaters.join("|")}` : "anyone")})`).join(", ")}`); lines.push(`  submit with: verdict score ${ev.id} <criterionId> --rater <id> --score <n>`); }
   if (ev.error) lines.push(`error: ${ev.error}`);
   lines.push("");
-  lines.push(`llm calls: ${ev.usage.llmCalls}  tokens in/out: ${ev.usage.inputTokens}/${ev.usage.outputTokens}  ${ev.usage.durationMs}ms`);
+  lines.push(`decision calls: ${ev.usage.decisionCalls}  llm calls: ${ev.usage.llmCalls}  tokens in/out: ${ev.usage.inputTokens}/${ev.usage.outputTokens}  ${ev.usage.durationMs}ms`);
   return lines.join("\n");
 }
 
@@ -66,20 +66,24 @@ language: en
 scale: { type: numeric, min: 1, max: 5 }
 
 judges:
+  # Decision models answer every criterion in ONE call: state + typed questions -> probabilities (no prose).
+  jev:   { type: decision, provider: typesafe, model: jev-latest, minConfidence: 0.35, onLowConfidence: human, escalateTo: [partner_a, partner_b] }
+  clef:  { type: decision, provider: cloudflare, model: "@cf/cloudflare/clef-flash" }
+  # Generative judge: slower, costs more, but returns a rationale and quotes. Use it where you need an explanation.
   claude: { type: llm, provider: anthropic, model: claude-opus-5-5, effort: medium }
-  fast:   { type: llm, provider: anthropic, model: claude-haiku-5-5, samples: 3 }
   partner:
     type: human
     raters: [partner_a, partner_b]
     required: 1
     instructions: Rate founder-market fit from the deck and any call notes.
 
-defaultJudge: { type: ref, ref: claude }
+defaultJudge: { type: ref, ref: jev }
 
 criteria:
   - id: problem
     name: Problem clarity
     weight: 2
+    # Anchors become the ordered rubric levels the decision model scores on (2-10 levels).
     anchors:
       "1": No clear problem stated
       "3": Problem stated but audience/urgency vague
@@ -91,12 +95,17 @@ criteria:
       type: panel
       combine: mean
       judges:
-        - { type: ref, ref: claude }
+        - { type: ref, ref: jev }
+        - { type: ref, ref: clef }
         - { type: benchmark, method: keywords, keywords: [revenue, users, customers, retention, MRR, ARR], mode: ratio }
   - id: team
     name: Team
     weight: 1.5
     judge: { type: ref, ref: partner }
+  - id: why_now
+    name: Why now (needs an explanation for the memo)
+    weight: 1
+    judge: { type: ref, ref: claude }
   - id: deck_length
     name: Deck is concise
     weight: 0.5
@@ -143,7 +152,7 @@ export function buildCli() {
     .option("--json", "print the full evaluation as JSON")
     .option("--evidence", "include ingested evidence text in JSON output")
     .option("--webhook <url>", "POST the result when complete")
-    .option("--mock", "use the mock LLM provider (no API calls) — overrides every llm judge")
+    .option("--mock", "use mock providers (no API calls) — overrides every decision and llm judge")
     .action(async (o) => {
       let rubric = await loadRubric(o.rubric);
       if (o.mock && typeof rubric !== "string") rubric = mockify(rubric);
@@ -241,12 +250,12 @@ export function buildCli() {
   return program;
 }
 
-/** Replace every llm judge with the mock provider (for dry runs / CI). */
+/** Replace every decision / llm judge with its mock provider (for dry runs / CI). */
 export function mockify(rubric: Rubric): Rubric {
   const walk = (j: unknown): unknown => {
     if (!j || typeof j !== "object") return j;
     const o = j as Record<string, unknown>;
-    if (o.type === "llm") return { ...o, provider: "mock" };
+    if (o.type === "llm" || o.type === "decision") return { ...o, provider: "mock" };
     if (o.type === "panel") return { ...o, judges: (o.judges as unknown[]).map(walk) };
     return j;
   };

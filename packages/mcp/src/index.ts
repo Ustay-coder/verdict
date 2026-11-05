@@ -33,7 +33,7 @@ function summarize(ev: Evaluation | Record<string, unknown>) {
     grade: e.aggregate?.grade,
     passed: e.aggregate?.passed,
     partial: e.aggregate?.partial,
-    criteria: e.criteria?.map((c) => ({ id: c.criterionId, name: c.name, status: c.status, score: c.score, normalized: c.normalized, pending: c.pending, rationale: c.ratings?.find((r) => r.rationale)?.rationale, quotes: c.ratings?.flatMap((r) => r.quotes ?? []).slice(0, 3) })),
+    criteria: e.criteria?.map((c) => ({ id: c.criterionId, name: c.name, status: c.status, score: c.score, normalized: c.normalized, pending: c.pending, confidence: c.ratings?.find((r) => typeof r.confidence === "number")?.confidence, probabilities: c.ratings?.find((r) => r.probabilities)?.probabilities, rationale: c.ratings?.find((r) => r.rationale)?.rationale, quotes: c.ratings?.flatMap((r) => r.quotes ?? []).slice(0, 3) })),
     pendingTasks: e.pendingTasks,
     error: e.error,
     usage: e.usage,
@@ -45,7 +45,7 @@ export function createMcpServer(opts: McpOptions = {}) {
   const client = mode === "remote" ? new Verdict({ baseUrl: opts.apiUrl ?? process.env.VERDICT_API_URL, apiKey: opts.apiKey ?? process.env.VERDICT_API_KEY }) : undefined;
   const engine = mode === "local" ? new Engine({ store: (opts.dataDir ?? process.env.VERDICT_DATA_DIR) ? new FileStore(opts.dataDir ?? process.env.VERDICT_DATA_DIR!) : new MemoryStore(), ingest: { allowLocalFiles: opts.allowLocalFiles ?? true } }) : undefined;
 
-  const server = new McpServer({ name: "verdict", version: "0.1.0" }, { instructions: "Verdict scores documents, websites, YouTube videos, JSON and text against customizable rubrics using LLM, human and benchmark judges. Create or inline a rubric, then call evaluate." });
+  const server = new McpServer({ name: "verdict", version: "0.1.0" }, { instructions: "Verdict scores documents, websites, YouTube videos, JSON and text against customizable rubrics. Judges: decision models (Jev / Clef / OpenAI Decisions — typed questions, probabilities, one call per rubric), humans, deterministic benchmarks, optional generative LLM for rationales. Create or inline a rubric, then call evaluate." });
   const text = (v: unknown) => ({ content: [{ type: "text" as const, text: JSON.stringify(v, null, 2) }] });
 
   server.registerTool("validate_rubric", {
@@ -59,7 +59,7 @@ export function createMcpServer(opts: McpOptions = {}) {
 
   server.registerTool("create_rubric", {
     title: "Create rubric",
-    description: "Store a rubric and get back its id for reuse. Criteria need id/name; optional weight, scale, anchors, judge ({type: llm|human|benchmark|panel}). Aggregation supports weighted_mean, weighted_sum, mean, median, min, max, geometric_mean, formula; gates; grades; passThreshold.",
+    description: "Store a rubric and get back its id for reuse. Criteria need id/name; optional weight, scale, anchors (= rubric levels for decision models), judge ({type: decision|human|benchmark|llm|panel}; default decision/typesafe). Aggregation supports weighted_mean, weighted_sum, mean, median, min, max, geometric_mean, formula; gates; grades; passThreshold.",
     inputSchema: { rubric: z.union([z.string(), z.record(z.string(), z.unknown())]) },
   }, async ({ rubric }) => {
     const parsed = typeof rubric === "string" ? loadRubricText(rubric) : parseRubric(rubric);

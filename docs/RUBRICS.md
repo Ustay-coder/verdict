@@ -10,7 +10,7 @@ context: string                   # who is evaluating what and why — strongly 
 language: en | ko | ...           # rationale language (default: follow the inputs)
 scale: <Scale>                    # default scale, default numeric 0..10
 judges: { <name>: <Judge> }       # reusable judges, referenced with { type: ref, ref: <name> }
-defaultJudge: <Judge>             # used by criteria without `judge`; default { type: llm, provider: anthropic }
+defaultJudge: <Judge>             # used by criteria without `judge`; default { type: decision, provider: typesafe }
 criteria: [ <Criterion>, ... ]    # at least one
 aggregation: <Aggregation>
 metadata: {}                      # yours
@@ -31,9 +31,13 @@ Humans may submit labels (`"excellent"`, `"pass"`) or numbers; LLMs are told the
   description: What a strong answer contains…
   weight: 2                   # default 1; 0 = reported but excluded from totals (still usable in gates)
   scale: <Scale>              # override rubric scale
-  anchors:                    # what each level looks like — the single biggest lever for LLM consistency
+  anchors:                    # what each level looks like — for decision models these ARE the rubric levels
     "1": No clear problem stated
+    "3": Problem stated but audience or urgency vague
     "5": "Specific, painful, quantified problem for a named audience"
+  levels:                     # explicit alternative to anchors: ordered worst → best, 2–10 entries, value on the scale
+    - { value: 1, label: none, description: No clear problem stated }
+    - { value: 5, label: sharp, description: Specific, quantified problem for a named audience }
   judge: <Judge> | [<Judge>, <Judge>]   # several = independent ratings, combined by `rater`
   rater: mean | median | trimmed_mean | min | max | majority   # override aggregation.rater
   inputs: [deck, brief]       # only evidence whose tag or label matches is shown to this criterion
@@ -43,7 +47,33 @@ Humans may submit labels (`"excellent"`, `"pass"`) or numbers; LLMs are told the
 
 ## Judges
 
-### `llm` — Decision AI
+### `decision` — decision models (default)
+```yaml
+{ type: decision, provider: typesafe | cloudflare | openrouter | openai | systemone | mock,
+  model: jev-latest, baseUrl: https://…, apiKeyEnv: MY_KEY,
+  instructions: "Extra guidance merged into every question",
+  minConfidence: 0.35, onLowConfidence: accept | human | error, escalateTo: [alice, bob],
+  options: { accountId: "…", … } }
+```
+How a criterion becomes a question:
+- numeric / ordinal scale → `score` question whose ordered `criteria` are the criterion's **levels** (`levels` → `anchors` → ordinal labels → auto-buckets). The answer's per-level probabilities give an expected value on the scale (`Σ p_i · value_i`), snapped to `step` / ordinal values; `probabilities` and `confidence` are stored on the rating.
+- binary scale → `noul` question; `anchors` keyed by the two labels (or `"0"` / `"1"`) describe the false / true cases. `confidence = |2p − 1|`.
+- All criteria that share one decision judge spec **and** the same evidence are sent in a single request.
+
+Providers and their env vars:
+
+| provider | endpoint | key | default model |
+| --- | --- | --- | --- |
+| `typesafe` | `https://api.typesafe.ai/v1/systemone` | `TYPESAFE_API_KEY` | `jev-latest` (`VERDICT_TYPESAFE_MODEL`) |
+| `cloudflare` | `…/accounts/{CLOUDFLARE_ACCOUNT_ID}/ai/run/{model}` (or `baseUrl` = AI Gateway) | `CLOUDFLARE_API_TOKEN` | `@cf/cloudflare/clef` (`clef-flash`, `typesafe/jev`) |
+| `openrouter` | `https://openrouter.ai/api/alpha/decisions` | `OPENROUTER_API_KEY` | `typesafe/jev-1.13` |
+| `openai` | `https://api.openai.com/v1/decisions` (`noul` sent as `predicate`) | `OPENAI_API_KEY` | `gpt-6-luna` |
+| `systemone` | `baseUrl` + `/systemone` | `SYSTEMONE_API_KEY` | `jev-latest` |
+| `mock` | in-process | — | options: `level`, `normalized`, `probabilities`, `noul` |
+
+Limits to design around (Jev 1.13 public figures): 64k tokens per request, 32k for state + longest question, 2–10 score levels, text-only state. Decision models do not explain themselves; pair a criterion with an `llm` judge when a written rationale is required.
+
+### `llm` — generative judge (optional)
 ```yaml
 { type: llm, provider: anthropic | openai | cloudflare | http | mock,
   model: claude-opus-5-5, effort: low|medium|high|xhigh|max, samples: 3,
@@ -55,6 +85,7 @@ Humans may submit labels (`"excellent"`, `"pass"`) or numbers; LLMs are told the
 - `cloudflare`: Workers AI REST (`CLOUDFLARE_ACCOUNT_ID` + token) or an AI Gateway via `baseUrl`.
 - `http`: POST `{system, user, criterion, scale, evidence, schema}` to your service; respond `{score, confidence?, rationale?, quotes?}`.
 - `samples > 1`: self-consistency — median score, confidence reduced by disagreement.
+- Use it for criteria that need a written rationale or quotes; decision models are faster and cheaper for the score itself.
 
 ### `human`
 ```yaml

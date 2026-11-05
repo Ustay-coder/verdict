@@ -4,9 +4,11 @@ import { aggregateNumbers, denormalizeScore, normalizeScore } from "../aggregate
 import { BenchmarkJudge } from "./benchmark.js";
 import { HumanJudge } from "./human.js";
 import { LlmJudge } from "./llm.js";
+import { DecisionJudge } from "./decision.js";
 import { type Judge, type JudgeContext, ratingBase } from "./types.js";
 
 export * from "./types.js";
+export * from "./decision.js";
 export * from "./llm.js";
 export * from "./benchmark.js";
 export * from "./human.js";
@@ -53,6 +55,7 @@ export function buildJudge(spec: JudgeSpec, rubric: Rubric): Judge {
       const j = buildJudge(target, rubric);
       return Object.assign(Object.create(Object.getPrototypeOf(j)), j, { id: spec.ref });
     }
+    case "decision": return new DecisionJudge(spec);
     case "llm": return new LlmJudge(spec);
     case "human": return new HumanJudge(spec);
     case "benchmark": return new BenchmarkJudge(spec);

@@ -9,7 +9,7 @@ const rubric = parseRubric({ name: "r", criteria: [{ id: "x", name: "Clarity", a
 const ctx = (text: string, json?: unknown): JudgeContext => ({
   rubric, criterion: rubric.criteria[0]!, scale: rubric.scale,
   evidence: [{ inputIndex: 0, kind: "text", label: "doc", tags: ["doc"], text, json, stats: stats(text) }],
-  evaluationId: "e", env: () => undefined, fetch: globalThis.fetch, usage: { llmCalls: 0, inputTokens: 0, outputTokens: 0 },
+  evaluationId: "e", env: () => undefined, fetch: globalThis.fetch, usage: { decisionCalls: 0, llmCalls: 0, inputTokens: 0, outputTokens: 0 },
 });
 
 describe("benchmark judge", () => {

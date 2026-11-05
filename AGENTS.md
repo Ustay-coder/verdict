@@ -1,7 +1,7 @@
 # Verdict — instructions for coding agents (Codex CLI, Claude Code, …)
 
-Verdict is an evaluation engine: rubrics (criteria × scales × anchors) are scored by pluggable judges
-(`llm` / `human` / `benchmark` / `panel`) and rolled up by a configurable aggregation. Surfaces: REST (Hono), CLI, MCP, SDK.
+Verdict is an evaluation engine: rubrics (criteria × scales × levels) are scored by pluggable judges
+(`decision` models such as Jev / Clef — the default — plus `human` / `benchmark` / `llm` / `panel`) and rolled up by a configurable aggregation. Surfaces: REST (Hono), CLI, MCP, SDK.
 Read `docs/ARCHITECTURE.md` before changing the engine and `docs/RUBRICS.md` before changing the schema.
 
 ## Working in this repo
@@ -13,6 +13,8 @@ Read `docs/ARCHITECTURE.md` before changing the engine and `docs/RUBRICS.md` bef
 
 ## Invariants (do not break)
 - Judges never throw; they return `status: "error"` or `status: "pending"` ratings (`packages/core/src/judges/types.ts`).
+- Decision models are the primary judge: a criterion maps to one `score` (ordered levels) or `noul` (binary) question, and all criteria sharing a judge spec + evidence go out in ONE request (`rateMany` / `batchKey` in `packages/core/src/judges/decision.ts`). Never add per-criterion round trips there.
+- Ratings from decision models keep `probabilities` and `confidence`; respect `minConfidence` / `onLowConfidence` escalation.
 - Every score keeps a raw value in the criterion's scale **and** a normalized 0..1 value; aggregation works on normalized unless the method says otherwise.
 - An evaluation freezes its rubric; `reaggregate` must never call judges.
 - Rubrics never contain secrets — judges reference env vars via `apiKeyEnv`.

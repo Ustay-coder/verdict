@@ -1,8 +1,10 @@
 # Verdict — the evaluation engine API
 
-**Score anything, your way.** Send documents, websites, YouTube links, JSON or raw text; define *what* to grade (criteria), *who* grades it (Decision AI, humans, or deterministic benchmarks) and *how* scores roll up (aggregation). Get a number, a grade, a pass/fail and a rationale back in one call — via REST, CLI, MCP or the TypeScript SDK.
+**Score anything, your way.** Send documents, websites, YouTube links, JSON or raw text; define *what* to grade (criteria), *who* grades it (decision models such as Jev or Clef, humans, deterministic benchmarks) and *how* scores roll up (aggregation). Get a number, a grade, a pass/fail and per-criterion probability distributions back in one call — via REST, CLI, MCP or the TypeScript SDK.
 
 Think "Resend for evaluation": one small, well-typed API that every product with a grading step can call.
+
+**Built on decision models, not chat models.** A rubric is a set of typed questions. Decision models ("System One" models: TypeSafe **Jev**, Cloudflare **Clef** / Clef-flash, OpenAI **Decisions API**, Inception Mercury Decide, …) take a `state` plus typed questions and return calibrated probabilities over the allowed answers in ~100–500 ms, with no prose to parse, at a fraction of LLM cost. Verdict turns every criterion into one `score` (ordered rubric levels) or `noul` (yes/no probability) question and answers the **whole rubric in a single request**. Generative LLMs remain available as an optional judge where you need a written rationale.
 
 ```
 POST /v1/evaluations
@@ -25,7 +27,7 @@ Every hiring pipeline, accelerator, grant committee, school, hackathon, content 
 | --- | --- |
 | **Any input** | `text`, `json`, `file` (PDF/MD/TXT/CSV/HTML/JSON — path or base64), `url`, `youtube` (transcript + description). Ingestors are pluggable. |
 | **Any criteria** | Numeric / binary / ordinal scales per criterion, weights, anchors (level descriptions), groups, optional criteria, per-criterion input filters. |
-| **Any judge** | `llm` (Anthropic by default; OpenAI-compatible; Cloudflare Workers AI; any HTTP decision endpoint), `human` (multi-rater, inbox, submit via API), `benchmark` (regex, keywords, length, JSON path, formula, similarity, external scorer), `panel` (combine several judges: mean/median/min/max/majority). Mix freely per criterion. |
+| **Any judge** | `decision` (**default** — Jev via TypeSafe, Clef on Cloudflare Workers AI, OpenRouter, OpenAI Decisions, any `/v1/systemone`-compatible endpoint; per-level probabilities, confidence gates, escalation to humans), `human` (multi-rater, inbox, submit via API), `benchmark` (regex, keywords, length, JSON path, formula, similarity, external scorer), `llm` (generative judge with rationale + quotes), `panel` (combine several judges: mean/median/min/max/majority). Mix freely per criterion. |
 | **Any aggregation** | `weighted_mean`, `weighted_sum`, `mean`, `median`, `min`, `max`, `geometric_mean`, or a custom **formula** over criterion scores. Rater aggregation (mean/median/trimmed/majority), gates, grades/tiers, pass thresholds, missing-score policy, output range. Re-aggregate any past evaluation without re-judging. |
 | **Any surface** | REST API (Node or Cloudflare Workers), `verdict` CLI, MCP server (for agents), TypeScript SDK. Multi-tenant API keys, webhooks with HMAC signatures, batches with rankings. |
 
@@ -33,10 +35,10 @@ Every hiring pipeline, accelerator, grant committee, school, hackathon, content 
 
 ```bash
 pnpm install && pnpm build
-export ANTHROPIC_API_KEY=sk-ant-...          # default judge; or use --mock / benchmark-only rubrics
+export TYPESAFE_API_KEY=...                  # default judge (Jev). Or CLOUDFLARE_* for Clef, or --mock / benchmark-only rubrics
 
 # 1. a rubric
-pnpm verdict rubric init rubric.yaml           # starter: LLM + human + benchmark + panel judges
+pnpm verdict rubric init rubric.yaml           # starter: decision (Jev + Clef) + human + benchmark + generative judges
 pnpm verdict rubric validate rubric.yaml
 
 # 2. evaluate (CLI, local engine, results persisted in ./.verdict)
@@ -93,14 +95,18 @@ Tools: `validate_rubric`, `create_rubric`, `list_rubrics`, `evaluate`, `compare`
 name: Startup pitch review
 scale: { type: numeric, min: 1, max: 5 }
 judges:
-  claude:  { type: llm, provider: anthropic, model: claude-opus-5-5, effort: medium }
+  jev:     { type: decision, provider: typesafe, model: jev-latest, minConfidence: 0.35, onLowConfidence: human, escalateTo: [partner_a] }
+  clef:    { type: decision, provider: cloudflare, model: "@cf/cloudflare/clef-flash" }
   partner: { type: human, raters: [partner_a, partner_b], required: 1 }
-defaultJudge: { type: ref, ref: claude }
+defaultJudge: { type: ref, ref: jev }
 criteria:
   - id: problem
     name: Problem clarity
     weight: 2
-    anchors: { "1": No clear problem, "3": Stated but vague, "5": "Specific, painful, quantified" }
+    anchors:                       # anchors ARE the rubric levels the decision model scores on
+      "1": No clear problem
+      "3": Stated but vague
+      "5": "Specific, painful, quantified"
   - id: traction
     name: Traction evidence
     weight: 2
@@ -108,8 +114,12 @@ criteria:
       type: panel
       combine: mean
       judges:
-        - { type: ref, ref: claude }
+        - { type: ref, ref: jev }
+        - { type: ref, ref: clef }
         - { type: benchmark, method: keywords, keywords: [revenue, users, retention, MRR], mode: ratio }
+  - id: safe
+    name: Brand safe
+    scale: { type: binary, labels: [unsafe, safe] }      # → a noul (yes/no probability) question
   - id: team
     name: Team
     weight: 1.5
@@ -121,6 +131,8 @@ aggregation:
   grades: [{ label: invite, min: 75 }, { label: maybe, min: 55 }, { label: pass, min: 0 }]
   passThreshold: 55
 ```
+
+What happens on `POST /v1/evaluations`: inputs are ingested into one `state`; `problem`, `safe` (and any other criterion on the `jev` judge) go out as **one** System One request with a `score` question per criterion and a `noul` question for the binary one; the response's per-level probabilities become an expected score on the criterion scale plus a `confidence`; answers under `minConfidence` are handed to a human; `traction` runs its panel; the aggregation produces the total, grade and pass/fail. Everything arrives in a few hundred milliseconds unless a human is in the loop.
 
 Full reference: [docs/RUBRICS.md](docs/RUBRICS.md). Design and extension points: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). More examples in [examples/rubrics](examples/rubrics).
 
@@ -145,10 +157,13 @@ Auth: `Authorization: Bearer <key>`; keys map to tenants via `VERDICT_API_KEYS="
 
 | Env | Meaning |
 | --- | --- |
-| `ANTHROPIC_API_KEY` | Default LLM judge (Claude). `VERDICT_ANTHROPIC_MODEL` overrides the model (default `claude-opus-5-5`). |
-| `OPENAI_API_KEY`, `OPENAI_BASE_URL`, `OPENAI_MODEL` | `provider: openai` — any OpenAI-compatible endpoint |
-| `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_AI_MODEL` | `provider: cloudflare` (Workers AI / AI Gateway) |
-| `VERDICT_HTTP_JUDGE_URL`, `VERDICT_HTTP_JUDGE_KEY` | `provider: http` — your own decision model behind a URL |
+| `TYPESAFE_API_KEY` | `decision` / `typesafe` — Jev (default judge). `VERDICT_TYPESAFE_MODEL` (default `jev-latest`) |
+| `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_API_TOKEN` | `decision` / `cloudflare` — Clef, Clef-flash, `typesafe/jev` on Workers AI. `VERDICT_CLOUDFLARE_MODEL` (default `@cf/cloudflare/clef`) |
+| `OPENROUTER_API_KEY` | `decision` / `openrouter` — `typesafe/jev-1.13`, `inception/mercury-decide`, … |
+| `OPENAI_API_KEY` | `decision` / `openai` — Decisions API (`gpt-6-luna`); also the `llm` / `openai` generative judge |
+| `SYSTEMONE_BASE_URL`, `SYSTEMONE_API_KEY` | `decision` / `systemone` — any endpoint speaking the `/v1/systemone` shape (self-hosted Clef, DigitalOcean, gateways) |
+| `ANTHROPIC_API_KEY` | `llm` / `anthropic` generative judge (rationales). `VERDICT_ANTHROPIC_MODEL` (default `claude-opus-5-5`) |
+| `VERDICT_HTTP_JUDGE_URL`, `VERDICT_HTTP_JUDGE_KEY` | `llm` / `http` — a prompted judge behind your own URL |
 | `VERDICT_API_KEYS` | `key:tenant,key2:tenant2` for the API |
 | `VERDICT_DATA_DIR` | Persist to JSON files (CLI default `./.verdict`; API default memory) |
 | `VERDICT_WEBHOOK_SECRET` | HMAC signing of webhook deliveries |
@@ -191,6 +206,6 @@ pnpm typecheck
 
 ## Status
 
-v0.1 — working engine, API, CLI, MCP, SDK with in-memory and file stores. See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#roadmap) for what's next (Postgres/D1 stores, calibration & inter-rater stats, image/video frames, rubric versioning UI).
+v0.2 — decision-model-first engine (Jev / Clef / OpenAI Decisions / System One-compatible), API, CLI, MCP, SDK with in-memory and file stores. Provider request shapes for TypeSafe and Cloudflare follow their public documentation; OpenAI Decisions and OpenRouter adapters follow public write-ups of the beta and parse defensively — pin `baseUrl`/`options` if a shape differs. See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#roadmap) for what's next.
 
 MIT.

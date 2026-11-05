@@ -13,7 +13,7 @@ export interface JudgeContext {
   env: (name: string) => string | undefined;
   fetch: typeof fetch;
   signal?: AbortSignal;
-  usage: { llmCalls: number; inputTokens: number; outputTokens: number };
+  usage: { decisionCalls: number; llmCalls: number; inputTokens: number; outputTokens: number };
 }
 
 /** A judge produces one or more ratings for a criterion. Pending ratings mean "waiting on a human". */
@@ -23,6 +23,13 @@ export interface Judge {
   /** Number of ratings this judge is expected to eventually produce. */
   expectedRatings(): number;
   rate(ctx: JudgeContext): Promise<Rating[]>;
+  /**
+   * Optional: answer several criteria that share the same evidence in ONE call (decision models fan out
+   * every question over one `state`). Keyed by criterion id. The engine groups by `batchKey()`.
+   */
+  rateMany?(ctxs: JudgeContext[]): Promise<Map<string, Rating[]>>;
+  /** Judges with equal batch keys and equal evidence are batched together. */
+  batchKey?(): string;
 }
 
 export function newRatingId() {

@@ -1,10 +1,12 @@
-# Academic essay grading — ordinal scale, LLM judge with 3 self-consistency samples, gate on plagiarism-style check.
+# Academic essay grading — ordinal levels scored by a decision model in one call; a generative judge adds feedback prose.
 name: Essay grading
-version: "2"
-context: Grade an undergraduate argumentative essay. Target audience is a first-year writing seminar.
-language: en
+version: "3"
+context: Grade an undergraduate argumentative essay for a first-year writing seminar.
 scale: { type: ordinal, labels: [poor, developing, proficient, excellent] }
-defaultJudge: { type: llm, provider: anthropic, model: claude-opus-5-5, samples: 3, effort: medium }
+judges:
+  jev: { type: decision, provider: typesafe, model: jev-latest }
+  feedback: { type: llm, provider: anthropic, model: claude-opus-5-5, effort: medium, instructions: Write feedback the student can act on. }
+defaultJudge: { type: ref, ref: jev }
 criteria:
   - id: thesis
     name: Thesis & argument
@@ -17,9 +19,18 @@ criteria:
   - id: structure
     name: Organization
     weight: 2
+    anchors:
+      poor: Paragraphs lack topic sentences; order feels random
+      developing: Some structure but transitions are weak
+      proficient: Logical order with clear transitions
+      excellent: Structure actively strengthens the argument
   - id: style
     name: Style & mechanics
     weight: 1
+  - id: feedback
+    name: Written feedback (for the student)
+    weight: 0
+    judge: { type: ref, ref: feedback }
   - id: length
     name: Length requirement (800–1500 words)
     weight: 0

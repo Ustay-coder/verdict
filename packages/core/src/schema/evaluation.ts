@@ -8,14 +8,16 @@ export interface Rating {
   id: string;
   criterionId: string;
   raterId: string;
-  judgeType: "llm" | "human" | "benchmark" | "panel";
+  judgeType: "decision" | "llm" | "human" | "benchmark" | "panel";
   status: RatingStatus;
   /** Score in the criterion's own units (e.g. 0..10, or ordinal index). */
   score?: number;
   /** Score mapped to 0..1. */
   normalized?: number;
-  /** Judge's own confidence 0..1 when available. */
+  /** Judge's own confidence 0..1 when available (decision models: distribution concentration). */
   confidence?: number;
+  /** Probability per rubric level (decision models), keyed by level label. */
+  probabilities?: Record<string, number>;
   rationale?: string;
   /** Quoted evidence supporting the score. */
   quotes?: string[];
@@ -73,7 +75,7 @@ export interface Evaluation {
   /** Human tasks waiting on input. */
   pendingTasks: Array<{ criterionId: string; raterId?: string; allowedRaters?: string[]; instructions?: string }>;
   error?: string;
-  usage: { llmCalls: number; inputTokens: number; outputTokens: number; durationMs: number };
+  usage: { decisionCalls: number; llmCalls: number; inputTokens: number; outputTokens: number; durationMs: number };
   metadata?: Record<string, unknown>;
   webhook?: string;
   createdAt: string;

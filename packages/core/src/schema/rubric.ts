@@ -31,9 +31,46 @@ export type Scale = z.infer<typeof Scale>;
 /* Judges                                                              */
 /* ------------------------------------------------------------------ */
 
+/**
+ * Decision models ("System One" models: TypeSafe Jev, Cloudflare Clef, OpenAI Decisions, ...) take a `state`
+ * plus typed questions and return probability distributions — no prose. They are Verdict's primary judge.
+ */
+export const DecisionProvider = z.enum([
+  "typesafe",   // Jev via api.typesafe.ai  (TYPESAFE_API_KEY)
+  "cloudflare", // Clef / Clef-flash / typesafe/jev on Workers AI (CLOUDFLARE_ACCOUNT_ID + CLOUDFLARE_API_TOKEN)
+  "openrouter", // typesafe/jev-*, inception/mercury-decide, ... (OPENROUTER_API_KEY)
+  "openai",     // Decisions API (OPENAI_API_KEY) — predicate / choice / score
+  "systemone",  // any endpoint speaking the /v1/systemone request shape (self-hosted Clef, DigitalOcean, gateways)
+  "mock",       // deterministic fake for tests and dry runs
+]);
+export type DecisionProvider = z.infer<typeof DecisionProvider>;
+
+export const DecisionJudgeSpec = z.object({
+  type: z.literal("decision"),
+  id: z.string().optional(),
+  provider: DecisionProvider.default("typesafe"),
+  /** e.g. jev-latest, jev-1.13.0, @cf/cloudflare/clef, @cf/cloudflare/clef-flash, typesafe/jev-1.13, gpt-6-luna */
+  model: z.string().optional(),
+  /** Override the provider base URL (gateways, self-hosted). */
+  baseUrl: z.string().url().optional(),
+  /** Env var holding the API key. */
+  apiKeyEnv: z.string().optional(),
+  /** Extra guidance merged into every question's instructions. */
+  instructions: z.string().optional(),
+  /** Below this confidence the answer is not trusted (0..1). */
+  minConfidence: z.number().min(0).max(1).optional(),
+  /** What to do with low-confidence answers: keep them, hand the criterion to a human, or record an error. */
+  onLowConfidence: z.enum(["accept", "human", "error"]).default("accept"),
+  /** Human raters allowed to take over when onLowConfidence = human (empty = anyone). */
+  escalateTo: z.array(z.string()).default([]),
+  /** Provider passthrough (e.g. Cloudflare account id, request overrides). */
+  options: z.record(z.string(), z.unknown()).optional(),
+});
+
 export const LlmProvider = z.enum(["anthropic", "openai", "cloudflare", "http", "mock"]);
 export type LlmProvider = z.infer<typeof LlmProvider>;
 
+/** Generative (prompted) judge. Slower and pricier than a decision model, but it can explain itself. */
 export const LlmJudgeSpec = z.object({
   type: z.literal("llm"),
   id: z.string().optional(),
@@ -125,6 +162,7 @@ export const BenchmarkJudgeSpec = z
 export const PanelCombine = z.enum(["mean", "median", "min", "max", "majority"]);
 
 export type JudgeSpec =
+  | z.infer<typeof DecisionJudgeSpec>
   | z.infer<typeof LlmJudgeSpec>
   | z.infer<typeof HumanJudgeSpec>
   | z.infer<typeof BenchmarkJudgeSpec>
@@ -133,6 +171,7 @@ export type JudgeSpec =
 
 export const JudgeSpec: z.ZodType<JudgeSpec> = z.lazy(() =>
   z.union([
+    DecisionJudgeSpec,
     LlmJudgeSpec,
     HumanJudgeSpec,
     BenchmarkJudgeSpec,
@@ -199,8 +238,13 @@ export const Criterion = z.object({
   description: z.string().optional(),
   weight: z.number().min(0).default(1),
   scale: Scale.optional(),
-  /** Descriptions of what each level looks like, keyed by score or label. Strongly improves LLM judges. */
+  /** Descriptions of what each level looks like, keyed by score or label. Decision models score ON these levels. */
   anchors: z.record(z.string(), z.string()).optional(),
+  /**
+   * Explicit ordered rubric levels (worst → best) for decision models. Each level maps to a value on the scale.
+   * Derived automatically from `anchors` / ordinal labels / binary when omitted (2–10 levels).
+   */
+  levels: z.array(z.object({ value: z.number(), label: z.string().optional(), description: z.string() })).min(2).max(10).optional(),
   /** Judge(s) for this criterion; falls back to rubric.defaultJudge. Multiple = independent ratings. */
   judge: z.union([JudgeSpec, z.array(JudgeSpec)]).optional(),
   /** Rater aggregation override for this criterion. */
@@ -225,7 +269,7 @@ export const Rubric = z.object({
   language: z.string().optional(),
   scale: Scale.default({ type: "numeric", min: 0, max: 10 }),
   judges: z.record(z.string(), JudgeSpec).default({}),
-  defaultJudge: JudgeSpec.default({ type: "llm", provider: "anthropic", samples: 1 } as JudgeSpec),
+  defaultJudge: JudgeSpec.default({ type: "decision", provider: "typesafe", onLowConfidence: "accept", escalateTo: [] } as JudgeSpec),
   criteria: z.array(Criterion).min(1),
   aggregation: Aggregation.prefault({}),
   metadata: z.record(z.string(), z.unknown()).optional(),

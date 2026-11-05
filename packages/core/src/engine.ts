@@ -3,7 +3,7 @@ import { Aggregation, parseRubric, type Criterion, type JudgeSpec, type Rubric }
 import { Subject, type Evidence } from "./schema/subject.js";
 import type { AggregateResult, CriterionResult, Evaluation, Rating } from "./schema/evaluation.js";
 import { ingest, type IngestOptions } from "./ingest/index.js";
-import { buildJudge, type Judge, type JudgeContext } from "./judges/index.js";
+import { buildJudge, newRatingId, type Judge, type JudgeContext } from "./judges/index.js";
 import { aggregateCriteria, aggregateRatings, coerceScore, criterionScale, normalizeScore } from "./aggregate/index.js";
 import { MemoryStore, type Store, type StoredRubric } from "./store/index.js";
 
@@ -120,7 +120,7 @@ export class Engine {
       criteria: [],
       aggregate: emptyAggregate(rubric),
       pendingTasks: [],
-      usage: { llmCalls: 0, inputTokens: 0, outputTokens: 0, durationMs: 0 },
+      usage: { decisionCalls: 0, llmCalls: 0, inputTokens: 0, outputTokens: 0, durationMs: 0 },
       metadata: req.metadata,
       webhook: req.webhook,
       createdAt: now,
@@ -146,23 +146,37 @@ export class Engine {
     const ratingsByCriterion = new Map<string, Rating[]>();
     const expected = new Map<string, number>();
 
-    await mapLimit(rubric.criteria, this.concurrency, async (criterion) => {
+    // Build one context per (criterion, judge) and group batchable judges (decision models) by batch key + evidence.
+    type Unit = { criterion: Criterion; judge: Judge; ctx: JudgeContext };
+    const units: Unit[] = [];
+    for (const criterion of rubric.criteria) {
       const judges = this.judgesFor(rubric, criterion);
       expected.set(criterion.id, judges.reduce((s, j) => s + j.expectedRatings(), 0));
-      const ctx: JudgeContext = {
-        rubric, criterion,
-        scale: criterionScale(rubric, criterion),
-        evidence: criterion.inputs?.length ? ev.evidence.filter((e) => e.tags.some((t) => criterion.inputs!.includes(t)) || criterion.inputs!.includes(e.label)) : ev.evidence,
-        evaluationId: ev.id,
-        env: this.env,
-        fetch: this.fetchImpl,
-        signal: req.signal,
-        usage,
-      };
-      const ratings = (await Promise.all(judges.map((j) => j.rate(ctx)))).flat();
-      ratingsByCriterion.set(criterion.id, ratings);
-      this.onEvent?.({ type: "criterion.scored", evaluationId: ev.id, result: aggregateRatings(rubric, criterion, ratings, expected.get(criterion.id)!) });
-    });
+      ratingsByCriterion.set(criterion.id, []);
+      const evidence = criterion.inputs?.length ? ev.evidence.filter((e) => e.tags.some((t) => criterion.inputs!.includes(t)) || criterion.inputs!.includes(e.label)) : ev.evidence;
+      for (const judge of judges) {
+        units.push({ criterion, judge, ctx: { rubric, criterion, scale: criterionScale(rubric, criterion), evidence, evaluationId: ev.id, env: this.env, fetch: this.fetchImpl, signal: req.signal, usage } });
+      }
+    }
+    const groups = new Map<string, Unit[]>();
+    const singles: Unit[] = [];
+    for (const u of units) {
+      if (u.judge.rateMany && u.judge.batchKey) {
+        const key = `${u.judge.batchKey()}|${u.ctx.evidence.map((e) => e.inputIndex).join(",")}`;
+        groups.set(key, [...(groups.get(key) ?? []), u]);
+      } else singles.push(u);
+    }
+    const jobs: Array<() => Promise<void>> = [
+      ...[...groups.values()].map((g) => async () => {
+        const m = await g[0]!.judge.rateMany!(g.map((u) => u.ctx));
+        for (const u of g) ratingsByCriterion.get(u.criterion.id)!.push(...(m.get(u.criterion.id) ?? [{ ...ratingBaseFor(u), status: "error", error: "judge returned no rating" }]));
+      }),
+      ...singles.map((u) => async () => { ratingsByCriterion.get(u.criterion.id)!.push(...(await u.judge.rate(u.ctx))); }),
+    ];
+    await mapLimit(jobs, this.concurrency, (job) => job());
+    for (const criterion of rubric.criteria) {
+      this.onEvent?.({ type: "criterion.scored", evaluationId: ev.id, result: aggregateRatings(rubric, criterion, ratingsByCriterion.get(criterion.id)!, expected.get(criterion.id)!) });
+    }
 
     ev.criteria = rubric.criteria.map((c) => aggregateRatings(rubric, c, ratingsByCriterion.get(c.id) ?? [], expected.get(c.id) ?? 0));
     this.finalize(ev);
@@ -301,6 +315,10 @@ export async function mapLimit<T, R>(items: T[], limit: number, fn: (item: T, i:
   });
   await Promise.all(workers);
   return out;
+}
+
+function ratingBaseFor(u: { criterion: Criterion; judge: Judge }): Omit<Rating, "status"> {
+  return { id: newRatingId(), criterionId: u.criterion.id, raterId: u.judge.id, judgeType: u.judge.type, createdAt: new Date().toISOString() };
 }
 
 export class NotFoundError extends Error { status = 404; }
