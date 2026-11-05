@@ -104,6 +104,47 @@ node edit.mjs data.json final.mp4            # --still <sec> frame.png to check 
 
 The cast, transcript and MP4 are not in the repo: the TUI header in them shows the model name.
 
+## Sound
+
+X autoplays muted, so the captions carry the story and sound is a bonus for viewers who unmute.
+
+**SFX (done, `recording/sfx.py`).** All sounds are synthesized, so there's nothing to license. Cue times come from
+the same timeline as the picture.
+
+| Moment | Sound |
+| --- | --- |
+| 15/100 stamp (0:00.3) | Low thud + paper slap |
+| 12 buzzwords highlighted | Felt-tip swipe each |
+| YAML levels `fog → sharp` | 5 rising bell notes |
+| Prompt typed / submitted | Soft key clicks, then a return key |
+| Each agent `Edit` (×7) | Whoosh as blocks strike out, pop as new ones land |
+| Each `evaluate` (×7) | Counter ticks, then a bell when the counter stops. **Pitch follows the score** (pentatonic, 15 → E4 … 94 → A6) |
+| 94, ship it | Major chord |
+| Score history bars | The same 7 notes again, as a callback |
+| End card | Riser into a low boom + shimmer |
+
+The mix sits at -16 LUFS integrated with -3.4 dBFS peak. Once VO lands, re-balance to -14 LUFS with SFX ducked under the voice.
+
+**VO: the founder records it.** One line per file (`vo/01.wav` …), 48 kHz WAV. A quiet room and a phone are
+fine. Record three takes of each line. Say the **number right as the counter stops** (the second time in each
+row). If a line runs long, the waiting stretches before it can be slowed to make room; the events themselves never move.
+
+| # | Window | Line | Number lands at |
+| --- | --- | --- | --- |
+| 01 | 0:00.2–0:02.3 | Our landing page scored fifteen. | |
+| 02 | 0:02.4–0:05.2 | Twelve buzzwords. Zero lines of code. | |
+| 03 | 0:05.4–0:08.2 | So we wrote down what "good" means. In YAML. | |
+| 04 | 0:08.4–0:12.4 | Then we gave an agent one rule: fix the weakest thing, re-score, repeat. | |
+| 05 | 0:12.5–0:15.8 | Baseline: fifteen. Every criterion, with how sure the judge is. | 0:13.2 |
+| 06 | 0:15.9–0:18.3 | Four buttons, one link… twenty-nine. | 0:17.6 |
+| 07 | 0:18.4–0:20.9 | A way to try it… forty-six. | 0:20.2 |
+| 08 | 0:21.0–0:26.1 | Delete the hype… fifty-eight. | 0:24.6 |
+| 09 | 0:26.2–0:29.0 | Show real output… seventy-eight. | 0:28.1 |
+| 10 | 0:29.1–0:33.3 | One command to a first result… eighty-eight. Not ninety yet. | 0:31.0 |
+| 11 | 0:33.4–0:37.5 | A headline that says what it is… ninety-four. Ship it. | 0:35.2 |
+| 12 | 0:40.5–0:45.9 | Six rewrites. One criterion each. Under two minutes, unattended. | |
+| 13 | 0:46.0–0:49.7 | Your taste, as YAML. Your agent, as the editor. | |
+
 ## Recording
 
 What Take A used, in order to reshoot or record a new take:
