@@ -24,8 +24,7 @@ const T = { introA: 0, introB: 2.3, yaml: 5.3, split: 8.3 };
 let acc = 0;
 const segs = data.segments.map(([a, b, sp]) => { const s = { a, b, sp, v0: T.split + acc }; acc += (b - a) / sp; s.v1 = T.split + acc; return s; });
 T.board = T.split + acc + 0.3;
-T.honest = T.board + 5.5;
-T.end = T.honest + 3.6;
+T.end = T.board + 5.5;
 T.total = T.end + 3.8;
 
 const J = (x) => JSON.stringify(x).replace(/</g, "\\u003c");
@@ -89,9 +88,6 @@ mark.bz.on{background:#ffe066;box-shadow:0 0 0 2px #ffe066}
 .brow .lbl{color:#d6d6de}.brow .lbl span{color:var(--mut);font-weight:500;font-family:"JetBrains Mono";font-size:22px}
 .brow .tr{height:34px;background:#1d1d22;border-radius:9px;overflow:hidden}.brow .fl{height:100%;border-radius:9px}
 .brow .num{font:800 44px "Inter Display";text-align:right}.brow .gr{font:600 20px Inter;color:var(--mut)}
-#quote{position:absolute;left:50%;top:250px;width:1500px;margin-left:-750px;text-align:center;font:600 54px/1.35 Inter;color:#16161a;background:#fff;border-radius:18px;padding:50px 60px}
-#quote u{text-decoration:underline wavy var(--red) 4px;text-underline-offset:10px}
-#quoteSrc{position:absolute;left:50%;top:190px;transform:translateX(-50%);font:600 20px "JetBrains Mono";color:var(--mut)}
 #endWrap{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:30px}
 #word{font:800 150px/1 "JetBrains Mono";letter-spacing:-.03em}
 #tag{font:600 48px Inter}
@@ -112,7 +108,6 @@ mark.bz.on{background:#ffe066;box-shadow:0 0 0 2px #ffe066}
   <div id="prev" class="page"><div id="prevBody"></div></div>
 </div>
 <div id="L_board" class="layer"><div id="boardWrap"><div id="boardTitle">Score history · one unattended run</div><div id="board"></div></div></div>
-<div id="L_honest" class="layer"><div id="quoteSrc">landing.md (final, 94/100), line 14</div><div id="quote">“Our <u>proprietary AI</u> understands your content like never before.”</div></div>
 <div id="L_end" class="layer"><div id="endWrap"><div id="word">verdict</div><div id="tag">Your taste, as YAML. Your agent, as the editor.</div><div id="small">Rubric, all 7 drafts and the scores in the replies ↓</div></div>
   <div id="disc">Real, unattended Claude Code run · waiting time sped up · scores by Verdict (Jev + Clef-flash)</div></div>
 <div id="cap"><span id="capMain"></span><span id="capSub"></span></div>
@@ -222,8 +217,7 @@ for (let k = 1; k < EVALS.length; k++) {
 }
 const lastE = EVALS[EVALS.length - 1];
 CAPS.push([lastE.v + 3.0, T.board, "94. One score went down on the way.", "specificity 78% → 66%"]);
-CAPS.push([T.board + 0.2, T.honest, "6 rewrites. 1 criterion each.", "under 2 minutes · unattended"]);
-CAPS.push([T.honest + 0.2, T.end, "It still says “proprietary AI”. That isn't true.", "the rubric never checked claims · that's the next rubric"]);
+CAPS.push([T.board + 0.2, T.end, "6 rewrites. 1 criterion each.", "under 2 minutes · unattended"]);
 function caption(v) {
   const c = CAPS.find(([a, b]) => v >= a && v < b);
   $("cap").style.opacity = c ? fade(v, c[0], c[1], 0.15).toFixed(3) : 0;
@@ -245,7 +239,7 @@ function board(v) {
   });
 }
 window.setTime = async (v) => {
-  const L = { intro: fade(v, -1, T.yaml), yaml: fade(v, T.yaml, T.split), split: fade(v, T.split, T.board), board: fade(v, T.board, T.honest), honest: fade(v, T.honest, T.end), end: fade(v, T.end, T.total + 1) };
+  const L = { intro: fade(v, -1, T.yaml), yaml: fade(v, T.yaml, T.split), split: fade(v, T.split, T.board), board: fade(v, T.board, T.end), end: fade(v, T.end, T.total + 1) };
   for (const k in L) $("L_" + k).style.opacity = L[k].toFixed(3);
   if (v < T.yaml) {
     const st = ease((v - 0.15) / 0.25); $("stamp").style.opacity = v < T.introB ? clamp(st * 2) : clamp(1 - (v - T.introB) / 0.3);
@@ -296,4 +290,4 @@ ff.stdin.end();
 await new Promise((r) => ff.on("close", r));
 await browser.close();
 console.log(`\nwrote ${outPath}: ${T.total.toFixed(1)}s`);
-console.log(JSON.stringify({ split: T.split, board: T.board, honest: T.honest, end: T.end, edits: data.states.slice(1).map(s => s.src), evals: data.evals.map(e => e.src) }));
+console.log(JSON.stringify({ split: T.split, board: T.board, end: T.end, edits: data.states.slice(1).map(s => s.src), evals: data.evals.map(e => e.src) }));

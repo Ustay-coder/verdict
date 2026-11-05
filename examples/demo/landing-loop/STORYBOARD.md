@@ -73,7 +73,7 @@ cuts and retimes it; captions and overlay numbers come from `take-a/evaluations.
 rewrote the whole page in one go, **15 → 97 in 94 s**. That works as a short "one prompt, one rewrite" reply
 clip. Its recording was kept outside the repo along with Take A's video.
 
-## Final edit (rendered, 53 s)
+## Final edit (rendered, 50 s)
 
 The shipped cut follows the shot list above, but shots 4–11 became one **split screen**. On the left is the
 recorded terminal. On the right is a **live preview of `landing.md`, rendered from the file exactly as it was at
@@ -87,8 +87,7 @@ score counts up and the criterion bars move. The amber "▸ next" bar marks the 
 | 0:05–0:08 | `value_prop` levels `fog → … → sharp` | `landing-page.yaml` |
 | 0:08–0:40 | Split screen: prompt typed in, baseline 15, fixes 1–6, 94 | cast bytes, 8 file states, 7 evaluations |
 | 0:40–0:46 | Score history bars 15 → 94 | evaluations |
-| 0:46–0:50 | *"Our proprietary AI…"*: it isn't true, and the rubric missed it | `take-a/drafts/step6.md` line 14 |
-| 0:50–0:53 | End card + disclosure line ("real, unattended run · waiting time sped up") | |
+| 0:46–0:50 | End card + disclosure line ("real, unattended run · waiting time sped up") | |
 
 Timing is honest by construction. Each page state and score sits at its real moment, from the transcript aligned
 to the recording (within 0.1 s). Moments around edits and scores play at ~1.35×, and waiting is compressed up to
