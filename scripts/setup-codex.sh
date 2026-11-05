@@ -17,17 +17,14 @@ echo "▶ codex $(codex --version)"
 mkdir -p "$HOME/.codex"
 touch "$CONFIG"
 
-# Force ChatGPT (OAuth) auth so usage is billed to the subscription, never to an API key.
-if grep -q '^preferred_auth_method' "$CONFIG"; then
-  sed -i.bak 's/^preferred_auth_method.*/preferred_auth_method = "chatgpt"/' "$CONFIG" && rm -f "$CONFIG.bak"
-else
-  printf '\n# Use the ChatGPT subscription (OAuth) rather than an API key\npreferred_auth_method = "chatgpt"\n' >> "$CONFIG"
-fi
-grep -q '^model *=' "$CONFIG" || printf 'model = "gpt-5-codex"\napproval_policy = "on-request"\nsandbox_mode = "workspace-write"\n' >> "$CONFIG"
+# ChatGPT (OAuth) auth is whatever `codex login` stores in auth.json; keep OPENAI_API_KEY out of the shell so it is
+# never preferred. Do not pin `model`: explicit "gpt-5-codex" is rejected on ChatGPT accounts — Codex picks the plan's model.
+sed -i.bak '/^preferred_auth_method/d; /^model *= *"gpt-5-codex"/d' "$CONFIG" && rm -f "$CONFIG.bak"
+grep -q '^approval_policy' "$CONFIG" || printf 'approval_policy = "on-request"\nsandbox_mode = "workspace-write"\n' >> "$CONFIG"
 if ! grep -q "projects.\"$REPO_DIR\"" "$CONFIG"; then
   printf '\n[projects."%s"]\ntrust_level = "trusted"\n' "$REPO_DIR" >> "$CONFIG"
 fi
-echo "▶ wrote $CONFIG (preferred_auth_method = chatgpt)"
+echo "▶ wrote $CONFIG"
 
 if [ -n "${OPENAI_API_KEY:-}" ]; then
   echo "⚠ OPENAI_API_KEY is set in this shell. Codex will still prefer ChatGPT auth, but unset it to be safe:  unset OPENAI_API_KEY"

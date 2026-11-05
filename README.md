@@ -185,7 +185,7 @@ Secrets never live in rubrics: judges reference them with `apiKeyEnv: MY_KEY_VAR
 Implementation work on this repo is meant to run through [OpenAI Codex CLI](https://github.com/openai/codex) authenticated with your ChatGPT plan rather than an API key:
 
 ```bash
-scripts/setup-codex.sh            # installs codex, sets preferred_auth_method = "chatgpt", runs `codex login`
+scripts/setup-codex.sh            # installs codex, writes a headless-friendly config, runs `codex login` (ChatGPT OAuth)
 scripts/setup-codex.sh --device   # headless machines: device-code login
 codex login status                # should say logged in via ChatGPT
 codex                             # start from the repo root; AGENTS.md carries the project rules
@@ -193,7 +193,7 @@ codex                             # start from the repo root; AGENTS.md carries 
 
 Running Codex **inside a cloud container** (Claude Code cloud, CI, a devbox) instead: the container's network policy must allow `auth.openai.com`, `chatgpt.com` and `api.openai.com`, then `scripts/codex-cloud.sh` writes a headless config and restores credentials from a `CODEX_AUTH_JSON` (or `CODEX_AUTH_JSON_B64`) secret — the contents of `~/.codex/auth.json` from any machine where you completed `codex login` — or falls back to `codex login --device-auth`. Drive it non-interactively with `codex exec "<task>"`.
 
-`AGENTS.md` is the agent-facing guide (invariants, build/test commands, package layering). `~/.codex/config.toml` is written with `preferred_auth_method = "chatgpt"`, so usage is billed to the subscription; keep `OPENAI_API_KEY` unset in the shell you run Codex from.
+`AGENTS.md` is the agent-facing guide (invariants, build/test commands, package layering). Logging in with `codex login` (browser or `--device-auth`) stores ChatGPT OAuth credentials in `~/.codex/auth.json`, so usage is billed to the subscription; keep `OPENAI_API_KEY` unset in the shell you run Codex from, and do not pin `model` in `config.toml` (explicit `gpt-5-codex` is rejected on ChatGPT accounts).
 
 ## Repository layout
 
