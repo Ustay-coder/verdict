@@ -9,6 +9,7 @@
 #
 # Network policy must allow: auth.openai.com, chatgpt.com, api.openai.com
 set -euo pipefail
+export NODE_USE_ENV_PROXY=1   # Node's fetch must honour the container's HTTPS_PROXY (Jev / Clef calls, tests)
 
 CODEX_VERSION="${CODEX_VERSION:-latest}"
 CODEX_HOME="${CODEX_HOME:-$HOME/.codex}"

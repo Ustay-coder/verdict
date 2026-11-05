@@ -4,6 +4,9 @@ import { parseRubric } from "../src/schema/rubric.js";
 import type { JudgeContext } from "../src/judges/types.js";
 import { stats } from "../src/ingest/index.js";
 import { Engine } from "../src/engine.js";
+import { readFileSync } from "node:fs";
+import jevFixture from "./fixtures/typesafe-systemone-response.json" with { type: "json" };
+void readFileSync;
 
 const rubric = parseRubric({
   name: "r",
@@ -100,13 +103,53 @@ describe("decision judge", () => {
     expect(x.usage.inputTokens).toBe(120);
     expect((r!.raw as { model: string }).model).toBe("jev-1.13.0");
   });
-  it("unwraps the Cloudflare result envelope", async () => {
-    const f: typeof fetch = async (url) => {
+  it("parses a real Jev 1.14 response (fixture captured live): index-keyed legend/probabilities, noul, choice, usage", async () => {
+    // Fixture = verbatim answer from api.typesafe.ai for a 4-level score, a noul and a choice question.
+    const f: typeof fetch = async () => new Response(JSON.stringify(jevFixture));
+    const triage = parseRubric({
+      name: "triage", scale: { type: "numeric", min: 0, max: 3 },
+      criteria: [
+        { id: "urgency", name: "Urgency", levels: [{ value: 0, label: "none", description: "nothing broken" }, { value: 1, label: "low", description: "workaround" }, { value: 2, label: "high", description: "degraded" }, { value: 3, label: "critical", description: "outage" }] },
+        { id: "needs_engineer", name: "Needs engineer", scale: { type: "binary", labels: ["no", "yes"] } },
+      ],
+    });
+    const mk = (id: string): JudgeContext => ({ rubric: triage, criterion: triage.criteria.find((x) => x.id === id)!, scale: triage.criteria.find((x) => x.id === id)!.scale ?? triage.scale, evidence: [{ inputIndex: 0, kind: "text", label: "t", tags: [], text: "down", stats: stats("down") }], evaluationId: "e", env: (n) => (n === "TYPESAFE_API_KEY" ? "k" : undefined), fetch: f, usage: { decisionCalls: 0, llmCalls: 0, inputTokens: 0, outputTokens: 0 } });
+    const j = new DecisionJudge({ type: "decision", provider: "typesafe", onLowConfidence: "accept", escalateTo: [] });
+    const ctxs = [mk("urgency"), mk("needs_engineer")];
+    ctxs[1]!.usage = ctxs[0]!.usage;
+    const m = await j.rateMany(ctxs);
+    const u = m.get("urgency")![0]!;
+    expect(u.status).toBe("scored");
+    expect(u.score).toBe(3);
+    expect(u.probabilities).toEqual({ none: 0, low: 0, high: 0, critical: 1 });
+    expect(u.confidence).toBe(1);
+    expect((u.raw as { model: string }).model).toBe("jev-1.14.0");
+    const n = m.get("needs_engineer")![0]!;
+    expect(n.score).toBe(1);
+    expect(n.probabilities).toEqual({ no: 0.29, yes: 0.71 });
+    expect(ctxs[0]!.usage.inputTokens).toBe(480);
+    expect(ctxs[0]!.usage.outputTokens).toBe(71);
+  });
+
+  it("truncates oversized state to the model's budget and records it", async () => {
+    const j = new DecisionJudge({ type: "decision", provider: "mock", options: { stateCharLimit: 100, level: 2 }, onLowConfidence: "accept", escalateTo: [] });
+    const [r] = await j.rate(ctx("problem", "x".repeat(5000)));
+    expect((r!.raw as { stateTruncated: boolean; stateChars: number }).stateTruncated).toBe(true);
+    expect((r!.raw as { stateChars: number }).stateChars).toBeLessThan(200);
+  });
+
+  it("sends the Cloudflare body with the required model selector and unwraps the result envelope", async () => {
+    let body: Record<string, unknown> | undefined;
+    const f: typeof fetch = async (url, init) => {
       expect(String(url)).toBe("https://api.cloudflare.com/client/v4/accounts/acc1/ai/run/@cf/cloudflare/clef-flash");
+      body = JSON.parse(String(init?.body));
       return new Response(JSON.stringify({ success: true, result: { answers: { safe: { type: "noul", noul: 0.95 } }, usage: { prompt_tokens: 40 } } }));
     };
     const j = new DecisionJudge({ type: "decision", provider: "cloudflare", model: "@cf/cloudflare/clef-flash", onLowConfidence: "accept", escalateTo: [] });
     const [r] = await j.rate({ ...ctx("safe"), fetch: f, env: (n) => ({ CLOUDFLARE_ACCOUNT_ID: "acc1", CLOUDFLARE_API_TOKEN: "t" } as Record<string, string>)[n] });
+    expect(body!.model).toBe("clef-flash");
+    expect(typeof body!.state).toBe("string");
+    expect((body!.questions as Record<string, { type: string }>).safe.type).toBe("noul");
     expect(r!.score).toBe(1);
     expect(r!.probabilities).toEqual({ unsafe: 0.05, safe: 0.95 });
   });

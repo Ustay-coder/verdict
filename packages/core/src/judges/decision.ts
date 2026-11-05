@@ -143,6 +143,17 @@ function concentration(p: number[]) { const n = p.length; if (n < 2) return 1; r
 /* The judge                                                           */
 /* ------------------------------------------------------------------ */
 
+/**
+ * Conservative state budgets (chars ≈ tokens × 4) so a request never exceeds the model's context window:
+ * Jev: 64k/request, 32k for state + longest question. Clef: 65,536. Clef-flash: 24,576. Room is left for questions.
+ */
+export function defaultStateCharLimit(provider: string, model?: string): number {
+  const m = (model ?? "").toLowerCase();
+  if (m.includes("clef-flash")) return 18_000 * 4;
+  if (provider === "cloudflare") return 50_000 * 4;
+  return 28_000 * 4; // Jev and System One-compatible hosts
+}
+
 export class DecisionJudge implements Judge {
   readonly type = "decision" as const;
   readonly id: string;
@@ -170,10 +181,15 @@ export class DecisionJudge implements Judge {
     const questions: Record<string, SystemOneQuestion> = {};
     for (const c of ctxs) questions[c.criterion.id] = buildQuestion(c, levelsBy.get(c.criterion.id)!, this.spec.instructions);
 
+    const limit = typeof this.spec.options?.stateCharLimit === "number" ? (this.spec.options.stateCharLimit as number) : defaultStateCharLimit(this.spec.provider, this.spec.model);
+    let state = renderEvidence(first.evidence);
+    const stateTruncated = state.length > limit;
+    if (stateTruncated) state = `${state.slice(0, limit)}\n[... state truncated to fit the model context ...]`;
+    const { stateCharLimit: _l, ...providerOptions } = this.spec.options ?? {};
     const started = Date.now();
     let res: DecisionResponse;
     try {
-      res = await provider.decide({ model: this.spec.model, state: renderEvidence(first.evidence), questions, baseUrl: this.spec.baseUrl, apiKey: this.spec.apiKeyEnv ? first.env(this.spec.apiKeyEnv) : undefined, options: this.spec.options }, first);
+      res = await provider.decide({ model: this.spec.model, state, questions, baseUrl: this.spec.baseUrl, apiKey: this.spec.apiKeyEnv ? first.env(this.spec.apiKeyEnv) : undefined, options: providerOptions }, first);
     } catch (e) { return errorAll(`${provider.name}: ${(e as Error).message}`); }
     first.usage.decisionCalls++;
     first.usage.inputTokens += res.usage?.inputTokens ?? 0;
@@ -192,7 +208,7 @@ export class DecisionJudge implements Judge {
         const rating: Rating = {
           ...base, status: "scored", score, normalized, confidence, probabilities,
           rationale: `${provider.name}${res.model ? `/${res.model}` : ""} distribution: ${dist}${low ? ` (low confidence ${confidence.toFixed(2)} < ${this.spec.minConfidence})` : ""}`,
-          raw: { provider: provider.name, model: res.model ?? this.spec.model, question: questions[c.criterion.id], answer, levels, latencyMs, lowConfidence: low },
+          raw: { provider: provider.name, model: res.model ?? this.spec.model, question: questions[c.criterion.id], answer, levels, latencyMs, lowConfidence: low, stateChars: state.length, stateTruncated },
         };
         if (low && this.spec.onLowConfidence === "error") out.set(c.criterion.id, [{ ...rating, status: "error", error: `confidence ${confidence.toFixed(2)} below ${this.spec.minConfidence}` }]);
         else if (low && this.spec.onLowConfidence === "human") {
@@ -241,17 +257,24 @@ export const systemOneProvider = systemOneAdapter("systemone", { keyEnv: "SYSTEM
 /** OpenRouter decisions endpoint (model ids like typesafe/jev-1.13, inception/mercury-decide). */
 export const openrouterProvider = systemOneAdapter("openrouter", { baseUrl: "https://openrouter.ai/api/alpha", keyEnv: "OPENROUTER_API_KEY", model: "typesafe/jev-1.13", path: "/decisions" });
 
-/** Cloudflare Workers AI — Clef / Clef-flash / typesafe/jev. Jev-API compatible body, `result` envelope on REST. */
+/**
+ * Cloudflare Workers AI — Clef / Clef-flash (System One-compatible body + Clef extensions).
+ * Per the model pages: body needs `model: "clef" | "clef-flash"` (selector, not the @cf id), `state`, `questions`
+ * (1–64, ids [A-Za-z0-9_.-]{1,100}); optional `images` (≤4 embedded PNG/JPEG/WebP). REST wraps the answer in `result`.
+ * Context: clef 65,536 tokens ($0.24/M input), clef-flash 24,576 tokens ($0.038/M input); output tokens are free.
+ */
 export const cloudflareDecisionProvider: DecisionProviderAdapter = {
   name: "cloudflare",
   async decide(req, ctx) {
     const account = (req.options?.accountId as string | undefined) ?? ctx.env("CLOUDFLARE_ACCOUNT_ID");
     const token = req.apiKey ?? ctx.env("CLOUDFLARE_API_TOKEN");
-    const model = req.model ?? ctx.env("VERDICT_CLOUDFLARE_MODEL") ?? "@cf/cloudflare/clef";
+    const model = req.model ?? ctx.env("VERDICT_CLOUDFLARE_MODEL") ?? "@cf/cloudflare/clef-flash";
     const base = req.baseUrl?.replace(/\/$/, "") ?? (account ? `https://api.cloudflare.com/client/v4/accounts/${account}/ai/run` : undefined);
     if (!base) throw new Error("cloudflare provider needs CLOUDFLARE_ACCOUNT_ID (or judge.baseUrl pointing at an AI Gateway)");
-    const { accountId: _a, ...rest } = req.options ?? {};
-    const data = await postJson(ctx, `${base}/${model}`, { state: req.state, questions: req.questions, ...rest }, token ? { authorization: `Bearer ${token}` } : {});
+    if (!token) throw new Error("cloudflare provider needs CLOUDFLARE_API_TOKEN (Workers AI: Read)");
+    const { accountId: _a, selector, ...rest } = req.options ?? {};
+    const body = { model: (selector as string | undefined) ?? model.split("/").pop(), state: req.state, questions: req.questions, ...rest };
+    const data = await postJson(ctx, `${base}/${model}`, body, { authorization: `Bearer ${token}` });
     if (data.success === false) throw new Error(`cloudflare error: ${JSON.stringify(data.errors)}`);
     const d = (data.result ?? data) as Record<string, unknown>;
     const usage = d.usage as { input_tokens?: number; prompt_tokens?: number; output_tokens?: number } | undefined;

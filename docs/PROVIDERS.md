@@ -1,0 +1,67 @@
+# Decision-model providers — verified contracts
+
+What Verdict sends and expects per provider, and how much of it has been verified against a live endpoint or the
+vendor's official documentation. Keep this honest: update the status column when you verify something.
+
+| Provider | Endpoint | Request | Response | Verified |
+| --- | --- | --- | --- | --- |
+| `typesafe` (Jev) | `POST https://api.typesafe.ai/v1/systemone`, `Authorization: Bearer $TYPESAFE_API_KEY` | `{ model, state, questions }` | `{ model, answers, usage }` | **Live** (2026-11-05, `jev-1.14.0`) + official API reference |
+| `cloudflare` (Clef) | `POST https://api.cloudflare.com/client/v4/accounts/{id}/ai/run/@cf/cloudflare/clef[-flash]`, `Authorization: Bearer $CLOUDFLARE_API_TOKEN` | `{ model: "clef"\|"clef-flash", state, questions, images? }` | `{ success, result: { model, answers, usage } }` | Official model page (request schema, pricing, limits); live call pending a token |
+| `openrouter` | `POST https://openrouter.ai/api/alpha/decisions` | System One shape, `model: typesafe/jev-1.13` | System One shape | Public write-ups only |
+| `openai` (Decisions API) | `POST https://api.openai.com/v1/decisions` | `noul` sent as `predicate` | parsed defensively (`noul` / `predicate` / `probability`) | Public write-ups only (beta) |
+| `systemone` | `baseUrl` + `/systemone` | System One shape | System One shape | By construction (same as Jev) |
+
+## System One request (Jev; Clef-compatible)
+
+```json
+{
+  "model": "jev-latest",
+  "state": "<text or JSON — Verdict sends the rendered evidence>",
+  "questions": {
+    "urgency": { "type": "score", "instructions": "…", "criteria": ["none: …", "low: …", "high: …", "critical: …"] },
+    "needs_engineer": { "type": "noul", "instructions": "…", "criteria": { "true": "…", "false": "…" } },
+    "team": { "type": "choice", "instructions": "…", "criteria": { "support": "…", "engineering": "…" } }
+  }
+}
+```
+
+## System One response (verbatim from a live Jev call, `packages/core/test/fixtures/typesafe-systemone-response.json`)
+
+```json
+{
+  "model": "jev-1.14.0",
+  "answers": {
+    "urgency": { "type": "score", "score": 3.0, "confidence": 1.0,
+                 "legend": { "0": "none: …", "1": "low: …", "2": "high: …", "3": "critical: …" },
+                 "probabilities": { "0": 0.0, "1": 0.0, "2": 0.0, "3": 1.0 } },
+    "needs_engineer": { "type": "noul", "noul": 0.71 },
+    "team": { "type": "choice", "choice": "engineering", "confidence": 1.0,
+              "probabilities": { "support": 0.0, "engineering": 1.0, "billing": 0.0 } }
+  },
+  "usage": { "input_tokens": 480, "output_tokens": 71 }
+}
+```
+
+Notes that matter for the engine:
+- `score` is the probability-weighted level **index** (0-based, may be fractional). `probabilities` and `legend` are objects keyed by the index as a string, in level order. Verdict maps the distribution onto the criterion's level **values** (expected value), so a 1/3/5 anchor set yields a 1–5 score, not an index.
+- `noul` has no `confidence`; Verdict derives `|2p − 1|`.
+- `usage.output_tokens` is reported but free; `input_tokens` is billable. Both are added to the evaluation's usage.
+- Models listed by `GET /v1/models`: `jev-latest` (currently 1.14.0) and `jev-preview`. Pin a version in production rubrics once TypeSafe exposes dated ids; log `answers.model` (Verdict stores it in `rating.raw.model`).
+- Limits (Jev public docs): 64k tokens per request, 32k for state + longest question, score 2–10 levels, choice ≤255 options, text-only state.
+
+## Clef specifics (Workers AI model pages, 2026-11)
+
+- Body **requires** `model: "clef"` or `"clef-flash"` — the selector, not the `@cf/…` id. Verdict derives it from the model id (`options.selector` overrides).
+- `questions`: 1–64 entries; ids match `[A-Za-z0-9_.-]{1,100}` (criterion ids satisfy this).
+- `images`: up to 4 embedded PNG/JPEG/WebP (≤4 MiB and 16 MP each; 8 MiB decoded total; 13 MiB body). Pass via `options.images`. Remote URLs are not accepted.
+- Context: clef 65,536 tokens; clef-flash 24,576 tokens. Long text state is **truncated by the model** to fit — Verdict truncates first, to its own budget, so the cut is visible (`rating.raw.stateTruncated`).
+- Pricing: clef $0.24 / M input tokens; clef-flash $0.038 / M; no output charge; media billed as input tokens (32×32 px per token, ≤1,024 per image).
+- Zero data retention; multimodal (vision).
+
+## State budgets
+
+`defaultStateCharLimit(provider, model)` (chars ≈ 4 × tokens): clef-flash 72k chars, clef 200k, Jev/System One 112k. Override per judge with `options.stateCharLimit`. Use `criterion.inputs` tags to send each criterion only the evidence it needs.
+
+## Cloud-session note
+
+Node's built-in `fetch` ignores `HTTPS_PROXY`. In Claude Code cloud containers run Node with `NODE_USE_ENV_PROXY=1` (curl already honours the proxy). `scripts/codex-cloud.sh` exports it.

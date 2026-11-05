@@ -10,6 +10,8 @@ Read `docs/ARCHITECTURE.md` before changing the engine and `docs/RUBRICS.md` bef
 - Try it without any LLM key: `node packages/cli/dist/bin.js eval -r examples/rubrics/offline-benchmark.yaml -i ci=examples/inputs/ci.json -i examples/inputs/CHANGELOG.md`
   or add `--mock` to any rubric that uses `llm` judges.
 - Dependency order: `core` ← `db`, `sdk` ← `api`, `mcp` ← `cli`. Rebuild `core` before testing dependants.
+- Live provider calls: `TYPESAFE_API_KEY` (Jev), `CLOUDFLARE_ACCOUNT_ID` + `CLOUDFLARE_API_TOKEN` (Clef-flash). Contracts and what is verified: `docs/PROVIDERS.md`.
+  In Claude Code cloud sessions prefix Node commands with `NODE_USE_ENV_PROXY=1` (built-in fetch ignores HTTPS_PROXY otherwise).
 - Persistence lives in `packages/db` (Drizzle ORM, SQLite dialect for Cloudflare D1; Postgres next). Schema: `packages/db/src/schema/sqlite.ts`.
   After a schema change run `pnpm --filter @verdict/db db:generate` and commit the new `packages/db/drizzle/*.sql`; never hand-edit applied migrations.
 
