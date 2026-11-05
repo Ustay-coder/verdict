@@ -3,6 +3,19 @@ name = "verdict-api"
 main = "dist/worker.js"
 compatibility_date = "2026-10-01"
 compatibility_flags = ["nodejs_compat"]
-# wrangler secret put ANTHROPIC_API_KEY
-# wrangler secret put VERDICT_API_KEYS
-# Persistence: MemoryStore is per-isolate. Implement `Store` on D1/KV and swap it in worker.ts.
+
+# Persistence: Cloudflare D1 through Drizzle. Create with `wrangler d1 create verdict`, paste the id below, then
+#   wrangler d1 migrations apply verdict --local     # dev
+#   wrangler d1 migrations apply verdict --remote    # prod
+[[d1_databases]]
+binding = "DB"
+database_name = "verdict"
+database_id = "<paste-from-wrangler-d1-create>"
+migrations_dir = "../db/drizzle"
+
+# Secrets (wrangler secret put <NAME>):
+#   TYPESAFE_API_KEY         Jev (default judge)
+#   CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_API_TOKEN   Clef / Clef-flash via Workers AI REST
+#   VERDICT_API_KEYS         bootstrap tenant keys, "key:tenant,..." (DB-managed keys take precedence)
+#   VERDICT_ADMIN_KEY        enables POST/GET/DELETE /v1/admin/keys
+#   VERDICT_WEBHOOK_SECRET   HMAC for webhook deliveries

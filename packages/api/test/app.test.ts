@@ -94,6 +94,27 @@ describe("api", () => {
     throw new Error("did not complete");
   });
 
+  it("manages API keys through the admin routes when a database-backed key store is configured", async () => {
+    const { fromSqliteFile } = await import("@verdict/db/sqlite");
+    const h = await fromSqliteFile(":memory:");
+    const engine = new Engine({ store: h.store });
+    const app = createApp({ engine, auth: h.auth, keys: h.auth, adminKey: "admin_secret" });
+    expect((await app.request("/v1/admin/keys", { method: "POST", headers: { authorization: "Bearer wrong", "content-type": "application/json" }, body: JSON.stringify({ tenantId: "acme", name: "ci" }) })).status).toBe(401);
+    const created = await app.request("/v1/admin/keys", { method: "POST", headers: { authorization: "Bearer admin_secret", "content-type": "application/json" }, body: JSON.stringify({ tenantId: "acme", name: "ci" }) });
+    expect(created.status).toBe(201);
+    const { key, id } = await created.json();
+    const r = await app.request("/v1/rubrics", { method: "POST", headers: { authorization: `Bearer ${key}`, "content-type": "application/json" }, body: JSON.stringify({ name: "x", criteria: [{ id: "a", name: "a", judge: { type: "benchmark", method: "keywords", keywords: ["a"] } }] }) });
+    expect(r.status).toBe(201);
+    expect((await r.json()).tenantId).toBe("acme");
+    expect((await app.request("/v1/admin/keys?tenant=acme", { headers: { authorization: "Bearer admin_secret" } })).status).toBe(200);
+    expect((await app.request(`/v1/admin/keys/${id}`, { method: "DELETE", headers: { authorization: "Bearer admin_secret" } })).status).toBe(204);
+    expect((await app.request("/v1/rubrics", { headers: { authorization: `Bearer ${key}` } })).status).toBe(401);
+    expect((await app.request("/v1/rubrics", { headers: { authorization: "Bearer not_a_key" } })).status).toBe(401);
+    // no admin key configured → admin routes 404
+    const noAdmin = createApp({ engine, auth: h.auth, keys: h.auth, adminKey: undefined });
+    expect((await noAdmin.request("/v1/admin/keys", { headers: { authorization: "Bearer x" } })).status).toBe(404);
+  });
+
   it("ranks batches", async () => {
     const { call } = mk();
     const res = await call("/v1/batches", { method: "POST", body: JSON.stringify({

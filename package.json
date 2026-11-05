@@ -2,7 +2,7 @@
   "name": "verdict-monorepo",
   "private": true,
   "version": "0.1.0",
-  "description": "Verdict — the evaluation engine API. Customizable rubrics, pluggable judges (Decision AI / human / benchmark), customizable aggregation. API, CLI and MCP.",
+  "description": "Verdict \u2014 the evaluation engine API. Customizable rubrics, pluggable judges (Decision AI / human / benchmark), customizable aggregation. API, CLI and MCP.",
   "type": "module",
   "packageManager": "pnpm@10.28.0",
   "scripts": {
@@ -16,5 +16,10 @@
     "typescript": "^5.9.3",
     "vitest": "^3.2.4",
     "@types/node": "^22.19.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "better-sqlite3"
+    ]
   }
 }

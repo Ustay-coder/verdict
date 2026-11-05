@@ -230,9 +230,27 @@ export function buildCli() {
       console.log(renderReport(ev));
     });
 
-  program.command("serve").description("run the HTTP API").option("-p, --port <port>", "port", "8787").option("--data-dir <dir>", "persist to disk (default: memory)").option("--allow-local-files").action(async (o) => {
+  program.command("serve").description("run the HTTP API").option("-p, --port <port>", "port", "8787").option("--database <file>", "SQLite file via Drizzle (same schema as D1); enables DB-managed API keys").option("--data-dir <dir>", "persist as JSON files").option("--allow-local-files").action(async (o) => {
     const { startServer } = await import("@verdict/api/server");
-    startServer({ port: Number(o.port), dataDir: o.dataDir, allowLocalFiles: !!o.allowLocalFiles });
+    await startServer({ port: Number(o.port), database: o.database, dataDir: o.dataDir, allowLocalFiles: !!o.allowLocalFiles });
+  });
+
+  const keysCmd = program.command("keys").description("manage API keys in a SQLite/D1-compatible database (--database)");
+  keysCmd.command("create").requiredOption("--database <file>").requiredOption("--tenant <id>").requiredOption("--name <name>").action(async (o) => {
+    const { fromSqliteFile } = await import("@verdict/db/sqlite");
+    const { auth } = await fromSqliteFile(o.database);
+    const k = await auth.createKey(o.tenant, o.name);
+    console.log(`${k.key}\n(id ${k.id}; shown once — store it now)`);
+  });
+  keysCmd.command("list").requiredOption("--database <file>").requiredOption("--tenant <id>").action(async (o) => {
+    const { fromSqliteFile } = await import("@verdict/db/sqlite");
+    const { auth } = await fromSqliteFile(o.database);
+    for (const k of await auth.listKeys(o.tenant)) console.log(`${k.id}\t${k.prefix}…\t${k.name}\t${k.revokedAt ? "revoked" : "active"}\tlast used ${k.lastUsedAt ?? "never"}`);
+  });
+  keysCmd.command("revoke <id>").requiredOption("--database <file>").action(async (id, o) => {
+    const { fromSqliteFile } = await import("@verdict/db/sqlite");
+    const { auth } = await fromSqliteFile(o.database);
+    console.log((await auth.revokeKey(id)) ? "revoked" : "not found");
   });
 
   program.command("mcp").description("run the MCP server over stdio (local engine, or remote if VERDICT_API_URL is set)").action(async () => {

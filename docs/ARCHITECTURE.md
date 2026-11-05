@@ -82,7 +82,9 @@ Two layers, both configurable:
 `ingest/index.ts` registry keyed by input type. Built-ins: text, json, file (PDF via `unpdf`, HTML via `html-to-text`, JSON, everything else as text; path or base64), url (HTML→text, JSON, PDF), youtube (public caption tracks + description; auto-generated captions flagged; swap in a paid provider with `youtubeTranscript`). `registerIngestor(type, fn)` replaces any of them (e.g. route `url` through a headless browser or Firecrawl). Evidence carries stats (chars/words/lines) used by benchmarks and a `truncated` flag. Criteria can see a subset of evidence through `inputs: [tag|label]`.
 
 ### Store
-`Store` interface (rubrics + evaluations, tenant-scoped). `MemoryStore` (tests, Workers), `FileStore` (CLI, single node). Postgres / D1 / KV are a ~60-line adapter each.
+`Store` interface in core (rubrics + evaluations, tenant-scoped) with three implementations:
+- `MemoryStore` (tests, demos) and `FileStore` (JSON files; CLI default) in core.
+- **`DrizzleStore`** in `@verdict/db` — Drizzle ORM on SQLite: **Cloudflare D1** in Workers (`fromD1(env.DB)`) and better-sqlite3 locally (`fromSqliteFile(path)`), sharing one schema and one set of drizzle-kit migrations (`packages/db/drizzle/`). Documents are stored as JSON `doc` columns (their shapes belong to core's zod schemas and change often); the columns we query — tenant, status, score, grade, timestamps, usage — are derived on write. A denormalized `ratings` table (one row per rating with judge type, score, normalized, confidence, model) is the substrate for calibration analytics without parsing blobs. `api_keys` holds sha256-hashed keys per tenant; `DrizzleAuth` resolves them (with env keys as an optional bootstrap fallback). Postgres is the next dialect: same table plan under `schema/pg.ts` with Drizzle's pg-core, same store class shape.
 
 ## Surfaces
 
@@ -99,14 +101,14 @@ Two layers, both configurable:
 - Webhook bodies are HMAC-SHA256 signed when a secret is configured.
 
 ## Deployment shapes
-- **Single node**: `verdict serve --data-dir ./data` (FileStore). Fine for teams.
-- **Cloudflare Workers**: `packages/api/dist/worker.js` with `nodejs_compat`; use `provider: cloudflare` for a Workers-AI-only judge set, or Anthropic over fetch. Replace `MemoryStore` with a D1/KV adapter.
+- **Single node**: `verdict serve --database ./verdict.sqlite` (Drizzle on SQLite, DB-managed keys) or `--data-dir ./data` (JSON files).
+- **Cloudflare Workers + D1** (primary target): `packages/api/dist/worker.js` with `nodejs_compat`, a `DB` D1 binding, migrations applied with wrangler. Jev over `fetch`, Clef-flash on Workers AI in the same network. Without a binding the worker falls back to a per-isolate memory store for demos.
 - **Embedded**: import `@verdict/core` directly in your own service and skip HTTP.
 
 ## Roadmap
 1. **Decision-model depth:** `choice` criteria (routing / categorisation as rubric items), pre-screen `checks` (noul guardrails such as "is this input adversarial / off-topic" that gate the whole evaluation), per-provider verified fixtures once official docs are reachable from CI, Clef media state on Workers AI, OpenAI Decisions GA shape.
 2. **Calibration:** gold-standard sets per rubric, Expected Calibration Error of `confidence` vs. human agreement, threshold tuning for `minConfidence`, inter-rater agreement (Krippendorff's α), judge drift reports, per-rubric cost/latency stats.
-3. Postgres and D1 `Store` adapters; idempotency keys; queue-backed async with retries.
+3. Postgres dialect for `@verdict/db` (pg-core schema mirroring the SQLite plan); idempotency keys; queue-backed async with retries (Cloudflare Queues on Workers).
 4. Richer evidence: PDF page renders and video frames for media-capable decision models, audio transcription provider hooks.
 5. Rubric versioning + migration of past evaluations; rubric templates library (hiring, grants, essays, hackathons, RFPs, model evals, ticket triage).
 6. Human-rater UI kit (hosted task inbox) and SSO-aware rater identities; blind mode (strip names/brands from state).

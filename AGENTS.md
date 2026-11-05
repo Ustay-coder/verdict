@@ -9,7 +9,9 @@ Read `docs/ARCHITECTURE.md` before changing the engine and `docs/RUBRICS.md` bef
 - Build everything: `pnpm build`. Typecheck: `pnpm typecheck`. Tests: `pnpm test` (vitest; `packages/core/test`, `packages/api/test`).
 - Try it without any LLM key: `node packages/cli/dist/bin.js eval -r examples/rubrics/offline-benchmark.yaml -i ci=examples/inputs/ci.json -i examples/inputs/CHANGELOG.md`
   or add `--mock` to any rubric that uses `llm` judges.
-- Dependency order: `core` ← `sdk` ← `api`, `mcp` ← `cli`. Rebuild `core` before testing dependants.
+- Dependency order: `core` ← `db`, `sdk` ← `api`, `mcp` ← `cli`. Rebuild `core` before testing dependants.
+- Persistence lives in `packages/db` (Drizzle ORM, SQLite dialect for Cloudflare D1; Postgres next). Schema: `packages/db/src/schema/sqlite.ts`.
+  After a schema change run `pnpm --filter @verdict/db db:generate` and commit the new `packages/db/drizzle/*.sql`; never hand-edit applied migrations.
 
 ## Invariants (do not break)
 - Judges never throw; they return `status: "error"` or `status: "pending"` ratings (`packages/core/src/judges/types.ts`).
@@ -17,7 +19,8 @@ Read `docs/ARCHITECTURE.md` before changing the engine and `docs/RUBRICS.md` bef
 - Ratings from decision models keep `probabilities` and `confidence`; respect `minConfidence` / `onLowConfidence` escalation.
 - Every score keeps a raw value in the criterion's scale **and** a normalized 0..1 value; aggregation works on normalized unless the method says otherwise.
 - An evaluation freezes its rubric; `reaggregate` must never call judges.
-- Rubrics never contain secrets — judges reference env vars via `apiKeyEnv`.
+- Rubrics never contain secrets — judges reference env vars via `apiKeyEnv`. API keys are stored only as sha256 hashes.
+- Documents (rubric / evaluation) are stored as JSON `doc` columns; add indexed columns only for fields that are queried. Every store read is tenant-scoped.
 - Formulas go through `packages/core/src/expr.ts` (no `eval`, no `Function`).
 - The API must keep running on Cloudflare Workers: no Node-only imports in `packages/api/src/app.ts` or anything it pulls from `core` at module top level (Node-only modules like `node:fs` are imported lazily inside functions).
 - Public API shape is documented in `README.md` (REST table) and mirrored by `packages/sdk`; change all three together.

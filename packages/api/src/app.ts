@@ -11,16 +11,26 @@ export interface Auth {
 }
 
 /** `VERDICT_API_KEYS="key1:tenantA,key2:tenantB"`; a bare key maps to tenant "default". Unset = open (single tenant). */
-export function envAuth(env: Record<string, string | undefined> = process.env): Auth {
+export function envAuth(env: Record<string, string | undefined> = (globalThis as { process?: { env?: Record<string, string | undefined> } }).process?.env ?? {}): Auth {
   const raw = env.VERDICT_API_KEYS?.trim();
   if (!raw) return { resolve: () => "default" };
   const keys = new Map(raw.split(",").map((pair) => { const [k, t] = pair.trim().split(":"); return [k!, t ?? "default"] as const; }));
   return { resolve: (k) => (k ? keys.get(k) : undefined) };
 }
 
+/** Optional API-key management (backed by @verdict/db's DrizzleAuth). Exposed under /v1/admin with VERDICT_ADMIN_KEY. */
+export interface KeyManager {
+  createKey(tenantId: string, name: string): Promise<{ id: string; key: string; prefix: string }>;
+  revokeKey(id: string, tenantId?: string): Promise<boolean>;
+  listKeys(tenantId: string): Promise<Array<{ id: string; name: string; prefix: string; createdAt: string; lastUsedAt: string | null; revokedAt: string | null }>>;
+}
+
 export interface AppOptions {
   engine: Engine;
   auth?: Auth;
+  keys?: KeyManager;
+  /** Bearer token for /v1/admin/* (default: env VERDICT_ADMIN_KEY). Unset = admin routes disabled. */
+  adminKey?: string;
   /** Return 202 immediately and finish in the background when the client asks (`"async": true`). */
   allowAsync?: boolean;
   log?: boolean;
@@ -38,7 +48,7 @@ export function present(ev: Evaluation, { evidence = false, ratings = true } = {
   };
 }
 
-export function createApp({ engine, auth = envAuth(), allowAsync = true, log = false }: AppOptions) {
+export function createApp({ engine, auth = envAuth(), keys, adminKey = (globalThis as { process?: { env?: Record<string, string> } }).process?.env?.VERDICT_ADMIN_KEY, allowAsync = true, log = false }: AppOptions) {
   const app = new Hono<Env>();
   if (log) app.use(logger());
   app.use("*", cors());
@@ -47,8 +57,29 @@ export function createApp({ engine, auth = envAuth(), allowAsync = true, log = f
   app.get("/v1/health", (c) => c.json({ ok: true }));
   app.get("/v1/openapi.json", (c) => c.json(openapi));
 
+  /* ---------- admin: API keys ---------- */
+  app.use("/v1/admin/*", async (c, next) => {
+    if (!adminKey || !keys) throw new HTTPException(404, { message: "admin API disabled (set VERDICT_ADMIN_KEY and a database-backed key store)" });
+    const header = c.req.header("authorization")?.replace(/^Bearer\s+/i, "");
+    if (header !== adminKey) throw new HTTPException(401, { message: "invalid admin key" });
+    await next();
+  });
+  app.post("/v1/admin/keys", async (c) => {
+    const body = z.object({ tenantId: z.string().min(1), name: z.string().min(1) }).parse(await c.req.json());
+    return c.json(await keys!.createKey(body.tenantId, body.name), 201);
+  });
+  app.get("/v1/admin/keys", async (c) => {
+    const tenantId = c.req.query("tenant");
+    if (!tenantId) throw new ValidationError("query param `tenant` is required");
+    return c.json({ data: await keys!.listKeys(tenantId) });
+  });
+  app.delete("/v1/admin/keys/:id", async (c) => {
+    if (!(await keys!.revokeKey(c.req.param("id")))) throw new NotFoundError(`key ${c.req.param("id")} not found`);
+    return c.body(null, 204);
+  });
+
   app.use("/v1/*", async (c, next) => {
-    if (c.req.path === "/v1/health" || c.req.path === "/v1/openapi.json") return next();
+    if (c.req.path === "/v1/health" || c.req.path === "/v1/openapi.json" || c.req.path.startsWith("/v1/admin/")) return next();
     const header = c.req.header("authorization");
     const key = header?.replace(/^Bearer\s+/i, "") ?? c.req.header("x-api-key");
     const tenant = await auth.resolve(key);
@@ -184,5 +215,7 @@ const openapi = {
     "/v1/evaluations/{id}/aggregate": { post: { summary: "Re-aggregate with a different aggregation config (no re-judging)" } },
     "/v1/tasks": { get: { summary: "Pending human-rating tasks (`?rater=`)" } },
     "/v1/batches": { post: { summary: "Evaluate many subjects against one rubric and rank them" } },
+    "/v1/admin/keys": { post: { summary: "Create an API key for a tenant (admin)" }, get: { summary: "List a tenant's keys (admin, `?tenant=`)" } },
+    "/v1/admin/keys/{id}": { delete: { summary: "Revoke a key (admin)" } },
   },
 };
