@@ -147,6 +147,15 @@ Originally proposed v2.1: a Jev `no_meta_copy` criterion ("text addresses the us
 recommendations constrained to stated brief rules, and audit checks for one-edge accent borders, numbered section
 markers and the resolved font family. Phase 4 (the founder's taste check) has not been run yet.
 
+## Take D: the v2.1 routine (2026-11-05)
+
+Fresh folder, same start page and data, principles updated with P12/P13, the expanded P11 and the list of installed
+fonts ([`take-d/PRINCIPLES-given-to-agent.md`](take-d/PRINCIPLES-given-to-agent.md)). The run took 4 min 45 s of agent
+time and stayed inside its folder; `data.json` is untouched and the final state matches. Brief **100** → round 1 **79** →
+round 2 **78** → round 3 **84**, passed every gate. Re-scored: 84 and 85. It renders 99% in Carlito, with 0 template habits
+measured. The agent loads `data.json` at runtime, so every figure is computed from the data. It also deleted an HTML
+comment "so the judges don't read it as the page describing itself": it knows it is being judged.
+
 ## Next steps
 
 1. ~~Audit metrics, rubric v2, calibration, Take C~~ (done above).
