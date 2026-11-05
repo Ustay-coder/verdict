@@ -1,0 +1,114 @@
+# Dev-tool landing page review — the rubric behind the "agent rewrites until 90+" demo video
+# (examples/demo/landing-loop). Decision models answer every judged criterion in one request; deterministic
+# benchmarks catch what a regex can (install command, buzzwords, length) so part of the score is explainable on screen.
+name: Dev-tool landing page
+version: "1"
+description: Would a skeptical developer, landing here from a link on X, understand the product and try it today?
+context: |
+  You are a senior engineer who has seen a thousand AI-tool landing pages. You give no credit for adjectives.
+  You reward pages that show what the tool does with real code, real numbers and a way to try it in minutes.
+  Most pages should land in the middle of each scale.
+language: en
+scale: { type: numeric, min: 1, max: 5 }
+
+judges:
+  jev:  { type: decision, provider: typesafe, model: jev-latest }
+  clef: { type: decision, provider: cloudflare, model: "@cf/cloudflare/clef-flash" }
+defaultJudge: { type: ref, ref: jev }
+
+# One cheap noul request before anything is scored: don't grade a blog post or an empty file.
+checks:
+  - id: is_landing_page
+    question: Is this the landing page or README of a software product or developer tool?
+    criteria: { true: Describes a product and invites the reader to use it, false: "An article, a note, an empty file or unrelated text" }
+    expect: true
+    action: abort
+    message: Not a landing page
+
+criteria:
+  - id: value_prop
+    name: Five-second test
+    group: Message
+    weight: 3
+    levels:
+      - { value: 1, label: fog, description: "After the first screen you cannot say what the product does or who it is for" }
+      - { value: 2, label: category, description: "You can name the category (e.g. 'an AI platform') but not what it concretely does" }
+      - { value: 3, label: what, description: "You know what it does, but not for whom or why it beats the alternative" }
+      - { value: 4, label: what_who, description: "What it does and for whom are clear in the headline and first lines" }
+      - { value: 5, label: sharp, description: "One sentence states what it does, for whom, and the concrete gain over the status quo" }
+
+  - id: proof
+    name: Shows, doesn't tell
+    group: Evidence
+    weight: 2
+    levels:
+      - { value: 1, description: "Only claims and adjectives; no example, number or demo" }
+      - { value: 2, description: "A vague example or an unsourced superlative ('10x faster')" }
+      - { value: 3, description: "One concrete example, e.g. a code snippet or a sample output" }
+      - { value: 4, description: "Real code AND a real output or measured number" }
+      - { value: 5, description: "Copy-pasteable code, its actual output, and measured numbers (latency, cost, accuracy)" }
+
+  - id: time_to_value
+    name: Time to first result
+    group: Evidence
+    weight: 2
+    levels:
+      - { value: 1, description: "Only 'book a demo' or 'join the waitlist'" }
+      - { value: 2, description: "Sign-up is possible but no hint of what happens after" }
+      - { value: 3, description: "Install instructions exist but need several steps or a key before anything runs" }
+      - { value: 4, description: "One command or request gets a first result" }
+      - { value: 5, description: "One command gets a first result with no account or key (offline / mock mode)" }
+
+  - id: specificity
+    name: No buzzword bingo
+    group: Message
+    weight: 1.5
+    judge:
+      type: panel
+      combine: mean                     # two decision models must agree it reads concrete
+      judges: [{ type: ref, ref: jev }, { type: ref, ref: clef }]
+    levels:
+      - { value: 1, description: "Mostly hype: revolutionary, seamless, next-generation, unlock, supercharge" }
+      - { value: 3, description: "Mixed: some concrete statements buried in marketing language" }
+      - { value: 5, description: "Plain, specific language a developer would write in a README" }
+
+  - id: cta
+    name: One obvious next step
+    group: Message
+    weight: 1.5
+    scale: { type: binary, labels: [no, yes] }
+    anchors:
+      no: "No call to action, or several competing ones of equal weight"
+      yes: "A single primary next step (a command, a link or a button) is unmistakable"
+
+  - id: install_cmd
+    name: Has an install / run command
+    group: Checks
+    weight: 1
+    judge: { type: benchmark, method: regex, pattern: "(git clone|npm (i|install)|pnpm (i|install|add|dlx)|npx |yarn add|pip install|brew install|curl -)", flags: i }
+
+  - id: hype_free
+    name: No banned buzzwords
+    group: Checks
+    weight: 1
+    judge:
+      type: benchmark
+      method: regex
+      pattern: "\\b(revolutionary|seamless(ly)?|next[- ]generation|cutting[- ]edge|game[- ]chang\\w*|supercharge\\w*|unlock\\w*|synerg\\w*|leverag\\w*|paradigm|world[- ]class)\\b"
+      flags: i
+      negate: true
+
+  - id: length
+    name: Fits one scroll
+    group: Checks
+    weight: 0.5
+    optional: true
+    judge: { type: benchmark, method: length, unit: words, min: 120, max: 700 }
+
+aggregation:
+  method: weighted_mean
+  normalize: [0, 100]
+  precision: 0
+  gates: [{ criterion: value_prop, min: 2, message: "Fails the five-second test" }]
+  grades: [{ label: ship it, min: 85 }, { label: almost, min: 65 }, { label: rewrite, min: 0 }]
+  passThreshold: 85
