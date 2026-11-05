@@ -1,10 +1,11 @@
-# Dashboard design review v2: one criterion per principle (examples/demo/ui-loop/PRINCIPLES.md).
+# Dashboard design review v2.1: one criterion per principle (examples/demo/ui-loop/PRINCIPLES.md).
+# v2.1 adds P12 (write for the user, not the reviewer), P13 (advice only from stated rules) and measures more defaults.
 # v1 (dashboard-design.yaml) judged surfaces and gave a restyled AI default 92. v2 asks whether the page answers
 # its operator's questions, encodes data well, and is free of first- AND second-order AI defaults.
 # Inputs:  -i ui=http://127.0.0.1:8766/ --screenshot  -i data=data.json  [-i brief=BRIEF.md]
 # Needs the render-audit scorer: node examples/demo/ui-loop/audit/server.mjs (port 7788).
 name: SaaS dashboard principles
-version: "2"
+version: "2.1"
 description: Does this dashboard answer its operator's questions at a glance, with honest encodings and a look of its own?
 context: |
   You review an analytics dashboard against established principles: Stephen Few (context, single screen, highlight
@@ -12,7 +13,9 @@ context: |
   (preattentive cues), Refactoring UI (hierarchy by de-emphasis, design in grayscale first). You recognise AI-generated
   defaults, first-order (purple/blue gradients, glass, glows, gradient text) and second-order "tasteful" ones (cream or
   off-white with one terracotta/orange accent, near-black with one acid accent, tracked all-caps eyebrows, one accented
-  headline word, a row of identical KPI cards with icon tiles, a decorative donut). Most dashboards land in the middle.
+  headline word, a row of identical KPI cards with icon tiles, a decorative donut, a thick accent bar down one edge,
+  numbered section headings, a sentence-style hero headline, Inter everywhere, helper text that explains the layout).
+  Most dashboards land in the middle.
 language: en
 scale: { type: numeric, min: 1, max: 5 }
 
@@ -54,6 +57,26 @@ criteria:
       - { value: 1, label: buried, description: "Notable events (a cancellation, churn) are absent or buried among routine items" }
       - { value: 3, label: present, description: "Notable events are shown, but not set apart from routine information" }
       - { value: 5, label: surfaced, description: "Items that need action are surfaced near the top and clearly marked; routine items are quiet" }
+  - id: writes_for_user
+    name: "P12 Writes for the user, not the reviewer"
+    group: Purpose
+    weight: 2
+    judge: { type: ref, ref: jev }
+    inputs: [ui]
+    levels:
+      - { value: 1, label: meta, description: "The page explains itself: sentences about its own layout, what is flagged where, why something is shown, or how it was judged ('flagged here first', 'routine items sit quietly')" }
+      - { value: 3, label: some_meta, description: "Mostly about the business, with a few sentences that justify or describe the page itself" }
+      - { value: 5, label: task, description: "Every sentence is about the business (what happened, what it means); nothing describes the page, its design or its review" }
+  - id: advice_grounded
+    name: "P13 Advice only from stated rules"
+    group: Purpose
+    weight: 1
+    judge: { type: ref, ref: jev }
+    inputs: [ui, brief, data]
+    levels:
+      - { value: 1, label: invented, description: "Recommends actions or owners that neither the data nor the brief supports (e.g. 'ask the customer team for a win-back call')" }
+      - { value: 3, label: loose, description: "Suggestions are plausible but go beyond the rules written in the brief" }
+      - { value: 5, label: grounded, description: "No recommendations, or only ones that follow a rule written in the brief" }
   - id: numbers_true
     name: Every figure derives from data.json
     group: Purpose
@@ -72,7 +95,7 @@ criteria:
     levels:
       - { value: 1, label: first_order, description: "Purple/blue gradients, glass cards, glows, gradient text" }
       - { value: 1.5, label: unstyled, description: "No design at all: default browser styles, plain lists, no layout; not a template, but not designed either" }
-      - { value: 2, label: second_order, description: "Tasteful AI default: cream or off-white with a single terracotta/orange accent, tracked all-caps labels, one accented headline word, a row of identical KPI cards, a decorative donut" }
+      - { value: 2, label: second_order, description: "Tasteful AI default: cream or off-white with one terracotta/orange accent, tracked all-caps labels, one accented headline word, identical KPI cards, a decorative donut, a thick accent bar down one edge, numbered section headings, a big sentence-style headline" }
       - { value: 4, label: mostly_own, description: "A few default habits remain, but the look follows from the content" }
       - { value: 5, label: own, description: "No recognisable template habits; every visual choice is explained by the data and its users" }
   - id: chart_fit
@@ -135,7 +158,7 @@ criteria:
   # ---------- measured on the rendered DOM ----------
   - { id: redundancy, name: "P4 Each figure shown once", group: Measured, weight: 1, inputs: [ui], judge: { type: benchmark, method: http, url: "http://127.0.0.1:7788/audit/repeated_figures" } }
   - { id: numerals, name: "P10 Tabular figures", group: Measured, weight: 1, inputs: [ui], judge: { type: benchmark, method: http, url: "http://127.0.0.1:7788/audit/numerals" } }
-  - { id: template_chrome, name: "P11 Template habits (eyebrows, accent words, icon tiles)", group: Measured, weight: 1.5, inputs: [ui], judge: { type: benchmark, method: http, url: "http://127.0.0.1:7788/audit/template_chrome" } }
+  - { id: template_chrome, name: "P11 Template habits (eyebrows, accent words, icon tiles, edge bars, numbered headings, Inter)", group: Measured, weight: 1.5, inputs: [ui], judge: { type: benchmark, method: http, url: "http://127.0.0.1:7788/audit/template_chrome" } }
   - { id: decoration, name: "P6 Decorative effects", group: Measured, weight: 1.5, inputs: [ui], judge: { type: benchmark, method: http, url: "http://127.0.0.1:7788/audit/decoration" } }
   - { id: motion, name: "No ambient animation", group: Measured, weight: 1, inputs: [ui], judge: { type: benchmark, method: http, url: "http://127.0.0.1:7788/audit/motion" } }
   - { id: contrast, name: "Text contrast (WCAG AA)", group: Measured, weight: 1.5, inputs: [ui], judge: { type: benchmark, method: http, url: "http://127.0.0.1:7788/audit/contrast" } }
@@ -145,7 +168,7 @@ criteria:
 aggregation:
   # Purpose and look earn the points; measured checks only take them away (a bare page that passes every check still scores low).
   method: formula
-  formula: "(questions_n * 3 + context_n * 2 + attention_n * 2 + defaults_n * 3 + chart_fit_n * 2 + color_signal_n * 2 + hierarchy_n * 2 + at_a_glance_n * 2 + craft_n * 2 + data_ink_n) / 21 * (0.55 + 0.45 * (redundancy_n + numerals_n + template_chrome_n * 1.5 + decoration_n * 1.5 + motion_n + contrast_n * 1.5 + type_scale_n + palette_n) / 9.5)"
+  formula: "(questions_n * 3 + context_n * 2 + attention_n * 2 + writes_for_user_n * 2 + advice_grounded_n + defaults_n * 3 + chart_fit_n * 2 + color_signal_n * 2 + hierarchy_n * 2 + at_a_glance_n * 2 + craft_n * 2 + data_ink_n) / 24 * (0.55 + 0.45 * (redundancy_n + numerals_n + template_chrome_n * 1.5 + decoration_n * 1.5 + motion_n + contrast_n * 1.5 + type_scale_n + palette_n) / 9.5)"
   normalize: [0, 100]
   precision: 0
   # A floor on every principle: excelling at nine can't hide failing one.
@@ -153,6 +176,8 @@ aggregation:
     - { criterion: numbers_true, min: 1, message: "A figure on the page doesn't match data.json" }
     - { criterion: questions, min: 3, message: "P1: doesn't answer the operator's questions" }
     - { criterion: context, min: 3, message: "P2: figures lack context" }
+    - { criterion: writes_for_user, min: 3, message: "P12: the page talks about itself" }
+    - { criterion: advice_grounded, min: 3, message: "P13: advice the data and brief don't support" }
     - { criterion: attention, min: 3, message: "P3: what needs attention isn't surfaced" }
     - { criterion: defaults, min: 3, message: "P11: still an AI default" }
     - { criterion: chart_fit, min: 3, message: "P5: comparisons rely on angle or area" }

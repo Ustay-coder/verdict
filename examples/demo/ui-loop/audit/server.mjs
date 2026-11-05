@@ -13,7 +13,8 @@
 //   type_scale  distinct font sizes in visible text
 //   palette     distinct saturated hue families (12 × 30°) across text, backgrounds, borders, gradients, SVG
 //   chart_types angle/area encodings: SVG donut rings (dasharray circles), arc-path pies, conic-gradient rings
-//   template_chrome  tracked all-caps eyebrows, one accented word inside a headline, icon tiles (small boxes holding an icon)
+//   template_chrome  tracked all-caps eyebrows, accented headline words, icon tiles, one-edge accent bars,
+//               numbered section headings, Inter as the face that actually renders (CDP getPlatformFontsForNode)
 //   repeated_figures the same figure shown 3+ times (48.2k and $48,200 count as the same value)
 //   numerals    share of numeric text set with tabular figures (or a monospace face)
 //   numbers_true every figure on screen derives from the json evidence (data.json): leaves, sums, shares, ratios, % changes
@@ -35,9 +36,32 @@ async function audit(url) {
     await page.goto(url, { waitUntil: "networkidle", timeout: 20_000 });
     await page.waitForTimeout(2500); // let count-up and entrance animations finish
     const result = await page.evaluate(measure);
+    result.fonts.rendered = await renderedFonts(page);
+    if (result.fonts.rendered[0] && /^inter( display)?$/i.test(result.fonts.rendered[0].family) && result.fonts.rendered[0].share > 0.5) {
+      result.template_chrome.boxes.push({ x: 0, y: 0, w: 0, h: 0, label: `default AI font (Inter renders ${Math.round(result.fonts.rendered[0].share * 100)}% of glyphs)` });
+      result.template_chrome.count++;
+    }
     cache.set(key, result);
     return result;
   } finally { await page.close(); }
+}
+
+// The faces Chromium actually used (declared stacks lie when a font isn't installed), by share of glyphs.
+async function renderedFonts(page) {
+  const cdp = await page.context().newCDPSession(page);
+  await cdp.send("DOM.enable"); await cdp.send("CSS.enable");
+  const { root } = await cdp.send("DOM.getDocument", { depth: -1 });
+  const { nodeIds } = await cdp.send("DOM.querySelectorAll", { nodeId: root.nodeId, selector: "body *" });
+  const glyphs = new Map();
+  for (const nodeId of nodeIds.slice(0, 400)) {
+    try {
+      const { fonts } = await cdp.send("CSS.getPlatformFontsForNode", { nodeId });
+      for (const f of fonts) glyphs.set(f.familyName, (glyphs.get(f.familyName) ?? 0) + f.glyphCount);
+    } catch { /* node without layout */ }
+  }
+  await cdp.detach();
+  const total = [...glyphs.values()].reduce((a, b) => a + b, 0) || 1;
+  return [...glyphs.entries()].sort((a, b) => b[1] - a[1]).map(([family, n]) => ({ family, share: Math.round((n / total) * 100) / 100 }));
 }
 
 // Runs in the page.
@@ -170,6 +194,22 @@ function measure() {
     }
   }
 
+  // one-edge accent bars: a thick coloured border on one side only (a catalogued AI habit)
+  for (const el of all) {
+    const s = getComputedStyle(el);
+    const sides = ["Top", "Right", "Bottom", "Left"].map((k) => ({ k, w: parseFloat(s[`border${k}Width`]) || 0, c: parse(s[`border${k}Color`]) }));
+    const thick = sides.filter((x) => x.w >= 3 && x.c && x.c.a > 0.3), thin = sides.filter((x) => x.w <= 1);
+    const sat = (c) => Math.max(c.r, c.g, c.b) - Math.min(c.r, c.g, c.b);
+    if (thick.length === 1 && thin.length === 3 && sat(thick[0].c) > 40 && el.getBoundingClientRect().height > 40) chrome.push(box(el, `one-edge accent bar (${thick[0].k.toLowerCase()})`));
+  }
+  // numbered section markers: headings that start "1." / "01" / "Step 1"
+  for (const h of document.querySelectorAll("h1, h2, h3, h4, [role=heading]")) {
+    if (visible(h) && /^\s*(step\s*)?0?\d{1,2}[.):·\s—–-]\s*\S/i.test(h.textContent)) chrome.push(box(h, "numbered section heading"));
+  }
+  // default font: the face that actually renders body text
+  const bodyFont = getComputedStyle(document.body).fontFamily.split(",")[0].replace(/["']/g, "").trim();
+  const usedFonts = [...new Set(texts.map((el) => getComputedStyle(el).fontFamily.split(",")[0].replace(/["']/g, "").trim()))];
+
   // repeated figures + numerals
   const canon = (tok) => {
     const m = /^[$€£]?(\d{1,3}(?:,\d{3})+|\d+(?:\.\d+)?)([kKmM])?%?$/.exec(tok.replace(/[+−-]/g, ""));
@@ -201,6 +241,7 @@ function measure() {
     figures: figures.filter((f) => !f.tick),
     chart_types: { count: angle.length, boxes: angle },
     template_chrome: { count: chrome.length, boxes: chrome },
+    fonts: { body: bodyFont, used: usedFonts },
     repeated_figures: { values: repeated.map(([v, b]) => ({ value: v, times: b.length })), boxes: repeated.flatMap(([, b]) => b) },
     numerals: { total: numEls.length, tabular: tab.length, boxes: numEls.filter((e) => !tab.includes(e)).map((e) => box(e, "proportional digits")) },
     contrast: { total: texts.length, failing: fails.length, boxes: fails },

@@ -27,7 +27,9 @@ chart fit "mixed", and Jev calls the content an "inventory" of numbers rather th
 | P8 | **Hierarchy by importance.** The most important answer is largest and first; secondary information is de-emphasised | Refactoring UI ("emphasise by de-emphasising"); Carbon | Four equal cards competing |
 | P9 | **At a glance, one screen.** The primary answers fit the first viewport | Few #1 "exceeding the boundaries of a single screen" | Answers spread over 1,470 px |
 | P10 | **Numbers set for reading.** Tabular figures, right-aligned columns, consistent rounding | Few #3 (precision); Stripe-style tables | Mixed precision, proportional digits |
-| P11 | **No defaults, first or second order.** Avoid purple gradients, glass and glows, *and* the "tasteful" fallbacks: cream + terracotta, near-black + one acid accent, tracked all-caps eyebrows, a single accented headline word, identical icon/KPI card rows | avoid-ai-design catalog; AI-slop tells write-ups; Anthropic frontend-design skill text | Both the original and Take B's result |
+| P11 | **No defaults, first or second order.** Avoid purple gradients, glass and glows, *and* the "tasteful" fallbacks: cream + terracotta, near-black + one acid accent, tracked all-caps eyebrows, a single accented headline word, identical icon/KPI card rows. v2.1 adds: one-edge accent bars, numbered section headings, a sentence-style hero headline, Inter as the rendered face | avoid-ai-design catalog; AI-slop tells write-ups; Anthropic frontend-design skill text | The original, Take B and Take C |
+| P12 | **Write for the user, not the reviewer** (v2.1). No sentences about the page itself | Goodhart seen in Take C | "Flagged here first… routine events sit quietly at the bottom right" |
+| P13 | **Advice only from stated rules** (v2.1). Recommendations follow a rule in the brief | Few (requirements); P1 | Ungrounded "next steps" |
 
 Caveats from the research: most of the AI-tells material is practitioner catalogues, not studies, and the
 cream + terracotta look is contested (some systems use it on purpose). The problem is **convergence on a default**,
@@ -131,7 +133,17 @@ marks the cancellation. Each figure appears once, and where the data has no comp
 3. **Remaining defaults.** A thick red bar down one edge of the attention block, numbered section headings
    ("1. 2. 3."), and Inter. All three are on the AI-tells lists and none is measured yet.
 
-Proposed v2.1: a Jev `no_meta_copy` criterion ("text addresses the user's task, not the design or the reviewer"),
+**Correction (v2.1 run):** item 2 turned out to be grounded. Take C's brief says the founder decides "which accounts
+the customer team should call this week (for example, a cancelled account to win back)". The new P13 judge rated
+it *grounded* 87%, which is right.
+
+**v2.1, applied:** P12 `writes_for_user` and P13 `advice_grounded` (Jev, both gated at 3/5). `template_chrome` now
+also counts one-edge accent bars, numbered section headings and the face Chromium actually renders (CDP
+`getPlatformFontsForNode`). Take C declared "Helvetica Neue", which isn't installed, so **100% of its glyphs rendered in
+Inter**. The P11 definition given to Clef lists these habits too. Re-scored: Take C **82 → 71, fails P12** (`writes_for_user`
+10%); principled reference 83, passes; one-shot 33; Take B 49.
+
+Originally proposed v2.1: a Jev `no_meta_copy` criterion ("text addresses the user's task, not the design or the reviewer"),
 recommendations constrained to stated brief rules, and audit checks for one-edge accent borders, numbered section
 markers and the resolved font family. Phase 4 (the founder's taste check) has not been run yet.
 
