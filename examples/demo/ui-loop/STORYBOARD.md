@@ -1,3 +1,37 @@
+# Video 2: "Our rubric said 92. The founder said: still AI."
+
+**Status: final cut rendered (58 s, 1080p, synthesized SFX).** It replaces the plan below (written before Take C/D).
+The story is the rubric learning from a person's judgement. Every number on screen is a real Verdict result, and
+every page is a render of a real state of the agents' files.
+
+| Time | Scene | Source |
+| --- | --- | --- |
+| 0:00–0:03 | The AI one-shot dashboard | `start/` |
+| 0:03–0:11 | X-ray (77 audit boxes), then Take B's 6 steps with the v1 score 27 → 42 → 42 → 48 → 51 → 92, **SHIP IT** stamp | audit scorer · `take-b/evaluations.json` |
+| 0:11–0:15 | *"Still looks AI-made."* (the founder). The new rubric agrees: 92 → **49**; second-order AI default · decorative donut · an inventory, not answers | founder feedback · v2.1 re-score |
+| 0:15–0:20 | The 13 principles appear (P12–P13 in amber), with the sources | `PRINCIPLES.md` |
+| 0:20–0:28 | Take C: **82 · PASSED** under v2, the founder says "still AI", v2.1's X-ray (one-edge bar, 3 numbered headings, 2 sentences written for the judge, Inter on 100% of glyphs): 82 → **71** | `take-c/` · audit + P12 |
+| 0:28–0:49 | Take D split screen: live page render per edit, v2.1 score card 33 → 79 → 78 → **84**, the brief chip (100), terminal PiP, speed chip | `take-d/` · the cast |
+| 0:49–0:54 | Before/after wipe: one-shot 33 vs Take D 84 | renders |
+| 0:54–0:58 | End card: *Write down what good means. Let the agent argue with it.* + disclosure | |
+
+Honesty notes: the two "copy written for the judge" boxes mark the sentences behind P12's 10% (located by text
+search; the judge scores the page, not sentences). Take B's v2.1 score (49) and Take C's (71) are re-scores made after
+the runs. Waiting time is compressed up to 50× in the Take D section, and the chip shows it. The founder's line is a
+short English rendering of their feedback. Confirm the wording before posting.
+
+**Founder VO (optional, same format as video 1):** 01 0:00–0:03 "We asked an AI for a modern, beautiful dashboard." ·
+02 0:03–0:11 "An agent fixed it until our rubric said yes. Twenty-seven to ninety-two." · 03 0:11–0:15 "I said it still
+looked AI-made. I was right." · 04 0:15–0:20 "So we rebuilt the rubric from the books." · 05 0:20–0:28 "Take two passed.
+Still AI. The new rubric caught why." · 06 0:28–0:49 "Take three: brief first, then the page. Seventy-nine… seventy-eight…
+eighty-four." · 07 0:49–0:58 "Same data. Same agent. A better rubric."
+
+Tools: `recording/video2_assets.mjs` → `recording/video2_edit.mjs` (writes `<out>.cues.json`) → `recording/video2_sfx.py`.
+
+---
+
+# (Earlier plan, before Take C/D)
+
 # "Every AI dashboard looks like this": an agent redesigns one, judged by what Verdict sees
 
 **Logline.** We asked an AI for a "modern, beautiful" SaaS dashboard. It made the dashboard every AI makes: dark
