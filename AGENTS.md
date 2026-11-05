@@ -36,4 +36,4 @@ Read `docs/ARCHITECTURE.md` before changing the engine and `docs/RUBRICS.md` bef
 ## Codex CLI
 Use the ChatGPT subscription via OAuth, not an API key: `scripts/setup-codex.sh` installs Codex, writes a headless-friendly
 `~/.codex/config.toml` (no `model` pin — ChatGPT accounts reject `gpt-5-codex`), and runs `codex login`. Start work with `codex` from the repo root. In a cloud container use `scripts/codex-cloud.sh` (credentials from the
-`CODEX_AUTH_JSON` secret, or device-code login) and `codex exec "<task>"` for non-interactive runs.
+`CODEX_AUTH_JSON` secret, or device-code login) and `codex exec "<task>" < /dev/null` for non-interactive runs (stdin must be closed or Codex waits for extra input).

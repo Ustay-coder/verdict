@@ -52,4 +52,4 @@ else
   echo "▶ no stored credentials; starting device-code login (approve the printed code on any device)"
   codex login --device-auth
 fi
-echo "✔ ready: run  codex exec \"<task>\"  from $REPO_DIR"
+echo "✔ ready: run  codex exec \"<task>\" < /dev/null  from $REPO_DIR   (close stdin in non-interactive runs or Codex waits for input)"
