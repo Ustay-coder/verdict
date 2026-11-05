@@ -1,0 +1,21 @@
+# Pure benchmark rubric: deterministic, no LLM, runs anywhere (CI, edge). Scores an API response JSON + README.
+name: Release readiness
+scale: { type: numeric, min: 0, max: 100 }
+criteria:
+  - id: tests
+    name: Test pass rate
+    weight: 3
+    judge: { type: benchmark, method: jsonpath, path: ci.pass_rate, input: ci }
+  - id: coverage
+    name: Coverage >= 80%
+    weight: 1
+    judge: { type: benchmark, method: formula, expression: "ci.coverage >= 80 ? 1 : ci.coverage / 80" }
+  - id: changelog
+    name: Changelog mentions breaking changes section
+    weight: 1
+    judge: { type: benchmark, method: keywords, keywords: [breaking changes, migration], mode: any }
+  - id: readme
+    name: README length
+    weight: 0.5
+    judge: { type: benchmark, method: length, unit: words, min: 200 }
+aggregation: { method: weighted_mean, normalize: [0, 100], passThreshold: 80, grades: [{ label: ship, min: 80 }, { label: hold, min: 0 }] }

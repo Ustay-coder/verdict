@@ -1,0 +1,8 @@
+# Cloudflare Workers deployment (copy to wrangler.toml). Build first: pnpm build
+name = "verdict-api"
+main = "dist/worker.js"
+compatibility_date = "2026-10-01"
+compatibility_flags = ["nodejs_compat"]
+# wrangler secret put ANTHROPIC_API_KEY
+# wrangler secret put VERDICT_API_KEYS
+# Persistence: MemoryStore is per-isolate. Implement `Store` on D1/KV and swap it in worker.ts.

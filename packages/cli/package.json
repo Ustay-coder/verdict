@@ -1,0 +1,24 @@
+{
+  "name": "@verdict/cli",
+  "version": "0.1.0",
+  "description": "verdict CLI \u2014 evaluate anything from the terminal.",
+  "type": "module",
+  "bin": {
+    "verdict": "./dist/bin.js"
+  },
+  "main": "./dist/index.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.json && chmod +x dist/bin.js",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "@verdict/api": "workspace:*",
+    "@verdict/core": "workspace:*",
+    "@verdict/mcp": "workspace:*",
+    "@verdict/sdk": "workspace:*",
+    "commander": "^15.0.0",
+    "yaml": "^2.9.1",
+    "@modelcontextprotocol/sdk": "^1.32.2"
+  }
+}

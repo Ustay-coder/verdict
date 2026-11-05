@@ -1,0 +1,35 @@
+{
+  "name": "@verdict/api",
+  "version": "0.1.0",
+  "description": "Verdict REST API (Hono). Runs on Node and Cloudflare Workers.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./server": {
+      "types": "./dist/server.d.ts",
+      "import": "./dist/server.js"
+    },
+    "./worker": {
+      "types": "./dist/worker.d.ts",
+      "import": "./dist/worker.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "dev": "node --watch dist/server.js",
+    "start": "node dist/server.js"
+  },
+  "dependencies": {
+    "@hono/node-server": "^1.19.9",
+    "@verdict/core": "workspace:*",
+    "hono": "^4.13.16",
+    "zod": "^4.6.7"
+  }
+}

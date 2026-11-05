@@ -1,0 +1,34 @@
+# Creator / sponsorship screening — YouTube link + channel page + brand brief as JSON.
+name: Sponsorship fit
+scale: { type: numeric, min: 0, max: 10, step: 0.5 }
+judges:
+  claude: { type: llm, provider: anthropic, model: claude-opus-5-5 }
+  cheap:  { type: llm, provider: cloudflare, model: "@cf/meta/llama-3.3-70b-instruct-fp8-fast" }
+defaultJudge: { type: ref, ref: claude }
+criteria:
+  - id: relevance
+    name: Audience relevance to brand
+    weight: 3
+    inputs: [video, brief]          # only inputs tagged video/brief are shown
+  - id: production
+    name: Production quality (from transcript & description)
+    weight: 1
+    judge: { type: panel, combine: median, judges: [{ type: ref, ref: claude }, { type: ref, ref: cheap }, { type: ref, ref: claude }] }
+  - id: safety
+    name: Brand safety
+    weight: 2
+    judge:
+      type: panel
+      combine: min                    # any member can veto
+      judges:
+        - { type: ref, ref: claude, instructions: Flag profanity, political content, or unsafe stunts. }
+        - { type: benchmark, method: regex, pattern: "\\b(nsfw|gambling|crypto giveaway)\\b", flags: i, negate: true }
+  - id: budget_fit
+    name: Rate within budget
+    weight: 1
+    judge: { type: benchmark, method: formula, expression: "clamp(brief.budget_usd / creator.rate_usd, 0, 1)" }
+aggregation:
+  method: formula
+  formula: "safety_n < 0.5 ? 0 : (relevance_n * 0.5 + production_n * 0.2 + budget_fit_n * 0.3)"
+  normalize: [0, 100]
+  passThreshold: 65
