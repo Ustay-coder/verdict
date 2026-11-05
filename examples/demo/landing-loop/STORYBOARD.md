@@ -73,6 +73,38 @@ cuts and retimes it; captions and overlay numbers come from `take-a/evaluations.
 rewrote the whole page in one go, **15 → 97 in 94 s**. That works as a short "one prompt, one rewrite" reply
 clip. Its recording was kept outside the repo along with Take A's video.
 
+## Final edit (rendered, 53 s)
+
+The shipped cut follows the shot list above, but shots 4–11 became one **split screen**. On the left is the
+recorded terminal. On the right is a **live preview of `landing.md`, rendered from the file exactly as it was at
+that moment**, with a score card above it. When the agent's `Edit` lands, the terminal shows the diff and the
+preview strikes the removed blocks in red, then fades the added ones in green. When its `evaluate` returns, the
+score counts up and the criterion bars move. The amber "▸ next" bar marks the criterion the agent fixed next.
+
+| Video | Scene | Source |
+| --- | --- | --- |
+| 0:00–0:05 | v1 page, **15/100** stamp, the 12 buzzwords highlighted | `v1.md` + the rubric's own buzzword regex |
+| 0:05–0:08 | `value_prop` levels `fog → … → sharp` | `landing-page.yaml` |
+| 0:08–0:40 | Split screen: prompt typed in, baseline 15, fixes 1–6, 94 | cast bytes, 8 file states, 7 evaluations |
+| 0:40–0:46 | Score history bars 15 → 94 | evaluations |
+| 0:46–0:50 | *"Our proprietary AI…"*: it isn't true, and the rubric missed it | `take-a/drafts/step6.md` line 14 |
+| 0:50–0:53 | End card + disclosure line ("real, unattended run · waiting time sped up") | |
+
+Timing is honest by construction. Each page state and score sits at its real moment, from the transcript aligned
+to the recording (within 0.1 s). Moments around edits and scores play at ~1.35×, and waiting is compressed up to
+12×. A "▶▶ N×" chip shows on screen whenever playback runs faster than 1.5×. It's a silent track: add music in
+the editor if you want it.
+
+Rebuild it from a take folder holding `landing.cast`, `landing.cast.markers` and the session `session.jsonl`:
+
+```bash
+cd examples/demo/landing-loop/recording && npm i @xterm/xterm@5.5.0 marked@12.0.2
+python3 build_edit_data.py <take-dir> ../v1.md ../../../rubrics/landing-page.yaml data.json
+node edit.mjs data.json final.mp4            # --still <sec> frame.png to check one frame
+```
+
+The cast, transcript and MP4 are not in the repo: the TUI header in them shows the model name.
+
 ## Recording
 
 What Take A used, in order to reshoot or record a new take:
