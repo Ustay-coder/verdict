@@ -65,6 +65,7 @@ export interface AggregateResult {
 export type EvaluationStatus = "queued" | "running" | "pending_human" | "completed" | "failed";
 
 export interface Evaluation {
+  job?: { attempts: number; maxAttempts: number; lastError?: string; nextAttemptAt?: string; deadLettered?: boolean };
   id: string;
   tenantId?: string;
   idempotencyKey?: string;

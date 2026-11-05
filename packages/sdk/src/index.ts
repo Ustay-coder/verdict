@@ -80,6 +80,7 @@ export class Verdict {
   };
 
   evaluations = {
+    retry: (id: string) => this.request<{ id: string; status: "queued"; url: string }>("POST", `/v1/evaluations/${encodeURIComponent(id)}/retry`),
     create: (params: EvaluateParams, opts: { idempotencyKey?: string } = {}) => this.request<EvaluationView>("POST", "/v1/evaluations", params, "application/json", keyHeaders(opts.idempotencyKey)),
     createIdempotent: async (params: EvaluateParams, key: string) => {
       const { data: evaluation, replayed } = await this.requestWithMeta<EvaluationView>("POST", "/v1/evaluations", params, "application/json", keyHeaders(key));

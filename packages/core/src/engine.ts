@@ -1,3 +1,4 @@
+import { RetryableError, type Queue, type Job, type SerializableEvaluateRequest } from "./queue.js";
 import { fingerprint } from "./idempotency.js";
 import { Aggregation, parseRubric, type Criterion, type JudgeSpec, type Rubric } from "./schema/rubric.js";
 import { Subject, type Evidence } from "./schema/subject.js";
@@ -8,6 +9,8 @@ import { aggregateCriteria, aggregateRatings, coerceScore, criterionScale, norma
 import { MemoryStore, type Store, type StoredRubric } from "./store/index.js";
 
 export interface EngineOptions {
+  queue?: Queue;
+  retry?: { maxAttempts?: number; backoffMs?: (attempt: number) => number };
   idempotencyTtlMs?: number;
   store?: Store;
   env?: (name: string) => string | undefined;
@@ -59,6 +62,9 @@ export function newId(prefix: string) {
 }
 
 export class Engine {
+  readonly queue?: Queue;
+  private maxAttempts: number;
+  private backoffMs: (attempt: number) => number;
   readonly store: Store;
   private idempotencyTtlMs: number;
   private env: (n: string) => string | undefined;
@@ -69,6 +75,9 @@ export class Engine {
   private onEvent?: (e: EngineEvent) => void;
 
   constructor(opts: EngineOptions = {}) {
+    this.queue = opts.queue;
+    this.maxAttempts = Math.max(1, opts.retry?.maxAttempts ?? 5);
+    this.backoffMs = opts.retry?.backoffMs ?? (attempt => Math.min(300_000, 2000 * 2 ** (attempt - 1) * (0.8 + Math.random() * 0.4)));
     this.idempotencyTtlMs = opts.idempotencyTtlMs ?? 86_400_000;
     this.store = opts.store ?? new MemoryStore();
     this.env = opts.env ?? ((n) => (globalThis as { process?: { env: Record<string, string | undefined> } }).process?.env[n]);
@@ -110,11 +119,12 @@ export class Engine {
 
   /* ---------------- evaluation ---------------- */
 
-  async evaluate(req: EvaluateRequest): Promise<Evaluation> {
+  async evaluate(req: EvaluateRequest, queued?: Evaluation): Promise<Evaluation> {
     const started = Date.now();
     const { rubric, rubricId } = await this.resolveRubric(req.rubric, req.tenantId);
     const ev = initialEvaluation(req, rubric, rubricId);
-    await this.store.putEvaluation(ev);
+    if (queued) { ev.job = { ...queued.job! }; ev.createdAt = queued.createdAt; ev.rubricId = queued.rubricId; }
+    await this.store.putEvaluation(queued ? structuredClone(ev) : ev);
     this.onEvent?.({ type: "evaluation.started", evaluation: ev });
     req.onStarted?.(ev);
 
@@ -125,8 +135,8 @@ export class Engine {
       ev.error = `ingestion failed: ${(e as Error).message}`;
       ev.usage.durationMs = Date.now() - started;
       ev.updatedAt = new Date().toISOString();
-      await this.store.putEvaluation(ev);
-      this.onEvent?.({ type: "evaluation.failed", evaluation: ev });
+      if (!queued) await this.store.putEvaluation(ev);
+      if (!queued) { this.onEvent?.({ type: "evaluation.failed", evaluation: ev }); await this.deliverWebhook(ev); }
       return ev;
     }
 
@@ -153,9 +163,8 @@ export class Engine {
         applyChecks(ev);
         ev.usage.durationMs = Date.now() - started;
         ev.updatedAt = new Date().toISOString();
-        await this.store.putEvaluation(ev);
-        this.onEvent?.({ type: "evaluation.completed", evaluation: ev });
-        await this.deliverWebhook(ev);
+        if (!queued) await this.store.putEvaluation(ev);
+        if (!queued) { this.onEvent?.({ type: "evaluation.completed", evaluation: ev }); await this.deliverWebhook(ev); }
         return ev;
       }
     }
@@ -198,6 +207,97 @@ export class Engine {
     ev.criteria = rubric.criteria.map((c) => aggregateRatings(rubric, c, ratingsByCriterion.get(c.id) ?? [], expected.get(c.id) ?? 0));
     this.finalize(ev);
     ev.usage.durationMs = Date.now() - started;
+    if (!queued) await this.store.putEvaluation(ev);
+    if (!queued) this.onEvent?.({ type: ev.status === "pending_human" ? "evaluation.pending_human" : ev.status === "failed" ? "evaluation.failed" : "evaluation.completed", evaluation: ev });
+    if (!queued && (ev.status === "completed" || ev.status === "failed")) await this.deliverWebhook(ev);
+    return ev;
+  }
+
+  private prepareQueued(ev: Evaluation) {
+    ev.status = "queued";
+    ev.job = { attempts: 0, maxAttempts: this.maxAttempts };
+    ev.error = undefined;
+    ev.updatedAt = new Date().toISOString();
+    return ev;
+  }
+
+  private async enqueueDocument(ev: Evaluation): Promise<Evaluation> {
+    if (!this.queue) throw new ValidationError("no queue configured");
+    await this.store.putEvaluation(ev);
+    const request: SerializableEvaluateRequest = { rubric: ev.rubric, subject: ev.subject, tenantId: ev.tenantId, metadata: ev.metadata, webhook: ev.webhook, idempotencyKey: ev.idempotencyKey };
+    await this.queue.enqueue({ type: "evaluate", evaluationId: ev.id, request: JSON.parse(JSON.stringify(request)), attempt: 1 });
+    return ev;
+  }
+
+  async enqueueEvaluation(req: EvaluateRequest): Promise<Evaluation> {
+    if (!this.queue) throw new ValidationError("no queue configured");
+    const { rubric, rubricId } = await this.resolveRubric(req.rubric, req.tenantId);
+    return this.enqueueDocument(this.prepareQueued(initialEvaluation(req, rubric, rubricId)));
+  }
+
+  async enqueueEvaluationIdempotent(req: EvaluateRequest & { idempotencyKey: string }) {
+    if (!this.queue) throw new ValidationError("no queue configured");
+    const result = await this.runIdempotent(req, "evaluation", [req.subject], ev => this.enqueueDocument(ev), ev => this.prepareQueued(ev));
+    return { evaluation: result.evaluations[0]!, replayed: result.replayed };
+  }
+
+  /** Reserve a fetchable document before handing work to a host's background lifetime. */
+  async evaluateBackground(req: EvaluateRequest, background: (work: Promise<unknown>) => void) {
+    const start = async (ev: Evaluation) => {
+      const work = this.evaluate({ ...req, rubric: ev.rubric, subject: ev.subject, id: ev.id });
+      background(work);
+      return ev;
+    };
+    if (req.idempotencyKey !== undefined) {
+      const result = await this.runIdempotent({ ...req, idempotencyKey: req.idempotencyKey }, "evaluation", [req.subject], start);
+      return { evaluation: result.evaluations[0]!, replayed: result.replayed };
+    }
+    const { rubric, rubricId } = await this.resolveRubric(req.rubric, req.tenantId);
+    const ev = initialEvaluation(req, rubric, rubricId);
+    await this.store.putEvaluation(ev);
+    return { evaluation: await start(ev), replayed: false };
+  }
+
+  async retryEvaluation(id: string, tenantId?: string): Promise<Evaluation> {
+    const ev = await this.store.getEvaluation(id, tenantId);
+    if (!ev) throw new NotFoundError(`evaluation ${id} not found`);
+    if (ev.status !== "failed") throw new ConflictError("only failed evaluations can be retried");
+    return this.enqueueDocument(this.prepareQueued(ev));
+  }
+
+  async processJob(job: Job): Promise<Evaluation> {
+    let jobs = processingJobs.get(this.store);
+    if (!jobs) { jobs = new Map(); processingJobs.set(this.store, jobs); }
+    const key = JSON.stringify([job.request.tenantId, job.evaluationId]);
+    const active = jobs.get(key);
+    if (active) return active;
+    const work = this.runJob(job);
+    jobs.set(key, work);
+    try { return await work; } finally { if (jobs.get(key) === work) jobs.delete(key); }
+  }
+
+  private async runJob(job: Job): Promise<Evaluation> {
+    const previous = await this.store.getEvaluation(job.evaluationId, job.request.tenantId);
+    if (!previous) throw new NotFoundError(`evaluation ${job.evaluationId} not found`);
+    if (previous.status === "completed" || previous.status === "pending_human" || previous.job?.deadLettered) return previous;
+    if (previous.status === "failed" && !transientErrors(previous)) return previous;
+    previous.job = { ...previous.job, attempts: job.attempt, maxAttempts: previous.job?.maxAttempts ?? this.maxAttempts, nextAttemptAt: undefined };
+    const ev = await this.evaluate({ ...job.request, rubric: previous.rubric, subject: previous.subject, id: previous.id }, previous);
+    const message = transientErrors(ev);
+    if (message) {
+      ev.job!.lastError = message;
+      if (job.attempt < ev.job!.maxAttempts) {
+        const delay = this.backoffMs(job.attempt);
+        ev.job!.nextAttemptAt = new Date(Date.now() + delay).toISOString();
+        ev.status = "queued";
+        await this.store.putEvaluation(ev);
+        throw new RetryableError(message, delay);
+      }
+      ev.status = "failed";
+      ev.job!.deadLettered = true;
+      ev.error = message;
+    }
+    ev.job!.nextAttemptAt = undefined;
     await this.store.putEvaluation(ev);
     this.onEvent?.({ type: ev.status === "pending_human" ? "evaluation.pending_human" : ev.status === "failed" ? "evaluation.failed" : "evaluation.completed", evaluation: ev });
     if (ev.status === "completed" || ev.status === "failed") await this.deliverWebhook(ev);
@@ -222,7 +322,7 @@ export class Engine {
     return { ...result, ranking: rankEvaluations(result.evaluations) };
   }
 
-  private async runIdempotent(req: EvaluateRequest & { idempotencyKey: string }, targetType: "evaluation" | "batch", subjects: Array<Subject | Record<string, unknown>>) {
+  private async runIdempotent(req: EvaluateRequest & { idempotencyKey: string }, targetType: "evaluation" | "batch", subjects: Array<Subject | Record<string, unknown>>, after?: (ev: Evaluation) => Promise<Evaluation>, prepare: (ev: Evaluation) => Evaluation = ev => ev) {
     if (req.idempotencyKey.length < 1 || req.idempotencyKey.length > 255) throw new ValidationError("Idempotency key must contain 1–255 characters");
     const lockKey = JSON.stringify([req.tenantId ?? "", req.idempotencyKey]);
     let locks = idempotencyLocks.get(this.store);
@@ -254,7 +354,7 @@ export class Engine {
         const recordToStore = { tenantId: req.tenantId, key: req.idempotencyKey, fingerprint: hash, targetType,
           targetId: targetType === "evaluation" ? ids[0] : undefined, evaluationIds: targetType === "batch" ? ids : undefined,
           createdAt: new Date().toISOString(), expiresAt: new Date(Date.now() + this.idempotencyTtlMs).toISOString() };
-        const initial = subjects.map((subject, i) => initialEvaluation({ ...req, subject, id: ids[i] }, rubric, rubricId));
+        const initial = subjects.map((subject, i) => prepare(initialEvaluation({ ...req, subject, id: ids[i] }, rubric, rubricId)));
         if (this.store.reserveIdempotency) {
           if (!await this.store.reserveIdempotency(recordToStore, initial)) continue;
         } else {
@@ -262,7 +362,7 @@ export class Engine {
           for (const evaluation of initial) await this.store.putEvaluation(evaluation);
         }
         release();
-        const evaluations = await mapLimit(subjects, Math.max(1, Math.floor(this.concurrency / 2)), (subject, i) => this.evaluate({ ...req, rubric, subject, id: ids[i] }));
+        const evaluations = await mapLimit(subjects, Math.max(1, Math.floor(this.concurrency / 2)), (subject, i) => after ? after(initial[i]!) : this.evaluate({ ...req, rubric, subject, id: ids[i] }));
         return { evaluations, replayed: false };
       }
     } finally {
@@ -452,3 +552,10 @@ function initialEvaluation(req: EvaluateRequest, rubric: Rubric, rubricId?: stri
     updatedAt: now,
   };
 }
+
+function transientErrors(ev: Evaluation): string | undefined {
+  const errors = [ev.status === "failed" ? ev.error : undefined, ...ev.criteria.flatMap(c => c.ratings.filter(r => r.status === "error").map(r => r.error))].filter((e): e is string => !!e);
+  return errors.find(e => /\b(429|5\d\d)\b|rate limit|timeout|timed out|fetch failed|ECONNRESET|ENOTFOUND|overloaded/i.test(e));
+}
+
+const processingJobs = new WeakMap<Store, Map<string, Promise<Evaluation>>>();

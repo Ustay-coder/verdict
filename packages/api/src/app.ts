@@ -3,7 +3,7 @@ import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 import { HTTPException } from "hono/http-exception";
 import { z } from "zod";
-import { ConflictError, calibrate, Aggregation, Engine, NotFoundError, Rubric, Subject, ValidationError, newId, parseRubric, loadRubricText, type Evaluation } from "@verdict/core";
+import { ConflictError, calibrate, Aggregation, Engine, NotFoundError, Rubric, Subject, ValidationError, parseRubric, loadRubricText, type Evaluation } from "@verdict/core";
 
 export interface Auth {
   /** Map an API key to a tenant id, or undefined to reject. Return "" for single-tenant open mode. */
@@ -32,6 +32,7 @@ export interface AppOptions {
   /** Bearer token for /v1/admin/* (default: env VERDICT_ADMIN_KEY). Unset = admin routes disabled. */
   adminKey?: string;
   /** Return 202 immediately and finish in the background when the client asks (`"async": true`). */
+  background?: (promise: Promise<unknown>) => void;
   allowAsync?: boolean;
   log?: boolean;
 }
@@ -48,7 +49,7 @@ export function present(ev: Evaluation, { evidence = false, ratings = true } = {
   };
 }
 
-export function createApp({ engine, auth = envAuth(), keys, adminKey = (globalThis as { process?: { env?: Record<string, string> } }).process?.env?.VERDICT_ADMIN_KEY, allowAsync = true, log = false }: AppOptions) {
+export function createApp({ engine, auth = envAuth(), keys, adminKey = (globalThis as { process?: { env?: Record<string, string> } }).process?.env?.VERDICT_ADMIN_KEY, allowAsync = true, background, log = false }: AppOptions) {
   const app = new Hono<Env>();
   if (log) app.use(logger());
   app.use("*", cors({ exposeHeaders: ["Idempotency-Replayed"] }));
@@ -155,27 +156,22 @@ export function createApp({ engine, auth = envAuth(), keys, adminKey = (globalTh
     const subject = body.subject ?? { name: body.name, inputs: body.inputs ?? [] };
     if (!subject.inputs?.length) throw new ValidationError("provide `subject.inputs` or `inputs`");
     const req = { rubric: body.rubric as string | Record<string, unknown>, subject, tenantId: tenant(c), metadata: body.metadata, webhook: body.webhook };
-    if (idempotencyKey !== undefined) {
-      const keyed = { ...req, idempotencyKey, fingerprintBody };
-      if (body.async && allowAsync) {
-        const result = await new Promise<{ evaluation: Evaluation; replayed: boolean }>((resolve, reject) => {
-          engine.evaluateIdempotent({ ...keyed, onStarted: evaluation => resolve({ evaluation, replayed: false }) }).then(resolve, reject);
-        });
-        if (result.replayed) c.header("Idempotency-Replayed", "true");
-        return c.json({ id: result.evaluation.id, status: result.replayed ? result.evaluation.status : "queued", url: `/v1/evaluations/${result.evaluation.id}` }, result.replayed ? 200 : 202);
-      }
-      const { evaluation, replayed } = await engine.evaluateIdempotent(keyed);
-      if (replayed) c.header("Idempotency-Replayed", "true");
-      return c.json(present(evaluation, { evidence: body.includeEvidence }), replayed ? 200 : evaluation.status === "failed" ? 422 : 201);
+    if (body.async && allowAsync && engine.queue) {
+      const result = idempotencyKey === undefined
+        ? { evaluation: await engine.enqueueEvaluation(req), replayed: false }
+        : await engine.enqueueEvaluationIdempotent({ ...req, idempotencyKey, fingerprintBody });
+      if (result.replayed) c.header("Idempotency-Replayed", "true");
+      return c.json({ id: result.evaluation.id, status: result.evaluation.status, url: `/v1/evaluations/${result.evaluation.id}` }, result.replayed ? 200 : 202);
     }
     if (body.async && allowAsync) {
-      // Resolve the rubric now so a bad reference fails synchronously, then run in the background.
-      await engine.resolveRubric(req.rubric, req.tenantId);
-      const id = newId("eval");
-      await new Promise<void>((resolve) => {
-        engine.evaluate({ ...req, id, onStarted: () => resolve() }).catch(() => resolve());
-      });
-      return c.json({ id, status: "queued", url: `/v1/evaluations/${id}` }, 202);
+      const result = await engine.evaluateBackground({ ...req, idempotencyKey, fingerprintBody }, background ?? (work => { void work.catch(() => {}); }));
+      if (result.replayed) c.header("Idempotency-Replayed", "true");
+      return c.json({ id: result.evaluation.id, status: result.replayed ? result.evaluation.status : "queued", url: `/v1/evaluations/${result.evaluation.id}` }, result.replayed ? 200 : 202);
+    }
+    if (idempotencyKey !== undefined) {
+      const { evaluation, replayed } = await engine.evaluateIdempotent({ ...req, idempotencyKey, fingerprintBody });
+      if (replayed) c.header("Idempotency-Replayed", "true");
+      return c.json(present(evaluation, { evidence: body.includeEvidence }), replayed ? 200 : evaluation.status === "failed" ? 422 : 201);
     }
     const ev = await engine.evaluate(req);
     return c.json(present(ev, { evidence: body.includeEvidence }), ev.status === "failed" ? 422 : 201);
@@ -189,6 +185,11 @@ export function createApp({ engine, auth = envAuth(), keys, adminKey = (globalTh
     const ev = await engine.store.getEvaluation(c.req.param("id"), tenant(c));
     if (!ev) throw new NotFoundError(`evaluation ${c.req.param("id")} not found`);
     return c.json(present(ev, { evidence: c.req.query("evidence") === "true" }));
+  });
+
+  app.post("/v1/evaluations/:id/retry", async c => {
+    const ev = await engine.retryEvaluation(c.req.param("id"), tenant(c));
+    return c.json({ id: ev.id, status: "queued", url: `/v1/evaluations/${ev.id}` }, 202);
   });
 
   const ScoreBody = z.object({ criterionId: z.string(), raterId: z.string(), score: z.union([z.number(), z.string()]), rationale: z.string().optional(), confidence: z.number().min(0).max(1).optional() });
@@ -252,6 +253,7 @@ const openapi = {
     "/v1/rubrics/{id}/calibration": { get: { summary: "Calibration report (`?target=0.8&buckets=5&limit=1000`)" } },
     "/v1/evaluations": { post: { summary: "Evaluate a subject (sync; `async:true` for 202). Optional Idempotency-Key header (1–255 chars); replay 200, conflict 409, TTL 24h" }, get: { summary: "List evaluations" } },
     "/v1/evaluations/{id}": { get: { summary: "Get evaluation (`?evidence=true` for full text)" } },
+    "/v1/evaluations/{id}/retry": { post: { summary: "Re-enqueue a failed evaluation (202; unknown 404; not failed 409)" } },
     "/v1/evaluations/{id}/scores": { post: { summary: "Submit a human score for a pending criterion" } },
     "/v1/evaluations/{id}/aggregate": { post: { summary: "Re-aggregate with a different aggregation config (no re-judging)" } },
     "/v1/tasks": { get: { summary: "Pending human-rating tasks (`?rater=`)" } },

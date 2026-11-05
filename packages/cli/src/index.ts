@@ -2,7 +2,7 @@ import { readFile, writeFile } from "node:fs/promises";
 import { basename, resolve } from "node:path";
 import { Command } from "commander";
 import YAML from "yaml";
-import { calibrate, Engine, FileStore, MemoryStore, loadRubricText, parseRubric, youtubeId, type Evaluation, type Input, type Rubric } from "@verdict/core";
+import { calibrate, MemoryQueue, Engine, FileStore, MemoryStore, loadRubricText, parseRubric, youtubeId, type Evaluation, type Input, type Rubric } from "@verdict/core";
 import { Verdict } from "@verdict/sdk";
 
 const dataDir = () => process.env.VERDICT_DATA_DIR ?? resolve(process.cwd(), ".verdict");
@@ -211,6 +211,19 @@ export function buildCli() {
     const ev = api ? ((await api.evaluations.get(id)) as unknown as Evaluation) : await localEngine().store.getEvaluation(id);
     if (!ev) { console.error("not found"); process.exitCode = 1; return; }
     console.log(o.json ? JSON.stringify(ev, null, 2) : renderReport(ev));
+  });
+
+  program.command("retry <evaluationId>").description("retry a failed evaluation").action(async id => {
+    const api = remote();
+    if (api) { await api.evaluations.retry(id); console.log(renderReport(await api.evaluations.wait(id) as unknown as Evaluation)); return; }
+    const queue = new MemoryQueue();
+    const engine = new Engine({ store: new FileStore(dataDir()), queue, ingest: { allowLocalFiles: true } });
+    queue.engine = engine;
+    await engine.retryEvaluation(id);
+    // Keep the CLI alive while unref'd retry timers are pending.
+    const keepAlive = setInterval(() => {}, 1000);
+    try { await queue.drain(); } finally { clearInterval(keepAlive); }
+    console.log(renderReport((await engine.store.getEvaluation(id))!));
   });
 
   program.command("tasks").description("list criteria waiting on human raters").option("--rater <id>").action(async (o) => {

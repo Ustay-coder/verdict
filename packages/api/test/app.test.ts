@@ -217,3 +217,33 @@ it("returns stored summaries for async replays and propagates conflicts", async 
   expect(await replay.json()).toMatchObject({ id: initial.id, url: initial.url });
   expect((await post({ ...idempotentBody, async: true, name: "different" })).status).toBe(409);
 });
+
+it("queues async requests, exposes job and retries failed evaluations", async () => {
+  const { MemoryQueue } = await import("@verdict/core");
+  const queue = new MemoryQueue();
+  const engine = new Engine({ queue }); queue.engine = engine;
+  const app = createApp({ engine });
+  const body = { async: true, rubric: { name: "Queue", defaultJudge: { type: "decision", provider: "mock" }, criteria: [{ id: "a", name: "A" }] }, inputs: [{ type: "text", text: "hello" }] };
+  const res = await app.request("/v1/evaluations", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+  expect(res.status).toBe(202);
+  const ref = await res.json();
+  await queue.drain();
+  expect(await (await app.request(ref.url)).json()).toMatchObject({ status: "completed", job: { attempts: 1 } });
+  expect((await app.request("/v1/evaluations/missing/retry", { method: "POST" })).status).toBe(404);
+  expect((await app.request(ref.url + "/retry", { method: "POST" })).status).toBe(409);
+  const ev = (await engine.store.getEvaluation(ref.id, "default"))!;
+  ev.status = "failed"; await engine.store.putEvaluation(ev);
+  expect((await app.request(ref.url + "/retry", { method: "POST" })).status).toBe(202);
+  await queue.drain();
+});
+
+it("registers async work with the background hook", async () => {
+  const promises: Promise<unknown>[] = [];
+  const app = createApp({ engine: new Engine(), background: promise => { promises.push(promise); } });
+  const res = await app.request("/v1/evaluations", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ async: true, rubric: { name: "Background", defaultJudge: { type: "decision", provider: "mock" }, criteria: [{ id: "a", name: "A" }] }, inputs: [{ type: "text", text: "hello" }] }) });
+  expect(res.status).toBe(202);
+  const ref = await res.json();
+  await Promise.all(promises);
+  expect(promises).toHaveLength(1);
+  expect(await (await app.request(ref.url)).json()).toMatchObject({ status: "completed" });
+});

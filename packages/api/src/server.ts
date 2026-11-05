@@ -1,5 +1,5 @@
 import { serve } from "@hono/node-server";
-import { Engine, FileStore, MemoryStore, type Store } from "@verdict/core";
+import { Engine, MemoryQueue, FileStore, MemoryStore, type Store } from "@verdict/core";
 import { createApp, envAuth, type Auth, type KeyManager } from "./app.js";
 
 /**
@@ -21,11 +21,17 @@ export async function startServer(opts: { port?: number; dataDir?: string; datab
     const h = await fromSqliteFile(database, process.env.VERDICT_API_KEYS ? envAuth() : undefined);
     store = h.store; auth = h.auth; keys = h.auth;
   } else store = dataDir ? new FileStore(dataDir) : new MemoryStore();
-  const engine = new Engine({ store, ingest: { allowLocalFiles: opts.allowLocalFiles ?? process.env.VERDICT_ALLOW_LOCAL_FILES === "1" } });
+  const queue = new MemoryQueue();
+  const engine = new Engine({ store, queue, ingest: { allowLocalFiles: opts.allowLocalFiles ?? process.env.VERDICT_ALLOW_LOCAL_FILES === "1" } });
+  queue.engine = engine;
   const app = createApp({ engine, auth, keys, log: process.env.VERDICT_LOG !== "0" });
   const server = serve({ fetch: app.fetch, port }, (info) => {
     const storeName = database ? `sqlite:${database}` : dataDir ? `file:${dataDir}` : "memory";
     console.log(`verdict api listening on http://localhost:${info.port}  (store: ${storeName}, auth: ${database ? "db + env keys" : process.env.VERDICT_API_KEYS ? "env keys" : "open"}${process.env.VERDICT_ADMIN_KEY && keys ? ", admin on" : ""})`);
+  });
+  process.once("SIGTERM", () => {
+    const keepAlive = setInterval(() => {}, 1000);
+    server.close(() => { void queue.drain().then(() => { clearInterval(keepAlive); process.exit(0); }); });
   });
   return { app, engine, server, port };
 }

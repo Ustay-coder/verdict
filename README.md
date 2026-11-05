@@ -161,8 +161,9 @@ Full reference: [docs/RUBRICS.md](docs/RUBRICS.md). Design and extension points:
 | `POST` | `/v1/rubrics` | Create (JSON body, or YAML with `content-type: application/yaml`) |
 | `POST` | `/v1/rubrics/validate` | Validate without storing |
 | `GET/PUT/DELETE` | `/v1/rubrics/:id` | Read / replace / delete |
-| `POST` | `/v1/evaluations` | Evaluate. `rubric` = id or inline. `inputs` or `subject`. `async:true` → `202 {id}`. `webhook` for completion. |
+| `POST` | `/v1/evaluations` | Evaluate. `rubric` = id or inline. `inputs` or `subject`. `async:true` → `202 {id,status:"queued",url}`; queue retries when configured. `webhook` for completion. |
 | `GET` | `/v1/evaluations/:id` | Status, per-criterion scores, ratings, rationales, quotes (`?evidence=true` includes ingested text) |
+| `POST` | `/v1/evaluations/:id/retry` | Re-enqueue a failed evaluation; reset attempts (202; 404 unknown, 409 not failed) |
 | `POST` | `/v1/evaluations/:id/scores` | Human rater submits `{criterionId, raterId, score, rationale?}` |
 | `POST` | `/v1/evaluations/:id/aggregate` | Re-aggregate with a different `aggregation` (optionally `persist`) |
 | `GET` | `/v1/tasks?rater=` | Pending human tasks |
@@ -246,3 +247,10 @@ Schema changes: edit `packages/db/src/schema/sqlite.ts`, run `pnpm --filter @ver
 v0.2 — decision-model-first engine (Jev / Clef / OpenAI Decisions / System One-compatible), API, CLI, MCP, SDK with in-memory and file stores. Provider request shapes for TypeSafe and Cloudflare follow their public documentation; OpenAI Decisions and OpenRouter adapters follow public write-ups of the beta and parse defensively — pin `baseUrl`/`options` if a shape differs. See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#roadmap) for what's next.
 
 MIT.
+
+
+### Async & retries
+
+POST /v1/evaluations with `async: true` returns 202 with a queued id and polling URL when a queue is configured. Node uses MemoryQueue (in-process; restart recovery requires a durable queue). Retries use exponential backoff starting at 2 seconds, capped at 5 minutes, with ±20% jitter and 5 attempts by default. Transient provider and ingestion failures retry; exhausted jobs become failed and dead-lettered. The evaluation's `job` field reports attempts, maxAttempts, lastError, nextAttemptAt and deadLettered. Terminal webhooks fire after retry classification.
+
+Cloudflare Queues require Workers Paid. Run `wrangler queues create verdict-jobs && wrangler queues create verdict-dlq`, then uncomment the producer and consumer sections in packages/api/wrangler.toml. Without QUEUE, Workers use waitUntil to finish async requests in the background with no retries.

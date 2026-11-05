@@ -29,6 +29,7 @@ function summarize(ev: Evaluation | Record<string, unknown>) {
   return {
     id: e.id,
     status: e.status,
+    ...(e.job ? { job: e.job } : {}),
     score: e.aggregate?.score,
     grade: e.aggregate?.grade,
     passed: e.aggregate?.passed,

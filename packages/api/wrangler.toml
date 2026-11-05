@@ -14,3 +14,16 @@ migrations_dir = "../db/drizzle"
 
 [observability]
 enabled = true
+
+# Queues require the Workers Paid plan. Create both queues before enabling:
+# wrangler queues create verdict-jobs && wrangler queues create verdict-dlq
+# [[queues.producers]]
+# binding = "QUEUE"
+# queue = "verdict-jobs"
+#
+# [[queues.consumers]]
+# queue = "verdict-jobs"
+# max_retries = 5
+# max_batch_size = 10
+# max_concurrency = 4
+# dead_letter_queue = "verdict-dlq"
