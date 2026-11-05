@@ -168,6 +168,8 @@ codex login status                # should say logged in via ChatGPT
 codex                             # start from the repo root; AGENTS.md carries the project rules
 ```
 
+Running Codex **inside a cloud container** (Claude Code cloud, CI, a devbox) instead: the container's network policy must allow `auth.openai.com`, `chatgpt.com` and `api.openai.com`, then `scripts/codex-cloud.sh` writes a headless config and restores credentials from a `CODEX_AUTH_JSON` (or `CODEX_AUTH_JSON_B64`) secret — the contents of `~/.codex/auth.json` from any machine where you completed `codex login` — or falls back to `codex login --device-auth`. Drive it non-interactively with `codex exec "<task>"`.
+
 `AGENTS.md` is the agent-facing guide (invariants, build/test commands, package layering). `~/.codex/config.toml` is written with `preferred_auth_method = "chatgpt"`, so usage is billed to the subscription; keep `OPENAI_API_KEY` unset in the shell you run Codex from.
 
 ## Repository layout
