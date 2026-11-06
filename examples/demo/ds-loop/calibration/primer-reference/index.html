@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en" data-color-mode="light" data-light-theme="light">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Acme Pulse · Overview</title>
+<link rel="stylesheet" href="design-system/primer.css">
+<style>
+  body { background: var(--bgColor-muted); }
+  .page { max-width: 1232px; margin: 0 auto; padding: var(--base-size-24); }
+  .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--base-size-16); }
+  .cols { display: grid; grid-template-columns: 3fr 2fr; gap: var(--base-size-16); }
+  .kpi-value { font-size: var(--text-title-size-large); font-weight: var(--base-text-weight-semibold); line-height: 1.25; font-variant-numeric: tabular-nums; }
+  .num { font-variant-numeric: tabular-nums; }
+  .bars rect { fill: var(--data-blue-color-emphasis); }
+  .bars rect.now { fill: var(--fgColor-accent); }
+  .bars text { fill: var(--fgColor-muted); font-size: 12px; }
+  .bars line { stroke: var(--borderColor-muted); }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="d-flex flex-items-center mb-4">
+    <h1 class="h3 flex-auto">Acme Pulse <span class="color-fg-muted text-normal">/ Overview</span></h1>
+    <span class="Label Label--secondary mr-2">Sample data</span>
+    <span class="color-fg-muted text-small">October 2026</span>
+  </div>
+
+  <div class="flash flash-warn mb-4">Bramble Studio cancelled on Nov 3 (reason: budget). Churn this month is 2.3%.</div>
+
+  <div class="kpis mb-4">
+    <div class="Box p-3"><div class="text-small color-fg-muted mb-1">Monthly recurring revenue</div><div class="kpi-value">$48,200</div><div class="text-small color-fg-success">+4.1% vs September</div></div>
+    <div class="Box p-3"><div class="text-small color-fg-muted mb-1">Active accounts</div><div class="kpi-value">1,284</div><div class="text-small color-fg-success">+37 this month</div></div>
+    <div class="Box p-3"><div class="text-small color-fg-muted mb-1">Churn rate</div><div class="kpi-value">2.3%</div><div class="text-small color-fg-muted">of accounts, October</div></div>
+    <div class="Box p-3"><div class="text-small color-fg-muted mb-1">Trial to paid</div><div class="kpi-value">18.6%</div><div class="text-small color-fg-muted">of trials converted</div></div>
+  </div>
+
+  <div class="cols mb-4">
+    <div class="Box">
+      <div class="Box-header d-flex flex-items-center"><h2 class="Box-title flex-auto">Weekly signups</h2><span class="text-small color-fg-muted">Sep 8 – Oct 27 · 281 last week</span></div>
+      <div class="Box-body">
+        <svg class="bars" viewBox="0 0 640 208" width="100%" height="208" role="img" aria-label="Weekly signups">
+          <line x1="0" y1="184" x2="640" y2="184"/>
+          <g id="g"></g>
+        </svg>
+      </div>
+    </div>
+    <div class="Box">
+      <div class="Box-header"><h2 class="Box-title">Revenue by plan</h2></div>
+      <div class="Box-body">
+        <div class="d-flex flex-justify-between mb-1"><span class="text-bold">Team</span><span class="color-fg-muted num">$24,900 · 498 accounts</span></div>
+        <span class="Progress mb-3"><span class="Progress-item color-bg-accent-emphasis" style="width:51.7%"></span></span>
+        <div class="d-flex flex-justify-between mb-1"><span class="text-bold">Starter</span><span class="color-fg-muted num">$13,860 · 702 accounts</span></div>
+        <span class="Progress mb-3"><span class="Progress-item color-bg-accent-emphasis" style="width:28.8%"></span></span>
+        <div class="d-flex flex-justify-between mb-1"><span class="text-bold">Business</span><span class="color-fg-muted num">$9,440 · 84 accounts</span></div>
+        <span class="Progress"><span class="Progress-item color-bg-accent-emphasis" style="width:19.6%"></span></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="Box">
+    <div class="Box-header"><h2 class="Box-title">Recent account events</h2></div>
+    <div class="Box-row d-flex flex-items-center"><span class="Label Label--danger mr-3">Cancelled</span><span class="flex-auto"><strong>Bramble Studio</strong> · reason: budget</span><span class="color-fg-muted text-small num">Nov 3, 09:05</span></div>
+    <div class="Box-row d-flex flex-items-center"><span class="Label Label--success mr-3">Upgraded</span><span class="flex-auto"><strong>Northfield Labs</strong> · Starter → Team</span><span class="color-fg-muted text-small num">Nov 4, 16:12</span></div>
+    <div class="Box-row d-flex flex-items-center"><span class="Label Label--accent mr-3">Trial</span><span class="flex-auto"><strong>Kettle &amp; Co</strong> · started a trial</span><span class="color-fg-muted text-small num">Nov 4, 11:40</span></div>
+    <div class="Box-row d-flex flex-items-center"><span class="Label Label--secondary mr-3">Seats</span><span class="flex-auto"><strong>Osprey Freight</strong> · added 12 seats</span><span class="color-fg-muted text-small num">Nov 2, 18:27</span></div>
+  </div>
+</div>
+<script>
+  const w = [["Sep 8",212],["Sep 15",198],["Sep 22",231],["Sep 29",244],["Oct 6",227],["Oct 13",259],["Oct 20",268],["Oct 27",281]];
+  const g = document.getElementById("g"), bw = 48, gap = 32, max = 300;
+  g.innerHTML = w.map(([wk, n], i) => { const h = n / max * 160, x = 16 + i * (bw + gap);
+    return `<rect class="${i === w.length - 1 ? "now" : ""}" x="${x}" y="${184 - h}" width="${bw}" height="${h}" rx="3"/>` +
+      `<text x="${x + bw / 2}" y="${176 - h}" text-anchor="middle">${n}</text><text x="${x + bw / 2}" y="202" text-anchor="middle">${wk}</text>`; }).join("");
+</script>
+</body></html>

@@ -1,0 +1,212 @@
+[
+ {
+  "round": 0,
+  "cast_time_s": 96.97,
+  "page": "evaluated/round0.html",
+  "score": 19,
+  "grade": "rework",
+  "passed": null,
+  "criteria": [
+   {
+    "id": "native",
+    "name": "Looks native to Primer",
+    "n": 0.02250000000000002,
+    "rationale": "cloudflare/@cf/cloudflare/clef distribution: foreign=97% borrowed=2% native=1%"
+   },
+   {
+    "id": "surfaces",
+    "name": "Surfaces match the specimen",
+    "n": 0.032999999999999974,
+    "rationale": "cloudflare/@cf/cloudflare/clef distribution: different=95% close=3% identical=2%"
+   },
+   {
+    "id": "craft",
+    "name": "Composed with care",
+    "n": 0.9675,
+    "rationale": "cloudflare/@cf/cloudflare/clef distribution: unstyled=1% uneven=5% crafted=94%"
+   },
+   {
+    "id": "ds_color",
+    "name": "Colours are Primer tokens",
+    "n": 0,
+    "rationale": "0/224 colour uses are tokens (0%); off-token: #8b8fb3 \u00d738 (nearest token: data-gray-color-emphasis #808fa3); #eef0ff \u00d730 (nearest token: bgColor-disabled #eff2f5); #5a5e80 \u00d718 (nearest token: display-gray-fgColor #5c6570); #ffffff14 \u00d713 (nearest token: bgColor-neutral-muted #818b981f); #34d399 \u00d710 (nearest token: display-pine-scale-2 #1dd781); #a78bfa \u00d710 (nearest token: display-purple-scale-3 #bc91f8); #22d3ee \u00d79 (nearest token: display-cyan-scale-2 #00d0fa); #0d0e1a \u00d79 (nearest token: bgColor-black #1f2328)"
+   },
+   {
+    "id": "ds_type",
+    "name": "Type sizes, weights and faces are on the scale",
+    "n": 0.533,
+    "rationale": "33/99 text styles are tokens (33%); off-token: 11px \u00d713; weight 700 \u00d78; 36px weight 800 \u00d74; 12.5px weight 700 \u00d74; 18px weight 700 \u00d74; 14.5px weight 650 \u00d74; 13.5px \u00d74; 11px weight 700 \u00d74; 100% of glyphs in the system's faces (Inter, Liberation Mono). Scale: 12/13/14/16/20/32/40 px, weights 300/400/500/600"
+   },
+   {
+    "id": "ds_space",
+    "name": "Spacing is on the scale",
+    "n": 0.404,
+    "rationale": "110/272 spacing values (padding + border, margin, gap) are tokens (40%); off-token: 10px \u00d743; 23px \u00d732; 15px \u00d718; 18px \u00d718; 9px \u00d714; 3px \u00d712; 14px \u00d710; 11px \u00d78. Scale: -48/-44/-40/-36/-32/-28/-24/-20/-16/-12/-8/-6/-4/-2/0/2/4/6/8/12/16/20/24/28/32/36/40/44/48/64 px"
+   },
+   {
+    "id": "ds_components",
+    "name": "Panels, labels and controls are Primer components",
+    "n": 0,
+    "rationale": "0/41 panels, badges, buttons, inputs and bars are Primer components (0%); off-token: custom span.swatch \u00d76; custom div.card.kpi \u00d74; custom div.card \u00d74; custom div.ev-icon \u00d74; custom div.ev-body \u00d74; custom span \u00d73; custom div.bar-track \u00d73; custom div.arpa \u00d73. Components: AvatarStack, Banner, Box, BtnGroup, CircleBadge, Counter, FormControl, Header, IssueLabel, Label, Link, Overlay, Popover, Progress, SelectMenu, SideNav, State, Subhead, TableObject, TimelineItem, Toast, ToggleSwitch, UnderlineNav, btn, flash, form-control, form-select, tabnav, menu, blankslate, pagination, avatar"
+   },
+   {
+    "id": "ds_shape",
+    "name": "Radii, borders and shadows are tokens",
+    "n": 0.705,
+    "rationale": "62/88 radii, border widths and shadows are tokens (70%); off-token: radius 20px \u00d712; radius 14px \u00d78; shadow rgba(139, 92, 246, 0.45) 0px 8px 30px 0px \u00d71; radius 11px \u00d71; shadow rgba(52, 211, 153, 0.004) 0px 0px 0px 8.93212px \u00d71; shadow rgb(34, 211, 238) 0px 0px 10px 0px \u00d71; shadow rgb(139, 92, 246) 0px 0px 10px 0px \u00d71; shadow rgb(236, 72, 153) 0px 0px 10px 0px \u00d71. Radii 3/6/12 px or full; borders 1/2/4 px; shadows: shadow-resting-medium, shadow-inset, shadow-resting-small, shadow-resting-xsmall, shadow-floating-large, shadow-floating-medium, shadow-floating-small, shadow-floating-xlarge"
+   },
+   {
+    "id": "contrast",
+    "name": "Text passes WCAG AA",
+    "n": 0.9495,
+    "rationale": "94/99 text elements pass WCAG AA"
+   },
+   {
+    "id": "numbers_true",
+    "name": "Every figure derives from data.json",
+    "n": 1,
+    "rationale": "all 30 figures derive from data.json"
+   }
+  ]
+ },
+ {
+  "round": 1,
+  "cast_time_s": 181.568,
+  "page": "evaluated/round1.html",
+  "score": 76,
+  "grade": "almost",
+  "passed": null,
+  "criteria": [
+   {
+    "id": "native",
+    "name": "Looks native to Primer",
+    "n": 0.629,
+    "rationale": "cloudflare/@cf/cloudflare/clef distribution: foreign=17% borrowed=40% native=43%"
+   },
+   {
+    "id": "surfaces",
+    "name": "Surfaces match the specimen",
+    "n": 0.7689999999999999,
+    "rationale": "cloudflare/@cf/cloudflare/clef distribution: different=6% close=34% identical=60%"
+   },
+   {
+    "id": "craft",
+    "name": "Composed with care",
+    "n": 0.93475,
+    "rationale": "cloudflare/@cf/cloudflare/clef distribution: unstyled=1% uneven=10% crafted=88%"
+   },
+   {
+    "id": "ds_color",
+    "name": "Colours are Primer tokens",
+    "n": 1,
+    "rationale": "159/159 colour uses are tokens (100%)"
+   },
+   {
+    "id": "ds_type",
+    "name": "Type sizes, weights and faces are on the scale",
+    "n": 1,
+    "rationale": "78/78 text styles are tokens (100%); 100% of glyphs in the system's faces (Inter, Liberation Mono). Scale: 12/13/14/16/20/32/40 px, weights 300/400/500/600"
+   },
+   {
+    "id": "ds_space",
+    "name": "Spacing is on the scale",
+    "n": 0.996,
+    "rationale": "273/274 spacing values (padding + border, margin, gap) are tokens (100%); off-token: 10px \u00d71. Scale: -48/-44/-40/-36/-32/-28/-24/-20/-16/-12/-8/-6/-4/-2/0/2/4/6/8/12/16/20/24/28/32/36/40/44/48/64 px"
+   },
+   {
+    "id": "ds_components",
+    "name": "Panels, labels and controls are Primer components",
+    "n": 1,
+    "rationale": "68/68 panels, badges, buttons, inputs and bars are Primer components (100%). Components: AvatarStack, Banner, Box, BtnGroup, CircleBadge, Counter, FormControl, Header, IssueLabel, Label, Link, Overlay, Popover, Progress, SelectMenu, SideNav, State, Subhead, TableObject, TimelineItem, Toast, ToggleSwitch, UnderlineNav, btn, flash, form-control, form-select, tabnav, menu, blankslate, pagination, avatar"
+   },
+   {
+    "id": "ds_shape",
+    "name": "Radii, borders and shadows are tokens",
+    "n": 1,
+    "rationale": "95/95 radii, border widths and shadows are tokens (100%). Radii 3/6/12 px or full; borders 1/2/4 px; shadows: shadow-resting-medium, shadow-inset, shadow-resting-small, shadow-resting-xsmall, shadow-floating-large, shadow-floating-medium, shadow-floating-small, shadow-floating-xlarge"
+   },
+   {
+    "id": "contrast",
+    "name": "Text passes WCAG AA",
+    "n": 1,
+    "rationale": "78/78 text elements pass WCAG AA"
+   },
+   {
+    "id": "numbers_true",
+    "name": "Every figure derives from data.json",
+    "n": 1,
+    "rationale": "all 30 figures derive from data.json"
+   }
+  ]
+ },
+ {
+  "round": 2,
+  "cast_time_s": 215.614,
+  "page": "evaluated/round2.html",
+  "score": 82,
+  "grade": "ship it",
+  "passed": null,
+  "criteria": [
+   {
+    "id": "native",
+    "name": "Looks native to Primer",
+    "n": 0.75125,
+    "rationale": "cloudflare/@cf/cloudflare/clef distribution: foreign=9% borrowed=31% native=59%"
+   },
+   {
+    "id": "surfaces",
+    "name": "Surfaces match the specimen",
+    "n": 0.8305,
+    "rationale": "cloudflare/@cf/cloudflare/clef distribution: different=4% close=26% identical=70%"
+   },
+   {
+    "id": "craft",
+    "name": "Composed with care",
+    "n": 0.92075,
+    "rationale": "cloudflare/@cf/cloudflare/clef distribution: unstyled=2% uneven=13% crafted=86%"
+   },
+   {
+    "id": "ds_color",
+    "name": "Colours are Primer tokens",
+    "n": 1,
+    "rationale": "160/160 colour uses are tokens (100%)"
+   },
+   {
+    "id": "ds_type",
+    "name": "Type sizes, weights and faces are on the scale",
+    "n": 1,
+    "rationale": "78/78 text styles are tokens (100%); 100% of glyphs in the system's faces (Inter, Liberation Mono). Scale: 12/13/14/16/20/32/40 px, weights 300/400/500/600"
+   },
+   {
+    "id": "ds_space",
+    "name": "Spacing is on the scale",
+    "n": 0.996,
+    "rationale": "267/268 spacing values (padding + border, margin, gap) are tokens (100%); off-token: 10px \u00d71. Scale: -48/-44/-40/-36/-32/-28/-24/-20/-16/-12/-8/-6/-4/-2/0/2/4/6/8/12/16/20/24/28/32/36/40/44/48/64 px"
+   },
+   {
+    "id": "ds_components",
+    "name": "Panels, labels and controls are Primer components",
+    "n": 1,
+    "rationale": "65/65 panels, badges, buttons, inputs and bars are Primer components (100%). Components: AvatarStack, Banner, Box, BtnGroup, CircleBadge, Counter, FormControl, Header, IssueLabel, Label, Link, Overlay, Popover, Progress, SelectMenu, SideNav, State, Subhead, TableObject, TimelineItem, Toast, ToggleSwitch, UnderlineNav, btn, flash, form-control, form-select, tabnav, menu, blankslate, pagination, avatar"
+   },
+   {
+    "id": "ds_shape",
+    "name": "Radii, borders and shadows are tokens",
+    "n": 1,
+    "rationale": "98/98 radii, border widths and shadows are tokens (100%). Radii 3/6/12 px or full; borders 1/2/4 px; shadows: shadow-resting-medium, shadow-inset, shadow-resting-small, shadow-resting-xsmall, shadow-floating-large, shadow-floating-medium, shadow-floating-small, shadow-floating-xlarge"
+   },
+   {
+    "id": "contrast",
+    "name": "Text passes WCAG AA",
+    "n": 1,
+    "rationale": "78/78 text elements pass WCAG AA"
+   },
+   {
+    "id": "numbers_true",
+    "name": "Every figure derives from data.json",
+    "n": 1,
+    "rationale": "all 30 figures derive from data.json"
+   }
+  ]
+ }
+]
