@@ -1,0 +1,760 @@
+{
+  "id": "eval_mw4bi7mlrc6jqjwz",
+  "rubricId": "rub_mw4bhwq5p6jszi3i",
+  "rubric": {
+    "id": "rub_mw4bhwq5p6jszi3i",
+    "name": "Post review",
+    "version": "1",
+    "description": "Would developers on X stop, read and reply, and is every claim true?",
+    "context": "You review a draft post for X aimed at developers and designers who use coding agents. The brief lists the facts\nthe post may use. Judge the draft text only. Most drafts land in the middle.\n",
+    "language": "en",
+    "scale": {
+      "type": "numeric",
+      "min": 1,
+      "max": 5
+    },
+    "judges": {
+      "jev": {
+        "type": "decision",
+        "provider": "typesafe",
+        "model": "jev-latest",
+        "onLowConfidence": "accept",
+        "escalateTo": []
+      },
+      "clef": {
+        "type": "decision",
+        "provider": "cloudflare",
+        "model": "@cf/cloudflare/clef",
+        "onLowConfidence": "accept",
+        "escalateTo": []
+      }
+    },
+    "defaultJudge": {
+      "type": "ref",
+      "ref": "jev"
+    },
+    "criteria": [
+      {
+        "id": "hook",
+        "name": "First line stops the scroll",
+        "weight": 3,
+        "levels": [
+          {
+            "value": 1,
+            "label": "flat",
+            "description": "Opens with a greeting, an announcement or a generic statement"
+          },
+          {
+            "value": 3,
+            "label": "ok",
+            "description": "Opens with the topic, but nothing surprising"
+          },
+          {
+            "value": 5,
+            "label": "hook",
+            "description": "The first line alone makes a developer want the next line: a concrete surprise, a number or a tension"
+          }
+        ],
+        "inputs": [
+          "post"
+        ],
+        "optional": false
+      },
+      {
+        "id": "specific",
+        "name": "Concrete, not vague",
+        "weight": 2,
+        "levels": [
+          {
+            "value": 1,
+            "label": "vague",
+            "description": "Adjectives and promises; no numbers or specifics"
+          },
+          {
+            "value": 3,
+            "label": "some",
+            "description": "One concrete detail"
+          },
+          {
+            "value": 5,
+            "label": "concrete",
+            "description": "Says exactly what happened, with the numbers that matter"
+          }
+        ],
+        "inputs": [
+          "post"
+        ],
+        "optional": false
+      },
+      {
+        "id": "clear",
+        "name": "One idea, plain words",
+        "weight": 2,
+        "levels": [
+          {
+            "value": 1,
+            "label": "muddled",
+            "description": "Several ideas, jargon or hashtags crowd it"
+          },
+          {
+            "value": 3,
+            "label": "mostly",
+            "description": "One idea, but wordy or with filler"
+          },
+          {
+            "value": 5,
+            "label": "clear",
+            "description": "One idea a developer gets in one read"
+          }
+        ],
+        "inputs": [
+          "post"
+        ],
+        "optional": false
+      },
+      {
+        "id": "reply",
+        "name": "Invites a reply",
+        "weight": 1,
+        "levels": [
+          {
+            "value": 1,
+            "label": "closed",
+            "description": "Nothing to respond to"
+          },
+          {
+            "value": 3,
+            "label": "maybe",
+            "description": "Some readers might respond"
+          },
+          {
+            "value": 5,
+            "label": "invites",
+            "description": "Developers will want to reply with their own case or a question"
+          }
+        ],
+        "inputs": [
+          "post"
+        ],
+        "optional": false
+      },
+      {
+        "id": "no_hype",
+        "name": "No hype",
+        "weight": 0,
+        "scale": {
+          "type": "binary",
+          "labels": [
+            "hype",
+            "plain"
+          ]
+        },
+        "anchors": {
+          "hype": "Uses hype or absolute claims: revolutionary, game-changing, perfect, any/every product, effortless, 10x, emoji rockets, a pile of hashtags",
+          "plain": "States what happened in plain words; no hype words or absolute promises"
+        },
+        "judge": {
+          "type": "ref",
+          "ref": "clef"
+        },
+        "inputs": [
+          "post"
+        ],
+        "optional": false
+      },
+      {
+        "id": "true_to_brief",
+        "name": "Every claim is in the brief",
+        "weight": 0,
+        "scale": {
+          "type": "binary",
+          "labels": [
+            "overclaims",
+            "true"
+          ]
+        },
+        "anchors": {
+          "overclaims": "Claims something the brief doesn't say, or exaggerates it",
+          "true": "Every claim matches the brief"
+        },
+        "judge": {
+          "type": "ref",
+          "ref": "clef"
+        },
+        "inputs": [
+          "post",
+          "brief"
+        ],
+        "optional": false
+      }
+    ],
+    "aggregation": {
+      "method": "weighted_mean",
+      "rater": "mean",
+      "normalize": [
+        0,
+        100
+      ],
+      "missing": "exclude",
+      "gates": [
+        {
+          "criterion": "no_hype",
+          "min": 1,
+          "message": "Hype: plain words get more replies from developers"
+        },
+        {
+          "criterion": "true_to_brief",
+          "min": 1,
+          "message": "Overclaims: says something the brief doesn't support"
+        }
+      ],
+      "grades": [
+        {
+          "label": "post it",
+          "min": 80
+        },
+        {
+          "label": "close",
+          "min": 60
+        },
+        {
+          "label": "rework",
+          "min": 0
+        }
+      ],
+      "passThreshold": 80,
+      "precision": 0
+    }
+  },
+  "subject": {
+    "name": "Draft C",
+    "inputs": [
+      {
+        "type": "file",
+        "path": "/root/launch-post/drafts/c.md",
+        "tags": [
+          "post"
+        ]
+      },
+      {
+        "type": "file",
+        "path": "/root/launch-post/brief.md",
+        "tags": [
+          "brief"
+        ]
+      }
+    ]
+  },
+  "evidence": [
+    {
+      "inputIndex": 0,
+      "kind": "file",
+      "label": "c.md",
+      "tags": [
+        "post"
+      ],
+      "text": "What would your coding agent's one-shot UI score against a real design system?\n\nOurs scored 19/100 against GitHub's Primer. Then Claude Code turned Primer's tokens into a Verdict rubric and rebuilt the page: 19 → 76 → 82, passing at 80, in about 3 minutes unattended.\n\nEvery colour, size and spacing value on the final page is a Primer token. 17-second video below.\n",
+      "truncated": false,
+      "stats": {
+        "chars": 365,
+        "words": 63,
+        "lines": 5
+      },
+      "source": "c.md"
+    },
+    {
+      "inputIndex": 1,
+      "kind": "file",
+      "label": "brief.md",
+      "tags": [
+        "brief"
+      ],
+      "text": "# What the post announces (facts the post may use)\n- A 17-second screen recording: Claude Code on the left, a dashboard on the right.\n- The dashboard started as an AI one-shot: dark purple glow, glass cards. Verdict scored it 19/100 against GitHub's\n  open-source Primer design system.\n- The agent installed Primer, ran an importer that turned Primer's tokens (751 colours, a 7-step type scale, spacing,\n  radii, component classes) into a Verdict rubric, and rebuilt the page.\n- Scores: 19 → 76 → 82 (passes at 80). Every colour, size and spacing value on the final page is a Primer token.\n- About 3 minutes, unattended. The data is fictional.\n- Verdict is an evaluation engine: rubrics scored by decision models, humans and deterministic checks.\n- Audience: developers and designers on X who use coding agents.\n",
+      "truncated": false,
+      "stats": {
+        "chars": 811,
+        "words": 137,
+        "lines": 10
+      },
+      "source": "brief.md"
+    }
+  ],
+  "status": "completed",
+  "criteria": [
+    {
+      "criterionId": "hook",
+      "name": "First line stops the scroll",
+      "weight": 3,
+      "status": "scored",
+      "ratings": [
+        {
+          "id": "rat_idplgklymw4bi7wt",
+          "criterionId": "hook",
+          "raterId": "jev",
+          "judgeType": "decision",
+          "createdAt": "2026-11-06T01:50:35.405Z",
+          "status": "scored",
+          "score": 4.62,
+          "normalized": 0.9049999999999998,
+          "confidence": 0.72,
+          "probabilities": {
+            "flat": 0.02,
+            "ok": 0.15,
+            "hook": 0.83
+          },
+          "rationale": "typesafe/jev-1.14.0 distribution: flat=2% ok=15% hook=83%",
+          "raw": {
+            "provider": "typesafe",
+            "model": "jev-1.14.0",
+            "question": {
+              "type": "score",
+              "instructions": "Context: You review a draft post for X aimed at developers and designers who use coding agents. The brief lists the facts\nthe post may use. Judge the draft text only. Most drafts land in the middle.\n Criterion \"First line stops the scroll\". Place the input on the ordered levels below (worst to best). Judge only this criterion using the evidence in the state.",
+              "criteria": [
+                "flat: Opens with a greeting, an announcement or a generic statement",
+                "ok: Opens with the topic, but nothing surprising",
+                "hook: The first line alone makes a developer want the next line: a concrete surprise, a number or a tension"
+              ]
+            },
+            "answer": {
+              "type": "score",
+              "score": 1.82,
+              "confidence": 0.72,
+              "legend": {
+                "0": "flat: Opens with a greeting, an announcement or a generic statement",
+                "1": "ok: Opens with the topic, but nothing surprising",
+                "2": "hook: The first line alone makes a developer want the next line: a concrete surprise, a number or a tension"
+              },
+              "probabilities": {
+                "0": 0.02,
+                "1": 0.15,
+                "2": 0.83
+              }
+            },
+            "levels": [
+              {
+                "value": 1,
+                "label": "flat",
+                "description": "Opens with a greeting, an announcement or a generic statement"
+              },
+              {
+                "value": 3,
+                "label": "ok",
+                "description": "Opens with the topic, but nothing surprising"
+              },
+              {
+                "value": 5,
+                "label": "hook",
+                "description": "The first line alone makes a developer want the next line: a concrete surprise, a number or a tension"
+              }
+            ],
+            "latencyMs": 361,
+            "lowConfidence": false,
+            "stateChars": 432,
+            "stateTruncated": false
+          }
+        }
+      ],
+      "pending": 0,
+      "score": 4.62,
+      "normalized": 0.905
+    },
+    {
+      "criterionId": "specific",
+      "name": "Concrete, not vague",
+      "weight": 2,
+      "status": "scored",
+      "ratings": [
+        {
+          "id": "rat_awumnmdsmw4bi7wt",
+          "criterionId": "specific",
+          "raterId": "jev",
+          "judgeType": "decision",
+          "createdAt": "2026-11-06T01:50:35.405Z",
+          "status": "scored",
+          "score": 5,
+          "normalized": 1,
+          "confidence": 1,
+          "probabilities": {
+            "vague": 0,
+            "some": 0,
+            "concrete": 1
+          },
+          "rationale": "typesafe/jev-1.14.0 distribution: vague=0% some=0% concrete=100%",
+          "raw": {
+            "provider": "typesafe",
+            "model": "jev-1.14.0",
+            "question": {
+              "type": "score",
+              "instructions": "Context: You review a draft post for X aimed at developers and designers who use coding agents. The brief lists the facts\nthe post may use. Judge the draft text only. Most drafts land in the middle.\n Criterion \"Concrete, not vague\". Place the input on the ordered levels below (worst to best). Judge only this criterion using the evidence in the state.",
+              "criteria": [
+                "vague: Adjectives and promises; no numbers or specifics",
+                "some: One concrete detail",
+                "concrete: Says exactly what happened, with the numbers that matter"
+              ]
+            },
+            "answer": {
+              "type": "score",
+              "score": 2,
+              "confidence": 1,
+              "legend": {
+                "0": "vague: Adjectives and promises; no numbers or specifics",
+                "1": "some: One concrete detail",
+                "2": "concrete: Says exactly what happened, with the numbers that matter"
+              },
+              "probabilities": {
+                "0": 0,
+                "1": 0,
+                "2": 1
+              }
+            },
+            "levels": [
+              {
+                "value": 1,
+                "label": "vague",
+                "description": "Adjectives and promises; no numbers or specifics"
+              },
+              {
+                "value": 3,
+                "label": "some",
+                "description": "One concrete detail"
+              },
+              {
+                "value": 5,
+                "label": "concrete",
+                "description": "Says exactly what happened, with the numbers that matter"
+              }
+            ],
+            "latencyMs": 361,
+            "lowConfidence": false,
+            "stateChars": 432,
+            "stateTruncated": false
+          }
+        }
+      ],
+      "pending": 0,
+      "score": 5,
+      "normalized": 1
+    },
+    {
+      "criterionId": "clear",
+      "name": "One idea, plain words",
+      "weight": 2,
+      "status": "scored",
+      "ratings": [
+        {
+          "id": "rat_ik4xht8ymw4bi7wt",
+          "criterionId": "clear",
+          "raterId": "jev",
+          "judgeType": "decision",
+          "createdAt": "2026-11-06T01:50:35.405Z",
+          "status": "scored",
+          "score": 3.52,
+          "normalized": 0.6299999999999999,
+          "confidence": 0,
+          "probabilities": {
+            "muddled": 0.22,
+            "mostly": 0.3,
+            "clear": 0.48
+          },
+          "rationale": "typesafe/jev-1.14.0 distribution: muddled=22% mostly=30% clear=48%",
+          "raw": {
+            "provider": "typesafe",
+            "model": "jev-1.14.0",
+            "question": {
+              "type": "score",
+              "instructions": "Context: You review a draft post for X aimed at developers and designers who use coding agents. The brief lists the facts\nthe post may use. Judge the draft text only. Most drafts land in the middle.\n Criterion \"One idea, plain words\". Place the input on the ordered levels below (worst to best). Judge only this criterion using the evidence in the state.",
+              "criteria": [
+                "muddled: Several ideas, jargon or hashtags crowd it",
+                "mostly: One idea, but wordy or with filler",
+                "clear: One idea a developer gets in one read"
+              ]
+            },
+            "answer": {
+              "type": "score",
+              "score": 1.25,
+              "confidence": 0,
+              "legend": {
+                "0": "muddled: Several ideas, jargon or hashtags crowd it",
+                "1": "mostly: One idea, but wordy or with filler",
+                "2": "clear: One idea a developer gets in one read"
+              },
+              "probabilities": {
+                "0": 0.22,
+                "1": 0.3,
+                "2": 0.48
+              }
+            },
+            "levels": [
+              {
+                "value": 1,
+                "label": "muddled",
+                "description": "Several ideas, jargon or hashtags crowd it"
+              },
+              {
+                "value": 3,
+                "label": "mostly",
+                "description": "One idea, but wordy or with filler"
+              },
+              {
+                "value": 5,
+                "label": "clear",
+                "description": "One idea a developer gets in one read"
+              }
+            ],
+            "latencyMs": 361,
+            "lowConfidence": false,
+            "stateChars": 432,
+            "stateTruncated": false
+          }
+        }
+      ],
+      "pending": 0,
+      "score": 3.52,
+      "normalized": 0.63
+    },
+    {
+      "criterionId": "reply",
+      "name": "Invites a reply",
+      "weight": 1,
+      "status": "scored",
+      "ratings": [
+        {
+          "id": "rat_8g0sscc9mw4bi7wt",
+          "criterionId": "reply",
+          "raterId": "jev",
+          "judgeType": "decision",
+          "createdAt": "2026-11-06T01:50:35.405Z",
+          "status": "scored",
+          "score": 4.12,
+          "normalized": 0.78,
+          "confidence": 0.34,
+          "probabilities": {
+            "closed": 0.05,
+            "maybe": 0.34,
+            "invites": 0.61
+          },
+          "rationale": "typesafe/jev-1.14.0 distribution: closed=5% maybe=34% invites=61%",
+          "raw": {
+            "provider": "typesafe",
+            "model": "jev-1.14.0",
+            "question": {
+              "type": "score",
+              "instructions": "Context: You review a draft post for X aimed at developers and designers who use coding agents. The brief lists the facts\nthe post may use. Judge the draft text only. Most drafts land in the middle.\n Criterion \"Invites a reply\". Place the input on the ordered levels below (worst to best). Judge only this criterion using the evidence in the state.",
+              "criteria": [
+                "closed: Nothing to respond to",
+                "maybe: Some readers might respond",
+                "invites: Developers will want to reply with their own case or a question"
+              ]
+            },
+            "answer": {
+              "type": "score",
+              "score": 1.56,
+              "confidence": 0.34,
+              "legend": {
+                "0": "closed: Nothing to respond to",
+                "1": "maybe: Some readers might respond",
+                "2": "invites: Developers will want to reply with their own case or a question"
+              },
+              "probabilities": {
+                "0": 0.05,
+                "1": 0.34,
+                "2": 0.61
+              }
+            },
+            "levels": [
+              {
+                "value": 1,
+                "label": "closed",
+                "description": "Nothing to respond to"
+              },
+              {
+                "value": 3,
+                "label": "maybe",
+                "description": "Some readers might respond"
+              },
+              {
+                "value": 5,
+                "label": "invites",
+                "description": "Developers will want to reply with their own case or a question"
+              }
+            ],
+            "latencyMs": 361,
+            "lowConfidence": false,
+            "stateChars": 432,
+            "stateTruncated": false
+          }
+        }
+      ],
+      "pending": 0,
+      "score": 4.12,
+      "normalized": 0.78
+    },
+    {
+      "criterionId": "no_hype",
+      "name": "No hype",
+      "weight": 0,
+      "status": "scored",
+      "ratings": [
+        {
+          "id": "rat_ujekt4q3mw4bi81l",
+          "criterionId": "no_hype",
+          "raterId": "clef",
+          "judgeType": "decision",
+          "createdAt": "2026-11-06T01:50:35.577Z",
+          "status": "scored",
+          "score": 1,
+          "normalized": 1,
+          "confidence": 0.8144,
+          "probabilities": {
+            "hype": 0.0928,
+            "plain": 0.9072
+          },
+          "rationale": "cloudflare/@cf/cloudflare/clef distribution: hype=9% plain=91%",
+          "raw": {
+            "provider": "cloudflare",
+            "model": "@cf/cloudflare/clef",
+            "question": {
+              "type": "noul",
+              "instructions": "Context: You review a draft post for X aimed at developers and designers who use coding agents. The brief lists the facts\nthe post may use. Judge the draft text only. Most drafts land in the middle.\n Criterion \"No hype\". Is the input \"plain\" for this criterion?",
+              "criteria": {
+                "true": "States what happened in plain words; no hype words or absolute promises",
+                "false": "Uses hype or absolute claims: revolutionary, game-changing, perfect, any/every product, effortless, 10x, emoji rockets, a pile of hashtags"
+              }
+            },
+            "answer": {
+              "type": "noul",
+              "noul": 0.9072
+            },
+            "levels": [
+              {
+                "value": 0,
+                "label": "hype",
+                "description": "Uses hype or absolute claims: revolutionary, game-changing, perfect, any/every product, effortless, 10x, emoji rockets, a pile of hashtags"
+              },
+              {
+                "value": 1,
+                "label": "plain",
+                "description": "States what happened in plain words; no hype words or absolute promises"
+              }
+            ],
+            "latencyMs": 534,
+            "lowConfidence": false,
+            "stateChars": 432,
+            "stateTruncated": false
+          }
+        }
+      ],
+      "pending": 0,
+      "score": 1,
+      "normalized": 1,
+      "gate": {
+        "passed": true
+      }
+    },
+    {
+      "criterionId": "true_to_brief",
+      "name": "Every claim is in the brief",
+      "weight": 0,
+      "status": "scored",
+      "ratings": [
+        {
+          "id": "rat_aad552eimw4bi822",
+          "criterionId": "true_to_brief",
+          "raterId": "clef",
+          "judgeType": "decision",
+          "createdAt": "2026-11-06T01:50:35.594Z",
+          "status": "scored",
+          "score": 1,
+          "normalized": 1,
+          "confidence": 0.8574,
+          "probabilities": {
+            "overclaims": 0.0713,
+            "true": 0.9287
+          },
+          "rationale": "cloudflare/@cf/cloudflare/clef distribution: overclaims=7% true=93%",
+          "raw": {
+            "provider": "cloudflare",
+            "model": "@cf/cloudflare/clef",
+            "question": {
+              "type": "noul",
+              "instructions": "Context: You review a draft post for X aimed at developers and designers who use coding agents. The brief lists the facts\nthe post may use. Judge the draft text only. Most drafts land in the middle.\n Criterion \"Every claim is in the brief\". Is the input \"true\" for this criterion?",
+              "criteria": {
+                "true": "Every claim matches the brief",
+                "false": "Claims something the brief doesn't say, or exaggerates it"
+              }
+            },
+            "answer": {
+              "type": "noul",
+              "noul": 0.9287
+            },
+            "levels": [
+              {
+                "value": 0,
+                "label": "overclaims",
+                "description": "Claims something the brief doesn't say, or exaggerates it"
+              },
+              {
+                "value": 1,
+                "label": "true",
+                "description": "Every claim matches the brief"
+              }
+            ],
+            "latencyMs": 551,
+            "lowConfidence": false,
+            "stateChars": 1320,
+            "stateTruncated": false
+          }
+        }
+      ],
+      "pending": 0,
+      "score": 1,
+      "normalized": 1,
+      "gate": {
+        "passed": true
+      }
+    }
+  ],
+  "aggregate": {
+    "method": "weighted_mean",
+    "range": [
+      0,
+      100
+    ],
+    "gates": [
+      {
+        "criterion": "no_hype",
+        "passed": true
+      },
+      {
+        "criterion": "true_to_brief",
+        "passed": true
+      }
+    ],
+    "partial": false,
+    "included": [
+      "hook",
+      "specific",
+      "clear",
+      "reply"
+    ],
+    "excluded": [
+      "no_hype",
+      "true_to_brief"
+    ],
+    "raw": 0.844375,
+    "score": 84,
+    "grade": "post it",
+    "passed": true
+  },
+  "pendingTasks": [],
+  "usage": {
+    "decisionCalls": 3,
+    "llmCalls": 0,
+    "inputTokens": 1847,
+    "outputTokens": 56,
+    "durationMs": 558
+  },
+  "batchId": "bat_mw4bi7mkh324mrqr",
+  "createdAt": "2026-11-06T01:50:35.037Z",
+  "updatedAt": "2026-11-06T01:50:35.595Z"
+}

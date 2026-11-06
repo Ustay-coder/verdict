@@ -1,0 +1,169 @@
+{
+  "id": "eval_mw4bhuaneb45gzg9",
+  "rubricId": "rub_mw4bhqwo8k2fu5wp",
+  "rubric": {
+    "id": "rub_mw4bhqwo8k2fu5wp",
+    "name": "Hackathon judging",
+    "version": "1",
+    "description": "Four criteria, judged once by Jev; the aggregation decides the winner.",
+    "context": "You judge one hackathon entry from its write-up. Judge each criterion on its own: a strong entry can still score\nlow on one criterion. Most entries land in the middle.\n",
+    "language": "en",
+    "scale": {
+      "type": "numeric",
+      "min": 1,
+      "max": 5
+    },
+    "judges": {
+      "jev": {
+        "type": "decision",
+        "provider": "typesafe",
+        "model": "jev-latest",
+        "onLowConfidence": "accept",
+        "escalateTo": []
+      }
+    },
+    "defaultJudge": {
+      "type": "ref",
+      "ref": "jev"
+    },
+    "criteria": [
+      {
+        "id": "impact",
+        "name": "Impact",
+        "weight": 1,
+        "levels": [
+          {
+            "value": 1,
+            "label": "minor",
+            "description": "A small convenience for a few people"
+          },
+          {
+            "value": 3,
+            "label": "useful",
+            "description": "A real problem for a clear group of people"
+          },
+          {
+            "value": 5,
+            "label": "major",
+            "description": "A serious problem for very many people"
+          }
+        ],
+        "optional": false
+      },
+      {
+        "id": "feasibility",
+        "name": "Feasibility",
+        "weight": 1,
+        "levels": [
+          {
+            "value": 1,
+            "label": "speculative",
+            "description": "Mostly unbuilt; the hard parts are unsolved"
+          },
+          {
+            "value": 3,
+            "label": "partial",
+            "description": "A working core, with important parts missing"
+          },
+          {
+            "value": 5,
+            "label": "proven",
+            "description": "Works end to end and is already used by real people"
+          }
+        ],
+        "optional": false
+      },
+      {
+        "id": "originality",
+        "name": "Originality",
+        "weight": 1,
+        "levels": [
+          {
+            "value": 1,
+            "label": "familiar",
+            "description": "Works like many existing products"
+          },
+          {
+            "value": 3,
+            "label": "fresh_angle",
+            "description": "A familiar idea with a new angle or audience"
+          },
+          {
+            "value": 5,
+            "label": "new",
+            "description": "Nobody does this today"
+          }
+        ],
+        "optional": false
+      },
+      {
+        "id": "execution",
+        "name": "Execution",
+        "weight": 1,
+        "levels": [
+          {
+            "value": 1,
+            "label": "sketch",
+            "description": "A mock-up or a prompt; little was built"
+          },
+          {
+            "value": 3,
+            "label": "demo",
+            "description": "A working demo with rough edges"
+          },
+          {
+            "value": 5,
+            "label": "polished",
+            "description": "A complete, polished build with real results"
+          }
+        ],
+        "optional": false
+      }
+    ],
+    "aggregation": {
+      "method": "weighted_mean",
+      "rater": "mean",
+      "normalize": [
+        0,
+        100
+      ],
+      "missing": "exclude",
+      "gates": [],
+      "precision": 1
+    }
+  },
+  "subject": {
+    "name": "Plant Pal",
+    "inputs": [
+      {
+        "type": "file",
+        "path": "/root/hackathon/entries/plant-pal.md"
+      }
+    ]
+  },
+  "evidence": [],
+  "status": "running",
+  "criteria": [],
+  "aggregate": {
+    "method": "weighted_mean",
+    "range": [
+      0,
+      100
+    ],
+    "gates": [],
+    "partial": true,
+    "included": [],
+    "excluded": []
+  },
+  "pendingTasks": [],
+  "usage": {
+    "decisionCalls": 0,
+    "llmCalls": 0,
+    "inputTokens": 0,
+    "outputTokens": 0,
+    "durationMs": 0
+  },
+  "batchId": "bat_mw4bhtysm20zl6yy",
+  "createdAt": "2026-11-06T01:50:17.759Z",
+  "updatedAt": "2026-11-06T01:50:17.759Z"
+}

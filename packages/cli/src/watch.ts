@@ -60,7 +60,10 @@ export function watchState(evaluations: Evaluation[]): WatchState {
   const base = { running, updatedAt: latest.updatedAt, rubric: { name: latest.rubric.name, version: latest.rubric.version },
     aggregation: { method: latest.rubric.aggregation.method, formula: latest.rubric.aggregation.formula } };
   if (latest.batchId) {
-    const batch = evs.filter((e) => e.batchId === latest.batchId);
+    // A batch lands one evaluation at a time: keep showing the newest batch that has finished completely.
+    const unfinished = new Set(evaluations.filter((e) => e.batchId && (e.status === "queued" || e.status === "running")).map((e) => e.batchId));
+    const shown = [...evs].reverse().find((e) => e.batchId && !unfinished.has(e.batchId))?.batchId ?? latest.batchId;
+    const batch = evs.filter((e) => e.batchId === shown);
     return { ...base, view: "leaderboard", entries: batch.map(entry).sort(byScore), history: [] };
   }
   const same = evs.filter((e) => !e.batchId && rubricKey(e) === rubricKey(latest)).sort((a, b) => a.createdAt.localeCompare(b.createdAt));

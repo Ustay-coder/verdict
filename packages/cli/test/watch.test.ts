@@ -51,6 +51,17 @@ describe("watchState", () => {
     expect(s.running).toBe(1);
   });
 
+  it("keeps the previous batch on screen until a new batch has finished", async () => {
+    const engine = new Engine();
+    const first = await engine.evaluateBatch(rubric, [{ name: "x", inputs: [{ type: "text", text: "alpha" }] }, { name: "y", inputs: [{ type: "text", text: "beta" }] }]);
+    const second = await engine.evaluateBatch(rubric, [{ name: "x", inputs: [{ type: "text", text: "alpha beta" }] }, { name: "y", inputs: [{ type: "text", text: "beta" }] }]);
+    const later = (e: (typeof second.evaluations)[number], ms: number, status = e.status) => ({ ...e, status, updatedAt: new Date(Date.now() + ms).toISOString() });
+    const partial = [...first.evaluations, later(second.evaluations[0]!, 1000), later(second.evaluations[1]!, 1000, "running")];
+    expect(new Set(watchState(partial).entries.map((e) => e.id))).toEqual(new Set(first.evaluations.map((e) => e.id)));
+    const done = [...first.evaluations, later(second.evaluations[0]!, 1000), later(second.evaluations[1]!, 2000)];
+    expect(new Set(watchState(done).entries.map((e) => e.id))).toEqual(new Set(second.evaluations.map((e) => e.id)));
+  });
+
   it("surfaces failed gates", async () => {
     const engine = new Engine();
     await engine.evaluate({ rubric: { ...rubric, aggregation: { gates: [{ criterion: "b", min: 1, message: "beta is required" }] } }, subject: { inputs: [{ type: "text", text: "alpha" }] } });

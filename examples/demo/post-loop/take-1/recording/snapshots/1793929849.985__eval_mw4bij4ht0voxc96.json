@@ -1,0 +1,273 @@
+{
+  "id": "eval_mw4bij4ht0voxc96",
+  "rubricId": "rub_mw4bhwq5p6jszi3i",
+  "rubric": {
+    "id": "rub_mw4bhwq5p6jszi3i",
+    "name": "Post review",
+    "version": "1",
+    "description": "Would developers on X stop, read and reply, and is every claim true?",
+    "context": "You review a draft post for X aimed at developers and designers who use coding agents. The brief lists the facts\nthe post may use. Judge the draft text only. Most drafts land in the middle.\n",
+    "language": "en",
+    "scale": {
+      "type": "numeric",
+      "min": 1,
+      "max": 5
+    },
+    "judges": {
+      "jev": {
+        "type": "decision",
+        "provider": "typesafe",
+        "model": "jev-latest",
+        "onLowConfidence": "accept",
+        "escalateTo": []
+      },
+      "clef": {
+        "type": "decision",
+        "provider": "cloudflare",
+        "model": "@cf/cloudflare/clef",
+        "onLowConfidence": "accept",
+        "escalateTo": []
+      }
+    },
+    "defaultJudge": {
+      "type": "ref",
+      "ref": "jev"
+    },
+    "criteria": [
+      {
+        "id": "hook",
+        "name": "First line stops the scroll",
+        "weight": 3,
+        "levels": [
+          {
+            "value": 1,
+            "label": "flat",
+            "description": "Opens with a greeting, an announcement or a generic statement"
+          },
+          {
+            "value": 3,
+            "label": "ok",
+            "description": "Opens with the topic, but nothing surprising"
+          },
+          {
+            "value": 5,
+            "label": "hook",
+            "description": "The first line alone makes a developer want the next line: a concrete surprise, a number or a tension"
+          }
+        ],
+        "inputs": [
+          "post"
+        ],
+        "optional": false
+      },
+      {
+        "id": "specific",
+        "name": "Concrete, not vague",
+        "weight": 2,
+        "levels": [
+          {
+            "value": 1,
+            "label": "vague",
+            "description": "Adjectives and promises; no numbers or specifics"
+          },
+          {
+            "value": 3,
+            "label": "some",
+            "description": "One concrete detail"
+          },
+          {
+            "value": 5,
+            "label": "concrete",
+            "description": "Says exactly what happened, with the numbers that matter"
+          }
+        ],
+        "inputs": [
+          "post"
+        ],
+        "optional": false
+      },
+      {
+        "id": "clear",
+        "name": "One idea, plain words",
+        "weight": 2,
+        "levels": [
+          {
+            "value": 1,
+            "label": "muddled",
+            "description": "Several ideas, jargon or hashtags crowd it"
+          },
+          {
+            "value": 3,
+            "label": "mostly",
+            "description": "One idea, but wordy or with filler"
+          },
+          {
+            "value": 5,
+            "label": "clear",
+            "description": "One idea a developer gets in one read"
+          }
+        ],
+        "inputs": [
+          "post"
+        ],
+        "optional": false
+      },
+      {
+        "id": "reply",
+        "name": "Invites a reply",
+        "weight": 1,
+        "levels": [
+          {
+            "value": 1,
+            "label": "closed",
+            "description": "Nothing to respond to"
+          },
+          {
+            "value": 3,
+            "label": "maybe",
+            "description": "Some readers might respond"
+          },
+          {
+            "value": 5,
+            "label": "invites",
+            "description": "Developers will want to reply with their own case or a question"
+          }
+        ],
+        "inputs": [
+          "post"
+        ],
+        "optional": false
+      },
+      {
+        "id": "no_hype",
+        "name": "No hype",
+        "weight": 0,
+        "scale": {
+          "type": "binary",
+          "labels": [
+            "hype",
+            "plain"
+          ]
+        },
+        "anchors": {
+          "hype": "Uses hype or absolute claims: revolutionary, game-changing, perfect, any/every product, effortless, 10x, emoji rockets, a pile of hashtags",
+          "plain": "States what happened in plain words; no hype words or absolute promises"
+        },
+        "judge": {
+          "type": "ref",
+          "ref": "clef"
+        },
+        "inputs": [
+          "post"
+        ],
+        "optional": false
+      },
+      {
+        "id": "true_to_brief",
+        "name": "Every claim is in the brief",
+        "weight": 0,
+        "scale": {
+          "type": "binary",
+          "labels": [
+            "overclaims",
+            "true"
+          ]
+        },
+        "anchors": {
+          "overclaims": "Claims something the brief doesn't say, or exaggerates it",
+          "true": "Every claim matches the brief"
+        },
+        "judge": {
+          "type": "ref",
+          "ref": "clef"
+        },
+        "inputs": [
+          "post",
+          "brief"
+        ],
+        "optional": false
+      }
+    ],
+    "aggregation": {
+      "method": "weighted_mean",
+      "rater": "mean",
+      "normalize": [
+        0,
+        100
+      ],
+      "missing": "exclude",
+      "gates": [
+        {
+          "criterion": "no_hype",
+          "min": 1,
+          "message": "Hype: plain words get more replies from developers"
+        },
+        {
+          "criterion": "true_to_brief",
+          "min": 1,
+          "message": "Overclaims: says something the brief doesn't support"
+        }
+      ],
+      "grades": [
+        {
+          "label": "post it",
+          "min": 80
+        },
+        {
+          "label": "close",
+          "min": 60
+        },
+        {
+          "label": "rework",
+          "min": 0
+        }
+      ],
+      "passThreshold": 80,
+      "precision": 0
+    }
+  },
+  "subject": {
+    "name": "Draft A",
+    "inputs": [
+      {
+        "type": "file",
+        "path": "/root/launch-post/drafts/a.md",
+        "tags": [
+          "post"
+        ]
+      },
+      {
+        "type": "file",
+        "path": "/root/launch-post/brief.md",
+        "tags": [
+          "brief"
+        ]
+      }
+    ]
+  },
+  "evidence": [],
+  "status": "running",
+  "criteria": [],
+  "aggregate": {
+    "method": "weighted_mean",
+    "range": [
+      0,
+      100
+    ],
+    "gates": [],
+    "partial": true,
+    "included": [],
+    "excluded": []
+  },
+  "pendingTasks": [],
+  "usage": {
+    "decisionCalls": 0,
+    "llmCalls": 0,
+    "inputTokens": 0,
+    "outputTokens": 0,
+    "durationMs": 0
+  },
+  "batchId": "bat_mw4bij4gfxgzh1dp",
+  "createdAt": "2026-11-06T01:50:49.937Z",
+  "updatedAt": "2026-11-06T01:50:49.937Z"
+}

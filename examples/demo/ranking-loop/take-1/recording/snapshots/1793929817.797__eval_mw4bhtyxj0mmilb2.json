@@ -1,0 +1,500 @@
+{
+  "id": "eval_mw4bhtyxj0mmilb2",
+  "rubricId": "rub_mw4bhqwo8k2fu5wp",
+  "rubric": {
+    "id": "rub_mw4bhqwo8k2fu5wp",
+    "name": "Hackathon judging",
+    "version": "1",
+    "description": "Four criteria, judged once by Jev; the aggregation decides the winner.",
+    "context": "You judge one hackathon entry from its write-up. Judge each criterion on its own: a strong entry can still score\nlow on one criterion. Most entries land in the middle.\n",
+    "language": "en",
+    "scale": {
+      "type": "numeric",
+      "min": 1,
+      "max": 5
+    },
+    "judges": {
+      "jev": {
+        "type": "decision",
+        "provider": "typesafe",
+        "model": "jev-latest",
+        "onLowConfidence": "accept",
+        "escalateTo": []
+      }
+    },
+    "defaultJudge": {
+      "type": "ref",
+      "ref": "jev"
+    },
+    "criteria": [
+      {
+        "id": "impact",
+        "name": "Impact",
+        "weight": 1,
+        "levels": [
+          {
+            "value": 1,
+            "label": "minor",
+            "description": "A small convenience for a few people"
+          },
+          {
+            "value": 3,
+            "label": "useful",
+            "description": "A real problem for a clear group of people"
+          },
+          {
+            "value": 5,
+            "label": "major",
+            "description": "A serious problem for very many people"
+          }
+        ],
+        "optional": false
+      },
+      {
+        "id": "feasibility",
+        "name": "Feasibility",
+        "weight": 1,
+        "levels": [
+          {
+            "value": 1,
+            "label": "speculative",
+            "description": "Mostly unbuilt; the hard parts are unsolved"
+          },
+          {
+            "value": 3,
+            "label": "partial",
+            "description": "A working core, with important parts missing"
+          },
+          {
+            "value": 5,
+            "label": "proven",
+            "description": "Works end to end and is already used by real people"
+          }
+        ],
+        "optional": false
+      },
+      {
+        "id": "originality",
+        "name": "Originality",
+        "weight": 1,
+        "levels": [
+          {
+            "value": 1,
+            "label": "familiar",
+            "description": "Works like many existing products"
+          },
+          {
+            "value": 3,
+            "label": "fresh_angle",
+            "description": "A familiar idea with a new angle or audience"
+          },
+          {
+            "value": 5,
+            "label": "new",
+            "description": "Nobody does this today"
+          }
+        ],
+        "optional": false
+      },
+      {
+        "id": "execution",
+        "name": "Execution",
+        "weight": 1,
+        "levels": [
+          {
+            "value": 1,
+            "label": "sketch",
+            "description": "A mock-up or a prompt; little was built"
+          },
+          {
+            "value": 3,
+            "label": "demo",
+            "description": "A working demo with rough edges"
+          },
+          {
+            "value": 5,
+            "label": "polished",
+            "description": "A complete, polished build with real results"
+          }
+        ],
+        "optional": false
+      }
+    ],
+    "aggregation": {
+      "method": "weighted_mean",
+      "rater": "mean",
+      "normalize": [
+        0,
+        100
+      ],
+      "missing": "exclude",
+      "gates": [],
+      "precision": 1
+    }
+  },
+  "subject": {
+    "name": "Menu Match",
+    "inputs": [
+      {
+        "type": "file",
+        "path": "/root/hackathon/entries/menu-match.md"
+      }
+    ]
+  },
+  "evidence": [
+    {
+      "inputIndex": 0,
+      "kind": "file",
+      "label": "menu-match.md",
+      "tags": [],
+      "text": "# Menu Match (fictional hackathon entry)\nPaste a restaurant menu and get the dishes that fit your diet. It works on the three menus we tried; the diet\nrules are a hard-coded list and there is no allergen data yet. The interface is a single text box.\n",
+      "truncated": false,
+      "stats": {
+        "chars": 249,
+        "words": 47,
+        "lines": 3
+      },
+      "source": "menu-match.md"
+    }
+  ],
+  "status": "completed",
+  "criteria": [
+    {
+      "criterionId": "impact",
+      "name": "Impact",
+      "weight": 1,
+      "status": "scored",
+      "ratings": [
+        {
+          "id": "rat_zgnv3gh4mw4bhuaj",
+          "criterionId": "impact",
+          "raterId": "jev",
+          "judgeType": "decision",
+          "createdAt": "2026-11-06T01:50:17.755Z",
+          "status": "scored",
+          "score": 1.98,
+          "normalized": 0.245,
+          "confidence": 0.26,
+          "probabilities": {
+            "minor": 0.51,
+            "useful": 0.49,
+            "major": 0
+          },
+          "rationale": "typesafe/jev-1.14.0 distribution: minor=51% useful=49% major=0%",
+          "raw": {
+            "provider": "typesafe",
+            "model": "jev-1.14.0",
+            "question": {
+              "type": "score",
+              "instructions": "Context: You judge one hackathon entry from its write-up. Judge each criterion on its own: a strong entry can still score\nlow on one criterion. Most entries land in the middle.\n Criterion \"Impact\". Place the input on the ordered levels below (worst to best). Judge only this criterion using the evidence in the state.",
+              "criteria": [
+                "minor: A small convenience for a few people",
+                "useful: A real problem for a clear group of people",
+                "major: A serious problem for very many people"
+              ]
+            },
+            "answer": {
+              "type": "score",
+              "score": 0.49,
+              "confidence": 0.26,
+              "legend": {
+                "0": "minor: A small convenience for a few people",
+                "1": "useful: A real problem for a clear group of people",
+                "2": "major: A serious problem for very many people"
+              },
+              "probabilities": {
+                "0": 0.51,
+                "1": 0.49,
+                "2": 0
+              }
+            },
+            "levels": [
+              {
+                "value": 1,
+                "label": "minor",
+                "description": "A small convenience for a few people"
+              },
+              {
+                "value": 3,
+                "label": "useful",
+                "description": "A real problem for a clear group of people"
+              },
+              {
+                "value": 5,
+                "label": "major",
+                "description": "A serious problem for very many people"
+              }
+            ],
+            "latencyMs": 391,
+            "lowConfidence": false,
+            "stateChars": 334,
+            "stateTruncated": false
+          }
+        }
+      ],
+      "pending": 0,
+      "score": 1.98,
+      "normalized": 0.245
+    },
+    {
+      "criterionId": "feasibility",
+      "name": "Feasibility",
+      "weight": 1,
+      "status": "scored",
+      "ratings": [
+        {
+          "id": "rat_mkgfr6zsmw4bhuak",
+          "criterionId": "feasibility",
+          "raterId": "jev",
+          "judgeType": "decision",
+          "createdAt": "2026-11-06T01:50:17.756Z",
+          "status": "scored",
+          "score": 3.02,
+          "normalized": 0.505,
+          "confidence": 0.96,
+          "probabilities": {
+            "speculative": 0.01,
+            "partial": 0.97,
+            "proven": 0.02
+          },
+          "rationale": "typesafe/jev-1.14.0 distribution: speculative=1% partial=97% proven=2%",
+          "raw": {
+            "provider": "typesafe",
+            "model": "jev-1.14.0",
+            "question": {
+              "type": "score",
+              "instructions": "Context: You judge one hackathon entry from its write-up. Judge each criterion on its own: a strong entry can still score\nlow on one criterion. Most entries land in the middle.\n Criterion \"Feasibility\". Place the input on the ordered levels below (worst to best). Judge only this criterion using the evidence in the state.",
+              "criteria": [
+                "speculative: Mostly unbuilt; the hard parts are unsolved",
+                "partial: A working core, with important parts missing",
+                "proven: Works end to end and is already used by real people"
+              ]
+            },
+            "answer": {
+              "type": "score",
+              "score": 1.01,
+              "confidence": 0.96,
+              "legend": {
+                "0": "speculative: Mostly unbuilt; the hard parts are unsolved",
+                "1": "partial: A working core, with important parts missing",
+                "2": "proven: Works end to end and is already used by real people"
+              },
+              "probabilities": {
+                "0": 0.01,
+                "1": 0.97,
+                "2": 0.02
+              }
+            },
+            "levels": [
+              {
+                "value": 1,
+                "label": "speculative",
+                "description": "Mostly unbuilt; the hard parts are unsolved"
+              },
+              {
+                "value": 3,
+                "label": "partial",
+                "description": "A working core, with important parts missing"
+              },
+              {
+                "value": 5,
+                "label": "proven",
+                "description": "Works end to end and is already used by real people"
+              }
+            ],
+            "latencyMs": 391,
+            "lowConfidence": false,
+            "stateChars": 334,
+            "stateTruncated": false
+          }
+        }
+      ],
+      "pending": 0,
+      "score": 3.02,
+      "normalized": 0.505
+    },
+    {
+      "criterionId": "originality",
+      "name": "Originality",
+      "weight": 1,
+      "status": "scored",
+      "ratings": [
+        {
+          "id": "rat_nkshhyxmmw4bhuak",
+          "criterionId": "originality",
+          "raterId": "jev",
+          "judgeType": "decision",
+          "createdAt": "2026-11-06T01:50:17.756Z",
+          "status": "scored",
+          "score": 1.04,
+          "normalized": 0.010000000000000009,
+          "confidence": 0.97,
+          "probabilities": {
+            "familiar": 0.98,
+            "fresh_angle": 0.02,
+            "new": 0
+          },
+          "rationale": "typesafe/jev-1.14.0 distribution: familiar=98% fresh_angle=2% new=0%",
+          "raw": {
+            "provider": "typesafe",
+            "model": "jev-1.14.0",
+            "question": {
+              "type": "score",
+              "instructions": "Context: You judge one hackathon entry from its write-up. Judge each criterion on its own: a strong entry can still score\nlow on one criterion. Most entries land in the middle.\n Criterion \"Originality\". Place the input on the ordered levels below (worst to best). Judge only this criterion using the evidence in the state.",
+              "criteria": [
+                "familiar: Works like many existing products",
+                "fresh_angle: A familiar idea with a new angle or audience",
+                "new: Nobody does this today"
+              ]
+            },
+            "answer": {
+              "type": "score",
+              "score": 0.03,
+              "confidence": 0.97,
+              "legend": {
+                "0": "familiar: Works like many existing products",
+                "1": "fresh_angle: A familiar idea with a new angle or audience",
+                "2": "new: Nobody does this today"
+              },
+              "probabilities": {
+                "0": 0.98,
+                "1": 0.02,
+                "2": 0
+              }
+            },
+            "levels": [
+              {
+                "value": 1,
+                "label": "familiar",
+                "description": "Works like many existing products"
+              },
+              {
+                "value": 3,
+                "label": "fresh_angle",
+                "description": "A familiar idea with a new angle or audience"
+              },
+              {
+                "value": 5,
+                "label": "new",
+                "description": "Nobody does this today"
+              }
+            ],
+            "latencyMs": 391,
+            "lowConfidence": false,
+            "stateChars": 334,
+            "stateTruncated": false
+          }
+        }
+      ],
+      "pending": 0,
+      "score": 1.04,
+      "normalized": 0.010000000000000009
+    },
+    {
+      "criterionId": "execution",
+      "name": "Execution",
+      "weight": 1,
+      "status": "scored",
+      "ratings": [
+        {
+          "id": "rat_8az6vdfsmw4bhuak",
+          "criterionId": "execution",
+          "raterId": "jev",
+          "judgeType": "decision",
+          "createdAt": "2026-11-06T01:50:17.756Z",
+          "status": "scored",
+          "score": 2.94,
+          "normalized": 0.4849999999999999,
+          "confidence": 0.92,
+          "probabilities": {
+            "sketch": 0.04,
+            "demo": 0.95,
+            "polished": 0.01
+          },
+          "rationale": "typesafe/jev-1.14.0 distribution: sketch=4% demo=95% polished=1%",
+          "raw": {
+            "provider": "typesafe",
+            "model": "jev-1.14.0",
+            "question": {
+              "type": "score",
+              "instructions": "Context: You judge one hackathon entry from its write-up. Judge each criterion on its own: a strong entry can still score\nlow on one criterion. Most entries land in the middle.\n Criterion \"Execution\". Place the input on the ordered levels below (worst to best). Judge only this criterion using the evidence in the state.",
+              "criteria": [
+                "sketch: A mock-up or a prompt; little was built",
+                "demo: A working demo with rough edges",
+                "polished: A complete, polished build with real results"
+              ]
+            },
+            "answer": {
+              "type": "score",
+              "score": 0.97,
+              "confidence": 0.92,
+              "legend": {
+                "0": "sketch: A mock-up or a prompt; little was built",
+                "1": "demo: A working demo with rough edges",
+                "2": "polished: A complete, polished build with real results"
+              },
+              "probabilities": {
+                "0": 0.04,
+                "1": 0.95,
+                "2": 0.01
+              }
+            },
+            "levels": [
+              {
+                "value": 1,
+                "label": "sketch",
+                "description": "A mock-up or a prompt; little was built"
+              },
+              {
+                "value": 3,
+                "label": "demo",
+                "description": "A working demo with rough edges"
+              },
+              {
+                "value": 5,
+                "label": "polished",
+                "description": "A complete, polished build with real results"
+              }
+            ],
+            "latencyMs": 391,
+            "lowConfidence": false,
+            "stateChars": 334,
+            "stateTruncated": false
+          }
+        }
+      ],
+      "pending": 0,
+      "score": 2.94,
+      "normalized": 0.485
+    }
+  ],
+  "aggregate": {
+    "method": "weighted_mean",
+    "range": [
+      0,
+      100
+    ],
+    "gates": [],
+    "partial": false,
+    "included": [
+      "impact",
+      "feasibility",
+      "originality",
+      "execution"
+    ],
+    "excluded": [],
+    "raw": 0.31125,
+    "score": 31.1
+  },
+  "pendingTasks": [],
+  "usage": {
+    "decisionCalls": 1,
+    "llmCalls": 0,
+    "inputTokens": 870,
+    "outputTokens": 60,
+    "durationMs": 421
+  },
+  "batchId": "bat_mw4bhtysm20zl6yy",
+  "createdAt": "2026-11-06T01:50:17.337Z",
+  "updatedAt": "2026-11-06T01:50:17.756Z"
+}
