@@ -25,7 +25,8 @@
 //               system's font stacks render (30%)
 //   ds_space    share of spacing values on the scale: padding + border per side, margins (not auto), flex/grid gaps
 //   ds_components share of elements that draw a box of their own (bordered or filled panels, badges, buttons, inputs,
-//               bars) that are the system's components (carry one of its component classes)
+//               bars) that are the system's components (carry one of its component classes); a class that looks like
+//               the system's but that no stylesheet defines (e.g. a utility from another version) counts as broken
 //   ds_shape    share of radii (token or full), border widths and box shadows (exact token shadows) that are tokens
 import { createServer } from "node:http";
 import { createHash } from "node:crypto";
@@ -349,6 +350,17 @@ function collectStyles() {
       for (const g of ["rowGap", "columnGap"]) { const v = px(cs[g]); if (v > 0 && /flex|grid/.test(cs.display)) out.push({ k: "space", prop: g, value: v, b }); }
     }
   }
+  // Classes the page uses that no stylesheet defines but that look like the system's (same prefix as a defined class):
+  // a misremembered utility (color-bg-neutral-emphasis in a version without it) silently paints nothing.
+  const defined = new Set();
+  const walk = (rules) => { for (const r of rules) { if (r.selectorText) for (const m of r.selectorText.matchAll(/\.([\w-]+)/g)) defined.add(m[1]); if (r.cssRules) walk(r.cssRules); } };
+  for (const sh of document.styleSheets) { try { walk(sh.cssRules); } catch { /* cross-origin */ } }
+  const prefixes = new Set([...defined].map((c) => c.split("-")[0]));
+  let n = 0; // every element using one counts: seven bars painted with an undefined class are seven broken bars
+  for (const el of document.querySelectorAll("[class]")) for (const c of el.classList) {
+    if (defined.has(c) || !c.includes("-") || !prefixes.has(c.split("-")[0]) || !visible(el) || ++n > 60) continue;
+    out.push({ k: "unknownClass", value: c, b: box(el) });
+  }
   return out;
 }
 
@@ -431,7 +443,9 @@ const ds = {
     const roots = dsT.components ?? [];
     const isDs = (c) => roots.some((r) => c === r || c.startsWith(r + "-"));
     const off = parts.filter((u) => !u.classes.some(isDs)).map((u) => ({ key: `custom ${u.tag}${u.classes.length ? "." + u.classes.slice(0, 2).join(".") : ""}`, b: u.b }));
-    const r = report(parts.length, off, "panels, badges, buttons, inputs and bars", (e) => `${e.key} ×${e.n}`);
+    // Each class the system doesn't define counts as a broken part: it renders as nothing.
+    const unknown = a.styles.filter((u) => u.k === "unknownClass").map((u) => ({ key: `.${u.value} is not defined by the stylesheet`, b: u.b }));
+    const r = report(parts.length + unknown.length, [...unknown, ...off], "panels, badges, buttons, inputs and bars", (e) => `${e.key} ×${e.n}`);
     return { ...r, rationale: r.rationale.replace(" are tokens", ` are ${dsT.designSystem.name} components`) + `. Components: ${roots.join(", ")}` };
   },
   ds_shape: (a, idx, dsT) => {
