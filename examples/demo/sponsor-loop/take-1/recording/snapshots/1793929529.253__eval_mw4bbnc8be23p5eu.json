@@ -1,0 +1,595 @@
+{
+  "id": "eval_mw4bbnc8be23p5eu",
+  "rubricId": "rub_mw4bbe0dar34j3vo",
+  "rubric": {
+    "name": "Sponsored video review",
+    "version": "1",
+    "description": "Would this brand approve this sponsored script as written?",
+    "context": "You review a creator's script for a sponsored video against the brand's brief. The brief lists the audience,\nwhat the product does, and claims the brand must never make. Judge only the script text.\n",
+    "language": "en",
+    "scale": {
+      "type": "numeric",
+      "min": 1,
+      "max": 5
+    },
+    "judges": {
+      "jev": {
+        "type": "decision",
+        "provider": "typesafe",
+        "model": "jev-latest",
+        "onLowConfidence": "accept",
+        "escalateTo": []
+      }
+    },
+    "defaultJudge": {
+      "type": "ref",
+      "ref": "jev"
+    },
+    "criteria": [
+      {
+        "id": "audience",
+        "name": "Speaks to the brand's audience",
+        "weight": 3,
+        "levels": [
+          {
+            "value": 1,
+            "label": "off",
+            "description": "Aimed at people the brief doesn't target"
+          },
+          {
+            "value": 3,
+            "label": "partial",
+            "description": "Some overlap with the brief's audience"
+          },
+          {
+            "value": 5,
+            "label": "exact",
+            "description": "Speaks directly to the audience the brief describes, in their situation"
+          }
+        ],
+        "inputs": [
+          "script",
+          "brief"
+        ],
+        "optional": false
+      },
+      {
+        "id": "product_truth",
+        "name": "Shows what the product actually does",
+        "weight": 2,
+        "levels": [
+          {
+            "value": 1,
+            "label": "vague",
+            "description": "Praise without showing any feature from the brief"
+          },
+          {
+            "value": 3,
+            "label": "some",
+            "description": "Mentions features, but tells more than it shows"
+          },
+          {
+            "value": 5,
+            "label": "shown",
+            "description": "Shows the brief's features in use, with concrete results"
+          }
+        ],
+        "inputs": [
+          "script",
+          "brief"
+        ],
+        "optional": false
+      },
+      {
+        "id": "disclosure",
+        "name": "Sponsorship disclosed early",
+        "weight": 1,
+        "scale": {
+          "type": "binary",
+          "labels": [
+            "missing",
+            "disclosed"
+          ]
+        },
+        "anchors": {
+          "missing": "No clear sponsorship disclosure near the start",
+          "disclosed": "The script says plainly, near the start, that the video is sponsored"
+        },
+        "inputs": [
+          "script"
+        ],
+        "optional": false
+      },
+      {
+        "id": "claims_safe",
+        "name": "No claim the brand can't make",
+        "weight": 0,
+        "scale": {
+          "type": "binary",
+          "labels": [
+            "unsafe",
+            "safe"
+          ]
+        },
+        "anchors": {
+          "unsafe": "At least one claim is on the brief's must-not list or promises an outcome the brand can't guarantee",
+          "safe": "Every claim is one the brand could legally make; nothing on the brief's must-not list"
+        },
+        "inputs": [
+          "script",
+          "brief"
+        ],
+        "optional": false
+      },
+      {
+        "id": "budget_fit",
+        "name": "Rate within budget",
+        "weight": 1,
+        "judge": {
+          "type": "benchmark",
+          "method": "formula",
+          "expression": "creator.rate_usd <= budget_usd ? 1 : budget_usd / creator.rate_usd"
+        },
+        "inputs": [
+          "brief"
+        ],
+        "optional": false
+      }
+    ],
+    "aggregation": {
+      "method": "formula",
+      "formula": "claims_safe_n < 0.5 ? 0 : (audience_n * 3 + product_truth_n * 2 + disclosure_n + budget_fit_n) / 7",
+      "rater": "mean",
+      "normalize": [
+        0,
+        100
+      ],
+      "missing": "exclude",
+      "gates": [
+        {
+          "criterion": "claims_safe",
+          "min": 1,
+          "message": "Brand safety: the script makes a claim on the brand's must-not list"
+        }
+      ],
+      "grades": [
+        {
+          "label": "approve",
+          "min": 75
+        },
+        {
+          "label": "revise",
+          "min": 50
+        },
+        {
+          "label": "reject",
+          "min": 0
+        }
+      ],
+      "passThreshold": 75,
+      "precision": 0
+    },
+    "id": "rub_mw4bbe0dar34j3vo",
+    "createdAt": "2026-11-06T01:45:16.717Z",
+    "updatedAt": "2026-11-06T01:45:16.717Z"
+  },
+  "subject": {
+    "name": "script.md round 2",
+    "inputs": [
+      {
+        "type": "file",
+        "path": "/root/sponsor-review/script.md",
+        "tags": [
+          "script"
+        ]
+      },
+      {
+        "type": "file",
+        "path": "/root/sponsor-review/brief.json",
+        "tags": [
+          "brief"
+        ]
+      }
+    ]
+  },
+  "evidence": [
+    {
+      "inputIndex": 0,
+      "kind": "file",
+      "label": "script.md",
+      "tags": [
+        "script"
+      ],
+      "text": "# Small Desk Studio: \"I tracked every dollar for 30 days\"\n\n[0:00] Last month I spent $214 on things I don't remember buying. So for 30 days I tracked every dollar.\n\n[0:08] Quick note: this video is sponsored by Tallyleaf, the budgeting app I used for the whole month.\n\n[0:14] Day one: I connected my cards and Tallyleaf sorted three months of spending into categories in about a minute.\n\n[0:25] The first surprise was subscriptions. Four of them, $47 a month, and I'd forgotten two.\n\n[0:36] Tallyleaf flags a subscription the day before it renews, so I cancelled the two I never open.\n\n[0:48] Week two, I set a grocery budget with my roommate. We both see the same number, and it updates when either of us pays.\n\n[1:10] By day 30 I'd spent $386 less than the month before. Not because of willpower; I just stopped being surprised.\n\n[1:22] What I'd change: the charts are a bit small on my phone, and the web app is still in beta.\n\n[1:30] If you want to try it, the link is in the description. First month free with code SMALLDESK.\n\n[1:36] Next week: the $40 desk upgrade that fixed my back.\n",
+      "truncated": false,
+      "stats": {
+        "chars": 1090,
+        "words": 200,
+        "lines": 21
+      },
+      "source": "script.md"
+    },
+    {
+      "inputIndex": 1,
+      "kind": "file",
+      "label": "brief.json",
+      "tags": [
+        "brief"
+      ],
+      "text": "{\n  \"note\": \"Fictional brand, creator and figures for a demo.\",\n  \"brand\": \"Tallyleaf\",\n  \"product\": \"A budgeting app: spending by category, forgotten-subscription alerts, shared household budgets\",\n  \"audience\": \"Renters aged 22–35 who want to stop overspending\",\n  \"must_not\": [\n    \"guaranteed financial outcomes\",\n    \"credit or loan approval claims\",\n    \"investment returns\",\n    \"comparisons naming competitors\"\n  ],\n  \"budget_usd\": 4000,\n  \"creator\": {\n    \"channel\": \"Small Desk Studio\",\n    \"rate_usd\": 3500\n  }\n}",
+      "truncated": false,
+      "stats": {
+        "chars": 523,
+        "words": 61,
+        "lines": 17
+      },
+      "source": "brief.json",
+      "json": {
+        "note": "Fictional brand, creator and figures for a demo.",
+        "brand": "Tallyleaf",
+        "product": "A budgeting app: spending by category, forgotten-subscription alerts, shared household budgets",
+        "audience": "Renters aged 22–35 who want to stop overspending",
+        "must_not": [
+          "guaranteed financial outcomes",
+          "credit or loan approval claims",
+          "investment returns",
+          "comparisons naming competitors"
+        ],
+        "budget_usd": 4000,
+        "creator": {
+          "channel": "Small Desk Studio",
+          "rate_usd": 3500
+        }
+      }
+    }
+  ],
+  "status": "completed",
+  "criteria": [
+    {
+      "criterionId": "audience",
+      "name": "Speaks to the brand's audience",
+      "weight": 3,
+      "status": "scored",
+      "ratings": [
+        {
+          "id": "rat_fr39yjd4mw4bbngu",
+          "criterionId": "audience",
+          "raterId": "jev",
+          "judgeType": "decision",
+          "createdAt": "2026-11-06T01:45:28.974Z",
+          "status": "scored",
+          "score": 4.44,
+          "normalized": 0.8599999999999999,
+          "confidence": 0.58,
+          "probabilities": {
+            "off": 0,
+            "partial": 0.28,
+            "exact": 0.72
+          },
+          "rationale": "typesafe/jev-1.14.0 distribution: off=0% partial=28% exact=72%",
+          "raw": {
+            "provider": "typesafe",
+            "model": "jev-1.14.0",
+            "question": {
+              "type": "score",
+              "instructions": "Context: You review a creator's script for a sponsored video against the brand's brief. The brief lists the audience,\nwhat the product does, and claims the brand must never make. Judge only the script text.\n Criterion \"Speaks to the brand's audience\". Place the input on the ordered levels below (worst to best). Judge only this criterion using the evidence in the state.",
+              "criteria": [
+                "off: Aimed at people the brief doesn't target",
+                "partial: Some overlap with the brief's audience",
+                "exact: Speaks directly to the audience the brief describes, in their situation"
+              ]
+            },
+            "answer": {
+              "type": "score",
+              "score": 1.72,
+              "confidence": 0.58,
+              "legend": {
+                "0": "off: Aimed at people the brief doesn't target",
+                "1": "partial: Some overlap with the brief's audience",
+                "2": "exact: Speaks directly to the audience the brief describes, in their situation"
+              },
+              "probabilities": {
+                "0": 0,
+                "1": 0.28,
+                "2": 0.72
+              }
+            },
+            "levels": [
+              {
+                "value": 1,
+                "label": "off",
+                "description": "Aimed at people the brief doesn't target"
+              },
+              {
+                "value": 3,
+                "label": "partial",
+                "description": "Some overlap with the brief's audience"
+              },
+              {
+                "value": 5,
+                "label": "exact",
+                "description": "Speaks directly to the audience the brief describes, in their situation"
+              }
+            ],
+            "latencyMs": 164,
+            "lowConfidence": false,
+            "stateChars": 1770,
+            "stateTruncated": false
+          }
+        }
+      ],
+      "pending": 0,
+      "score": 4.44,
+      "normalized": 0.8600000000000001
+    },
+    {
+      "criterionId": "product_truth",
+      "name": "Shows what the product actually does",
+      "weight": 2,
+      "status": "scored",
+      "ratings": [
+        {
+          "id": "rat_prwx4376mw4bbngu",
+          "criterionId": "product_truth",
+          "raterId": "jev",
+          "judgeType": "decision",
+          "createdAt": "2026-11-06T01:45:28.974Z",
+          "status": "scored",
+          "score": 5,
+          "normalized": 1,
+          "confidence": 1,
+          "probabilities": {
+            "vague": 0,
+            "some": 0,
+            "shown": 1
+          },
+          "rationale": "typesafe/jev-1.14.0 distribution: vague=0% some=0% shown=100%",
+          "raw": {
+            "provider": "typesafe",
+            "model": "jev-1.14.0",
+            "question": {
+              "type": "score",
+              "instructions": "Context: You review a creator's script for a sponsored video against the brand's brief. The brief lists the audience,\nwhat the product does, and claims the brand must never make. Judge only the script text.\n Criterion \"Shows what the product actually does\". Place the input on the ordered levels below (worst to best). Judge only this criterion using the evidence in the state.",
+              "criteria": [
+                "vague: Praise without showing any feature from the brief",
+                "some: Mentions features, but tells more than it shows",
+                "shown: Shows the brief's features in use, with concrete results"
+              ]
+            },
+            "answer": {
+              "type": "score",
+              "score": 2,
+              "confidence": 1,
+              "legend": {
+                "0": "vague: Praise without showing any feature from the brief",
+                "1": "some: Mentions features, but tells more than it shows",
+                "2": "shown: Shows the brief's features in use, with concrete results"
+              },
+              "probabilities": {
+                "0": 0,
+                "1": 0,
+                "2": 1
+              }
+            },
+            "levels": [
+              {
+                "value": 1,
+                "label": "vague",
+                "description": "Praise without showing any feature from the brief"
+              },
+              {
+                "value": 3,
+                "label": "some",
+                "description": "Mentions features, but tells more than it shows"
+              },
+              {
+                "value": 5,
+                "label": "shown",
+                "description": "Shows the brief's features in use, with concrete results"
+              }
+            ],
+            "latencyMs": 164,
+            "lowConfidence": false,
+            "stateChars": 1770,
+            "stateTruncated": false
+          }
+        }
+      ],
+      "pending": 0,
+      "score": 5,
+      "normalized": 1
+    },
+    {
+      "criterionId": "disclosure",
+      "name": "Sponsorship disclosed early",
+      "weight": 1,
+      "status": "scored",
+      "ratings": [
+        {
+          "id": "rat_kco25psemw4bbnms",
+          "criterionId": "disclosure",
+          "raterId": "jev",
+          "judgeType": "decision",
+          "createdAt": "2026-11-06T01:45:29.188Z",
+          "status": "scored",
+          "score": 1,
+          "normalized": 1,
+          "confidence": 0.96,
+          "probabilities": {
+            "missing": 0.02,
+            "disclosed": 0.98
+          },
+          "rationale": "typesafe/jev-1.14.0 distribution: missing=2% disclosed=98%",
+          "raw": {
+            "provider": "typesafe",
+            "model": "jev-1.14.0",
+            "question": {
+              "type": "noul",
+              "instructions": "Context: You review a creator's script for a sponsored video against the brand's brief. The brief lists the audience,\nwhat the product does, and claims the brand must never make. Judge only the script text.\n Criterion \"Sponsorship disclosed early\". Is the input \"disclosed\" for this criterion?",
+              "criteria": {
+                "true": "The script says plainly, near the start, that the video is sponsored",
+                "false": "No clear sponsorship disclosure near the start"
+              }
+            },
+            "answer": {
+              "type": "noul",
+              "noul": 0.98
+            },
+            "levels": [
+              {
+                "value": 0,
+                "label": "missing",
+                "description": "No clear sponsorship disclosure near the start"
+              },
+              {
+                "value": 1,
+                "label": "disclosed",
+                "description": "The script says plainly, near the start, that the video is sponsored"
+              }
+            ],
+            "latencyMs": 377,
+            "lowConfidence": false,
+            "stateChars": 1167,
+            "stateTruncated": false
+          }
+        }
+      ],
+      "pending": 0,
+      "score": 1,
+      "normalized": 1
+    },
+    {
+      "criterionId": "claims_safe",
+      "name": "No claim the brand can't make",
+      "weight": 0,
+      "status": "scored",
+      "ratings": [
+        {
+          "id": "rat_uyreweevmw4bbngu",
+          "criterionId": "claims_safe",
+          "raterId": "jev",
+          "judgeType": "decision",
+          "createdAt": "2026-11-06T01:45:28.974Z",
+          "status": "scored",
+          "score": 1,
+          "normalized": 1,
+          "confidence": 0.72,
+          "probabilities": {
+            "unsafe": 0.14,
+            "safe": 0.86
+          },
+          "rationale": "typesafe/jev-1.14.0 distribution: unsafe=14% safe=86%",
+          "raw": {
+            "provider": "typesafe",
+            "model": "jev-1.14.0",
+            "question": {
+              "type": "noul",
+              "instructions": "Context: You review a creator's script for a sponsored video against the brand's brief. The brief lists the audience,\nwhat the product does, and claims the brand must never make. Judge only the script text.\n Criterion \"No claim the brand can't make\". Is the input \"safe\" for this criterion?",
+              "criteria": {
+                "true": "Every claim is one the brand could legally make; nothing on the brief's must-not list",
+                "false": "At least one claim is on the brief's must-not list or promises an outcome the brand can't guarantee"
+              }
+            },
+            "answer": {
+              "type": "noul",
+              "noul": 0.86
+            },
+            "levels": [
+              {
+                "value": 0,
+                "label": "unsafe",
+                "description": "At least one claim is on the brief's must-not list or promises an outcome the brand can't guarantee"
+              },
+              {
+                "value": 1,
+                "label": "safe",
+                "description": "Every claim is one the brand could legally make; nothing on the brief's must-not list"
+              }
+            ],
+            "latencyMs": 164,
+            "lowConfidence": false,
+            "stateChars": 1770,
+            "stateTruncated": false
+          }
+        }
+      ],
+      "pending": 0,
+      "score": 1,
+      "normalized": 1,
+      "gate": {
+        "passed": true
+      }
+    },
+    {
+      "criterionId": "budget_fit",
+      "name": "Rate within budget",
+      "weight": 1,
+      "status": "scored",
+      "ratings": [
+        {
+          "id": "rat_06kruetmmw4bbncb",
+          "criterionId": "budget_fit",
+          "raterId": "benchmark:formula",
+          "judgeType": "benchmark",
+          "createdAt": "2026-11-06T01:45:28.811Z",
+          "status": "scored",
+          "normalized": 1,
+          "score": 5,
+          "confidence": 1,
+          "rationale": "formula \"creator.rate_usd <= budget_usd ? 1 : budget_usd / creator.rate_usd\" = 1",
+          "raw": {
+            "scope": {
+              "inputs": 1,
+              "words": 61,
+              "chars": 523,
+              "lines": 17,
+              "must_not.length": 4,
+              "budget_usd": 4000,
+              "creator.rate_usd": 3500
+            }
+          }
+        }
+      ],
+      "pending": 0,
+      "score": 5,
+      "normalized": 1
+    }
+  ],
+  "aggregate": {
+    "method": "formula",
+    "range": [
+      0,
+      100
+    ],
+    "gates": [
+      {
+        "criterion": "claims_safe",
+        "passed": true
+      }
+    ],
+    "partial": false,
+    "included": [
+      "audience",
+      "product_truth",
+      "disclosure",
+      "budget_fit"
+    ],
+    "excluded": [
+      "claims_safe"
+    ],
+    "raw": 0.94,
+    "score": 94,
+    "grade": "approve",
+    "passed": true
+  },
+  "pendingTasks": [],
+  "usage": {
+    "decisionCalls": 2,
+    "llmCalls": 0,
+    "inputTokens": 1909,
+    "outputTokens": 72,
+    "durationMs": 382
+  },
+  "createdAt": "2026-11-06T01:45:28.808Z",
+  "updatedAt": "2026-11-06T01:45:29.189Z"
+}

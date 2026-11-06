@@ -106,6 +106,7 @@ main{padding:20px 24px}.panel{background:var(--panel);border:1px solid var(--lin
 .doc .hd{padding:10px 14px;border-bottom:1px solid var(--line);display:flex;gap:8px;color:var(--muted);font-size:12px}.doc .hd b{color:var(--text)}
 .doc pre{margin:0;padding:8px 0;font:12.5px/1.6 ui-monospace,SFMono-Regular,Menlo,monospace;white-space:pre-wrap;word-break:break-word}
 .doc pre div{padding:0 14px}.doc pre .chg{background:var(--add);box-shadow:inset 3px 0 var(--addline)}
+.doc pre .del{background:#fdecea;box-shadow:inset 3px 0 #f2a99d;color:#9b2c1c;text-decoration:line-through;text-decoration-color:#d9826f}.doc pre .gone{display:none}
 .score{padding:16px}.big{font-size:44px;font-weight:650;letter-spacing:-.02em;font-variant-numeric:tabular-nums}.big small{font-size:18px;color:var(--muted);font-weight:500}
 .pill{display:inline-block;font-size:12px;font-weight:600;border-radius:999px;padding:2px 10px;margin-right:6px}.pass{background:#e3f4ea;color:var(--good)}.fail{background:#fdeae4;color:var(--bad)}.grade{background:#eef1f6;color:#344054}
 .gate{margin-top:12px;padding:10px 12px;border-radius:6px;background:#fdeae4;color:#8a2508;font-size:13px}
@@ -127,13 +128,20 @@ main{padding:20px 24px}.panel{background:var(--panel);border:1px solid var(--lin
 const $=(s)=>document.querySelector(s), esc=(s)=>String(s??"").replace(/[&<>"]/g,(c)=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"})[c]);
 const pct=(n)=>n==null?"—":Math.round(n*100)+"%", num=(n)=>n==null?"—":(Math.round(n*10)/10).toString();
 let last="", prevRects=new Map(), prevScores=new Map();
-function changed(cur,prev){ if(!prev) return new Set(); const old=new Set(prev.split("\\n")); const out=new Set(); cur.split("\\n").forEach((l,i)=>{ if(l.trim()&&!old.has(l)) out.add(i); }); return out; }
+// Line diff (LCS) against the previous evaluation's text: kept, added and removed lines.
+function diff(prev,cur){ const a=prev.split("\\n"), b=cur.split("\\n"), n=a.length, m=b.length;
+  const L=Array.from({length:n+1},()=>new Int32Array(m+1)); for(let i=n-1;i>=0;i--) for(let j=m-1;j>=0;j--) L[i][j]=a[i]===b[j]?L[i+1][j+1]+1:Math.max(L[i+1][j],L[i][j+1]);
+  const out=[]; let i=0,j=0; while(i<n&&j<m){ if(a[i]===b[j]){out.push(["=",b[j]]);i++;j++;} else if(L[i+1][j]>=L[i][j+1]) out.push(["-",a[i++]]); else out.push(["+",b[j++]]); }
+  while(i<n) out.push(["-",a[i++]]); while(j<m) out.push(["+",b[j++]]); return out; }
 function crits(e){ return e.criteria.map(c=>'<div class="crit'+(c.gateFailed?' bad':'')+'"><div class="row"><span class="n">'+esc(c.name)+'</span><span class="v">'+esc(c.choice??"")+' '+pct(c.normalized)+'</span></div><div class="bar"><i style="width:'+Math.round((c.normalized??0)*100)+'%"></i></div>'+(c.gateFailed?'<div class="why"><b>Gate:</b> '+esc(c.gateFailed)+'</div>':c.rationale?'<div class="why">'+esc(c.rationale)+'</div>':'')+'</div>').join(""); }
 function docs(e,prev){
   if(!e.evidence.length) return '<div class="panel doc"><div class="hd">No text evidence</div></div>';
-  return e.evidence.map(doc=>{ const p=prev?.evidence.find(d=>d.label===doc.label); const marks=p?changed(doc.text,p.text):new Set();
-    const lines=doc.text.split("\\n").map((l,i)=>'<div class="'+(marks.has(i)?'chg':'')+'">'+(esc(l)||"&nbsp;")+'</div>').join("");
-    return '<div class="panel doc" style="margin-bottom:16px"><div class="hd"><b>'+esc(doc.label)+'</b><span>'+(prev?(p?marks.size+' line'+(marks.size===1?'':'s')+' changed since the previous evaluation':'new in this evaluation'):'first evaluation')+'</span></div><pre>'+lines+'</pre></div>'; }).join("");
+  return e.evidence.map(doc=>{ const p=prev?.evidence.find(d=>d.label===doc.label);
+    const rows=p?diff(p.text,doc.text):doc.text.split("\\n").map(l=>["=",l]);
+    const add=rows.filter(r=>r[0]==="+"&&r[1].trim()).length, del=rows.filter(r=>r[0]==="-"&&r[1].trim()).length;
+    const note=!prev?'first evaluation':!p?'new in this evaluation':add||del?[add?add+' line'+(add>1?'s':'')+' added':'',del?del+' removed':''].filter(Boolean).join(', ')+' since the previous evaluation':'unchanged since the previous evaluation';
+    const lines=rows.map(([t,l])=>'<div class="'+(t==="+"&&l.trim()?'chg':t==="-"&&l.trim()?'del':t==="-"?'gone':'')+'">'+(esc(l)||"&nbsp;")+'</div>').join("");
+    return '<div class="panel doc" style="margin-bottom:16px"><div class="hd"><b>'+esc(doc.label)+'</b><span>'+note+'</span></div><pre>'+lines+'</pre></div>'; }).join("");
 }
 function single(s){
   const e=s.entries[0], range=e.range?'<small> / '+e.range[1]+'</small>':"";

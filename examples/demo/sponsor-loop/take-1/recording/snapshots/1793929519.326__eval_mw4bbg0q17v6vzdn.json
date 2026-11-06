@@ -1,0 +1,219 @@
+{
+  "id": "eval_mw4bbg0q17v6vzdn",
+  "rubricId": "rub_mw4bbe0dar34j3vo",
+  "rubric": {
+    "name": "Sponsored video review",
+    "version": "1",
+    "description": "Would this brand approve this sponsored script as written?",
+    "context": "You review a creator's script for a sponsored video against the brand's brief. The brief lists the audience,\nwhat the product does, and claims the brand must never make. Judge only the script text.\n",
+    "language": "en",
+    "scale": {
+      "type": "numeric",
+      "min": 1,
+      "max": 5
+    },
+    "judges": {
+      "jev": {
+        "type": "decision",
+        "provider": "typesafe",
+        "model": "jev-latest",
+        "onLowConfidence": "accept",
+        "escalateTo": []
+      }
+    },
+    "defaultJudge": {
+      "type": "ref",
+      "ref": "jev"
+    },
+    "criteria": [
+      {
+        "id": "audience",
+        "name": "Speaks to the brand's audience",
+        "weight": 3,
+        "levels": [
+          {
+            "value": 1,
+            "label": "off",
+            "description": "Aimed at people the brief doesn't target"
+          },
+          {
+            "value": 3,
+            "label": "partial",
+            "description": "Some overlap with the brief's audience"
+          },
+          {
+            "value": 5,
+            "label": "exact",
+            "description": "Speaks directly to the audience the brief describes, in their situation"
+          }
+        ],
+        "inputs": [
+          "script",
+          "brief"
+        ],
+        "optional": false
+      },
+      {
+        "id": "product_truth",
+        "name": "Shows what the product actually does",
+        "weight": 2,
+        "levels": [
+          {
+            "value": 1,
+            "label": "vague",
+            "description": "Praise without showing any feature from the brief"
+          },
+          {
+            "value": 3,
+            "label": "some",
+            "description": "Mentions features, but tells more than it shows"
+          },
+          {
+            "value": 5,
+            "label": "shown",
+            "description": "Shows the brief's features in use, with concrete results"
+          }
+        ],
+        "inputs": [
+          "script",
+          "brief"
+        ],
+        "optional": false
+      },
+      {
+        "id": "disclosure",
+        "name": "Sponsorship disclosed early",
+        "weight": 1,
+        "scale": {
+          "type": "binary",
+          "labels": [
+            "missing",
+            "disclosed"
+          ]
+        },
+        "anchors": {
+          "missing": "No clear sponsorship disclosure near the start",
+          "disclosed": "The script says plainly, near the start, that the video is sponsored"
+        },
+        "inputs": [
+          "script"
+        ],
+        "optional": false
+      },
+      {
+        "id": "claims_safe",
+        "name": "No claim the brand can't make",
+        "weight": 0,
+        "scale": {
+          "type": "binary",
+          "labels": [
+            "unsafe",
+            "safe"
+          ]
+        },
+        "anchors": {
+          "unsafe": "At least one claim is on the brief's must-not list or promises an outcome the brand can't guarantee",
+          "safe": "Every claim is one the brand could legally make; nothing on the brief's must-not list"
+        },
+        "inputs": [
+          "script",
+          "brief"
+        ],
+        "optional": false
+      },
+      {
+        "id": "budget_fit",
+        "name": "Rate within budget",
+        "weight": 1,
+        "judge": {
+          "type": "benchmark",
+          "method": "formula",
+          "expression": "creator.rate_usd <= budget_usd ? 1 : budget_usd / creator.rate_usd"
+        },
+        "inputs": [
+          "brief"
+        ],
+        "optional": false
+      }
+    ],
+    "aggregation": {
+      "method": "formula",
+      "formula": "claims_safe_n < 0.5 ? 0 : (audience_n * 3 + product_truth_n * 2 + disclosure_n + budget_fit_n) / 7",
+      "rater": "mean",
+      "normalize": [
+        0,
+        100
+      ],
+      "missing": "exclude",
+      "gates": [
+        {
+          "criterion": "claims_safe",
+          "min": 1,
+          "message": "Brand safety: the script makes a claim on the brand's must-not list"
+        }
+      ],
+      "grades": [
+        {
+          "label": "approve",
+          "min": 75
+        },
+        {
+          "label": "revise",
+          "min": 50
+        },
+        {
+          "label": "reject",
+          "min": 0
+        }
+      ],
+      "passThreshold": 75,
+      "precision": 0
+    },
+    "id": "rub_mw4bbe0dar34j3vo",
+    "createdAt": "2026-11-06T01:45:16.717Z",
+    "updatedAt": "2026-11-06T01:45:16.717Z"
+  },
+  "subject": {
+    "name": "script.md round 1",
+    "inputs": [
+      {
+        "type": "file",
+        "path": "/root/sponsor-review/script.md",
+        "tags": [
+          "script"
+        ]
+      },
+      {
+        "type": "file",
+        "path": "/root/sponsor-review/brief.json",
+        "tags": [
+          "brief"
+        ]
+      }
+    ]
+  },
+  "evidence": [],
+  "status": "running",
+  "criteria": [],
+  "aggregate": {
+    "method": "formula",
+    "range": [
+      0,
+      100
+    ],
+    "gates": [],
+    "partial": true,
+    "included": [],
+    "excluded": []
+  },
+  "pendingTasks": [],
+  "usage": {
+    "decisionCalls": 0,
+    "llmCalls": 0,
+    "inputTokens": 0,
+    "outputTokens": 0,
+    "durationMs": 0
+  },
+  "createdAt": "2026-11-06T01:45:19.322Z",
+  "updatedAt": "2026-11-06T01:45:19.322Z"
+}
