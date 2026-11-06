@@ -30,6 +30,17 @@ Tools: `recording/video2_assets.mjs` → `recording/video2_edit.mjs` (writes `<o
 
 ---
 
+## Plain working video (no effects): Take D
+
+Same format as the landing-page video: Claude Code on the left, the dashboard on the right, nothing added.
+[`recording/plain2pane-html.mjs`](recording/plain2pane-html.mjs) builds it.
+- **Left:** Take D's recorded terminal bytes, replayed at their recorded times.
+- **Right:** the real page, reloaded at the exact moment each `Write`/`Edit` landed. It's rendered 1280 px wide (as
+  Verdict's renderer saw it) and shown at 0.875×. `data.json` comes from a routed virtual host, so no port is opened.
+- **First half:** the page stays the AI one-shot while the agent writes and scores its brief. That is what happened:
+  the first rewrite lands 2 min 6 s into the run.
+- **Cuts:** real time (5:08) and uniform 3× (1:43) and 5× (1:02), each labelled with its speed.
+
 # (Earlier plan, before Take C/D)
 
 # "Every AI dashboard looks like this": an agent redesigns one, judged by what Verdict sees
