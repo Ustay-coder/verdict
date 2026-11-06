@@ -99,6 +99,19 @@ Built by [`recording/plain2pane-html.mjs`](recording/plain2pane-html.mjs) with
 - **Left:** Take E's recorded terminal bytes, played at their recorded times.
 - **Right:** the real page, reloaded at the moment each Write/Edit landed, 1280 px wide at 0.875×.
 - **Cuts:** real time (3:42), plus 3× and 5×, each labelled with its speed.
+- **Social cut (17 s):** [`take-e/warp.json`](take-e/warp.json) sets a speed per segment. Waiting is 40–60×, and the
+  moments that matter play at 1–2.5×: "Baseline is 19", the page turning into Primer, "up to 76 from 19". The current
+  speed is printed above the terminal. A 1.6 s cold open shows the finished state first.
+
+  | Time | What's on screen |
+  | --- | --- |
+  | 0:00 | The result (cold open) |
+  | 0:02 | The run starts; the AI one-shot is on the right |
+  | 0:04 | Baseline 19 |
+  | 0:06 | The page becomes Primer |
+  | 0:17 | End |
+
+  Nothing is edited out.
 - **The first 2 min 40 s** show the install, the import and the baseline score while the right pane still shows the
   AI one-shot. That is what happened.
 
