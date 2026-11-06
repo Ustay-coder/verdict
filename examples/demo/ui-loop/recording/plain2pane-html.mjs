@@ -3,7 +3,8 @@
 // renderer Verdict used, shown at 0.875×), reloaded at the exact moment each Edit/Write landed (tool-result
 // timestamps aligned to the cast). Pages that fetch data.json get it from a routed virtual host; no port is opened.
 // Real time, no captions, overlays, highlights or sound.
-//   node plain2pane-html.mjs <take-dir> <states-dir> <data.json> out.mp4 [--from 10] [--tail 2.5] [--title t] [--url u] [--still s out.png]
+//   node plain2pane-html.mjs <take-dir> <states-dir> <data.json> out.mp4 [--from 10] [--tail 2.5] [--title t] [--url u] [--assets dir] [--still s out.png]
+//   --assets: a folder whose files the page links by relative path (e.g. the work folder, for design-system/primer.css)
 //   take-dir: <name>.cast + <name>.cast.markers; states-dir: build_states.py output (timeline.json + states/NN.html)
 import { createRequire } from "node:module";
 import { spawn } from "node:child_process";
@@ -18,6 +19,7 @@ const [takeDir, statesDir, dataJson, outPath, ...rest] = process.argv.slice(2);
 const opt = (n, d) => { const i = rest.indexOf(`--${n}`); return i >= 0 ? rest[i + 1] : d; };
 const fps = 30, FROM = Number(opt("from", 10)), TAIL = Number(opt("tail", 2.5));
 const TITLE = opt("title", "claude — ~/acme-dashboard-d"), URL_LABEL = opt("url", "127.0.0.1:8770 — index.html");
+const ASSETS = opt("assets", null);
 const stillAt = opt("still", null), stillOut = stillAt != null ? rest[rest.indexOf("--still") + 2] : null;
 
 const castFile = readdirSync(takeDir).find((f) => f.endsWith(".cast"));
@@ -54,7 +56,9 @@ window.load=(u)=>new Promise((r)=>{const f=document.getElementById("vp"); f.onlo
 const browser = await chromium.launch();
 const ctx = await browser.newContext({ viewport: { width: 1920, height: 1080 }, deviceScaleFactor: 1 });
 await ctx.route("http://take.local/**", (route) => {
-  const f = new URL(route.request().url()).pathname.split("/").pop() || "index.html";
+  const pathname = decodeURIComponent(new URL(route.request().url()).pathname);
+  const f = pathname.split("/").pop() || "index.html";
+  if (ASSETS && pathname.split("/").length > 2) return route.fulfill({ path: join(ASSETS, pathname), contentType: f.endsWith(".css") ? "text/css" : f.endsWith(".png") ? "image/png" : undefined });
   const path = f === "data.json" ? dataJson : join(statesDir, "states", f);
   return route.fulfill({ path, contentType: f.endsWith(".json") ? "application/json" : "text/html" });
 });

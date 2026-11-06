@@ -18,6 +18,15 @@
 //   repeated_figures the same figure shown 3+ times (48.2k and $48,200 count as the same value)
 //   numerals    share of numeric text set with tabular figures (or a monospace face)
 //   numbers_true every figure on screen derives from the json evidence (data.json): leaves, sums, shares, ratios, % changes
+// Design-system conformance (needs a `ds` input: tokens.json from examples/demo/ds-loop/import-design-system.mjs):
+//   ds_color    share of colour uses (text, backgrounds, borders, SVG fills/strokes) that are token colours; gradients
+//               and canvas count as off-token; off-token colours come back with the nearest token
+//   ds_type     share of text styles whose size and weight are on the scale (70%) and of glyphs set in the faces the
+//               system's font stacks render (30%)
+//   ds_space    share of spacing values on the scale: padding + border per side, margins (not auto), flex/grid gaps
+//   ds_components share of elements that draw a box of their own (bordered or filled panels, badges, buttons, inputs,
+//               bars) that are the system's components (carry one of its component classes)
+//   ds_shape    share of radii (token or full), border widths and box shadows (exact token shadows) that are tokens
 import { createServer } from "node:http";
 import { createHash } from "node:crypto";
 import { createRequire } from "node:module";
@@ -37,6 +46,7 @@ async function audit(url) {
     await page.waitForTimeout(2500); // let count-up and entrance animations finish
     const result = await page.evaluate(measure);
     result.fonts.rendered = await renderedFonts(page);
+    result.styles = await page.evaluate(collectStyles);
     if (result.fonts.rendered[0] && /^inter( display)?$/i.test(result.fonts.rendered[0].family) && result.fonts.rendered[0].share > 0.5) {
       result.template_chrome.boxes.push({ x: 0, y: 0, w: 0, h: 0, label: `default AI font (Inter renders ${Math.round(result.fonts.rendered[0].share * 100)}% of glyphs)` });
       result.template_chrome.count++;
@@ -281,6 +291,161 @@ function allowedNumbers(data) {
   walk(data);
   return out;
 }
+
+// Runs in the page: every colour, type, spacing and shape value the page actually uses (for design-system conformance).
+function collectStyles() {
+  const out = [];
+  const box = (el) => { const r = el.getBoundingClientRect(); return { x: Math.round(r.left + scrollX), y: Math.round(r.top + scrollY), w: Math.round(r.width), h: Math.round(r.height) }; };
+  const visible = (el) => { const s = getComputedStyle(el); const r = el.getBoundingClientRect(); return s.visibility !== "hidden" && s.display !== "none" && Number(s.opacity) > 0.05 && r.width > 0 && r.height > 0; };
+  const alpha = (c) => { const m = /rgba?\(([^)]+)\)/.exec(c || ""); if (!m) return 0; const p = m[1].split(/[,\s/]+/).filter(Boolean); return p.length > 3 ? Number(p[3]) : 1; };
+  const px = (v) => (v && v.endsWith("px") ? Number(v.slice(0, -2)) : null);
+  const keyword = (el, prop) => { try { const v = el.computedStyleMap().get(prop); return v && v.constructor.name === "CSSKeywordValue" ? String(v) : null; } catch { return null; } };
+  const els = [document.documentElement, document.body, ...document.body.querySelectorAll("*")];
+  for (const el of els) {
+    if (/^(SCRIPT|STYLE|LINK|META|TITLE|HEAD|BR|DEFS|LINEARGRADIENT|RADIALGRADIENT|STOP|CLIPPATH|MASK|FILTER)$/i.test(el.tagName) || !visible(el)) continue;
+    const cs = getComputedStyle(el), b = box(el), inSvg = el instanceof SVGElement;
+    if (inSvg) {
+      if (el.tagName.toLowerCase() === "svg") continue;
+      for (const prop of ["fill", "stroke"]) {
+        const v = cs[prop];
+        if (!v || v === "none" || (prop === "stroke" && (px(cs.strokeWidth) ?? 1) === 0)) continue;
+        if (/url\(/.test(v)) out.push({ k: "color", prop, gradient: true, b });
+        else if (alpha(v) > 0) out.push({ k: "color", prop, value: v, b });
+      }
+      if (el.tagName.toLowerCase() === "text" && el.textContent.trim()) out.push({ k: "text", size: px(cs.fontSize), weight: Number(cs.fontWeight), b });
+      continue;
+    }
+    if (el.tagName === "CANVAS") { out.push({ k: "color", prop: "canvas", unknown: true, b }); continue; }
+    // Component-like elements (panels, badges, buttons, inputs, bars): anything that draws a box of its own.
+    if (el !== document.documentElement && el !== document.body) {
+      const bordered = ["Top", "Right", "Bottom", "Left"].some((d) => cs[`border${d}Style`] !== "none" && (px(cs[`border${d}Width`]) ?? 0) > 0) || (cs.boxShadow && cs.boxShadow !== "none");
+      const parentBg = (() => { for (let p = el.parentElement; p; p = p.parentElement) { const c = getComputedStyle(p).backgroundColor; if (alpha(c) > 0) return c; } return "rgb(255, 255, 255)"; })();
+      const filled = alpha(cs.backgroundColor) > 0 && cs.backgroundColor !== parentBg;
+      const control = /^(BUTTON|INPUT|SELECT|TEXTAREA)$/.test(el.tagName);
+      const huge = b.w >= innerWidth * 0.9 && b.h >= document.documentElement.scrollHeight * 0.8;
+      const cell = /^(TD|TH|TR|THEAD|TBODY|TABLE)$/.test(el.tagName) && !filled; // table rules are content structure, not components
+      if ((bordered || filled || control) && !huge && !cell) out.push({ k: "part", classes: [...el.classList], tag: el.tagName.toLowerCase(), b });
+    }
+    const hasText = [...el.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim());
+    if (hasText) { out.push({ k: "text", size: px(cs.fontSize), weight: Number(cs.fontWeight), b }); out.push({ k: "color", prop: "color", value: cs.color, b }); }
+    for (const pseudo of [null, "::before", "::after"]) {
+      const ps = pseudo ? getComputedStyle(el, pseudo) : cs;
+      if (pseudo && (ps.content === "none" || ps.content === "normal" || ps.display === "none")) continue;
+      if (alpha(ps.backgroundColor) > 0) out.push({ k: "color", prop: "background" + (pseudo ?? ""), value: ps.backgroundColor, b });
+      if (/gradient\(/.test(ps.backgroundImage)) out.push({ k: "color", prop: "background-image" + (pseudo ?? ""), gradient: ps.backgroundImage, b });
+      const sides = ["Top", "Right", "Bottom", "Left"].filter((d) => ps[`border${d}Style`] !== "none" && (px(ps[`border${d}Width`]) ?? 0) > 0);
+      for (const v of new Set(sides.map((d) => ps[`border${d}Color`]))) if (alpha(v) > 0) out.push({ k: "color", prop: "border" + (pseudo ?? ""), value: v, b });
+      for (const v of new Set(sides.map((d) => px(ps[`border${d}Width`])))) out.push({ k: "borderWidth", value: v, b });
+      const radii = new Set(["TopLeft", "TopRight", "BottomRight", "BottomLeft"].map((c) => px(ps[`border${c}Radius`])).filter((v) => v > 0));
+      for (const v of radii) out.push({ k: "radius", value: v, b });
+      if (ps.boxShadow && ps.boxShadow !== "none") out.push({ k: "shadow", value: ps.boxShadow, b });
+      if (pseudo) continue;
+      for (const d of ["Top", "Right", "Bottom", "Left"]) {
+        const inset = (px(cs[`padding${d}`]) ?? 0) + (sides.includes(d) ? px(cs[`border${d}Width`]) : 0);
+        if (inset > 0) out.push({ k: "space", prop: `inset-${d.toLowerCase()}`, value: Math.round(inset * 100) / 100, pad: px(cs[`padding${d}`]), b });
+        const m = px(cs[`margin${d}`]);
+        if (m && !keyword(el, `margin-${d.toLowerCase()}`)) out.push({ k: "space", prop: `margin-${d.toLowerCase()}`, value: Math.round(m * 100) / 100, b });
+      }
+      for (const g of ["rowGap", "columnGap"]) { const v = px(cs[g]); if (v > 0 && /flex|grid/.test(cs.display)) out.push({ k: "space", prop: g, value: v, b }); }
+    }
+  }
+  return out;
+}
+
+// Design-system conformance: compare the values the page uses with the tokens in the `ds` input (tokens.json).
+const hexRgba = (h) => { h = h.replace("#", ""); if (h.length <= 4) h = [...h].map((c) => c + c).join(""); return { r: parseInt(h.slice(0, 2), 16), g: parseInt(h.slice(2, 4), 16), b: parseInt(h.slice(4, 6), 16), a: h.length > 6 ? parseInt(h.slice(6, 8), 16) / 255 : 1 }; };
+const cssRgba = (c) => { const m = /rgba?\(([^)]+)\)/.exec(c); if (!m) return null; const [r, g, b, a = 1] = m[1].split(/[,\s/]+/).filter(Boolean).map(Number); return { r, g, b, a }; };
+const toColor = (v) => (v.startsWith("#") ? hexRgba(v) : cssRgba(v));
+const hex = ({ r, g, b, a }) => "#" + [r, g, b].map((v) => Math.round(v).toString(16).padStart(2, "0")).join("") + (a < 1 ? Math.round(a * 255).toString(16).padStart(2, "0") : "");
+const near = (x, y, tol = 0.5) => Math.abs(x - y) <= tol;
+const dsCache = new WeakMap();
+function dsIndex(ds) {
+  if (dsCache.has(ds)) return dsCache.get(ds);
+  const colors = ds.colors.map((c) => ({ ...c, rgba: toColor(c.value) })).filter((c) => c.rgba);
+  const layers = (v) => v.split(/,(?![^(]*\))/).map((l) => { const c = /(#[0-9a-f]{3,8}|rgba?\([^)]+\))/i.exec(l)?.[0]; const nums = [...l.replace(c ?? "", "").matchAll(/-?[\d.]+(px|rem)?/g)].map((m) => Number(m[0].replace(/px|rem/, "")) * (m[0].endsWith("rem") ? 16 : 1)); return { inset: /inset/.test(l), color: c ? toColor(c) : null, nums: [...nums, 0, 0, 0, 0].slice(0, 4) }; });
+  const shadows = ds.shadows.map((s) => ({ ...s, layers: layers(s.value) }));
+  const idx = { colors, shadows, layers };
+  dsCache.set(ds, idx); return idx;
+}
+const colorMatch = (idx, rgba) => idx.colors.find((c) => near(c.rgba.r, rgba.r, 2) && near(c.rgba.g, rgba.g, 2) && near(c.rgba.b, rgba.b, 2) && near(c.rgba.a, rgba.a, 0.02));
+const nearestColor = (idx, rgba) => idx.colors.filter((c) => near(c.rgba.a, rgba.a, 0.05)).sort((x, y) => dist(x.rgba, rgba) - dist(y.rgba, rgba))[0];
+const dist = (p, q) => (p.r - q.r) ** 2 + (p.g - q.g) ** 2 + (p.b - q.b) ** 2;
+const hairline = (idx, dsT, v) => idx.layers(v).every((l) => l.inset && l.nums[2] === 0 && l.color && colorMatch(idx, l.color) && l.nums.slice(0, 2).concat(l.nums[3]).every((n) => n === 0 || dsT.borderWidths.includes(Math.abs(n))));
+const shadowMatch = (idx, v) => { const L = idx.layers(v); return idx.shadows.find((s) => s.layers.length === L.length && s.layers.every((t, i) => t.inset === L[i].inset && t.nums.every((n, j) => near(n, L[i].nums[j], 0.5)) && (!t.color || (L[i].color && dist(t.color, L[i].color) <= 12 && near(t.color.a, L[i].color.a, 0.02))))); };
+const tally = (items) => { const m = new Map(); for (const it of items) { const e = m.get(it.key) ?? { ...it, n: 0, boxes: [] }; e.n++; if (e.boxes.length < 6) e.boxes.push(it.b); m.set(it.key, e); } return [...m.values()].sort((a, b) => b.n - a.n); };
+const report = (total, off, what, fmt) => {
+  const t = tally(off), share = total ? (total - off.length) / total : 1;
+  return { normalized: Math.round(share * 1000) / 1000, value: off.length, boxes: t.flatMap((e) => e.boxes.map((b) => ({ ...b, label: e.key }))).slice(0, 80),
+    rationale: `${total - off.length}/${total} ${what} are tokens (${Math.round(share * 100)}%)` + (t.length ? `; off-token: ${t.slice(0, 8).map(fmt).join("; ")}` : "") };
+};
+const rendersAs = new Map();
+async function renderedFace(stack) {
+  if (rendersAs.has(stack)) return rendersAs.get(stack);
+  const page = await browser.newPage();
+  try { await page.setContent(`<p style='font-family:${stack.replace(/'/g, "")}'>Abc 123</p>`); const f = (await renderedFonts(page))[0]?.family; rendersAs.set(stack, f); return f; } finally { await page.close(); }
+}
+const ds = {
+  ds_color: (a, idx) => {
+    const uses = a.styles.filter((u) => u.k === "color");
+    const off = [];
+    for (const u of uses) {
+      if (u.gradient) {
+        // A gradient between identical token colours is a flat fill (the system's own flash banners do this).
+        const stops = typeof u.gradient === "string" ? [...u.gradient.matchAll(/rgba?\([^)]+\)/g)].map((m) => cssRgba(m[0])) : [];
+        const flat = stops.length && stops.every((c) => dist(c, stops[0]) === 0 && c.a === stops[0].a) && colorMatch(idx, stops[0]);
+        if (!flat) off.push({ key: `gradient (${u.prop})`, b: u.b });
+        continue;
+      }
+      if (u.unknown) { off.push({ key: "canvas (colours can't be checked)", b: u.b }); continue; }
+      const c = cssRgba(u.value); if (!c || colorMatch(idx, c)) continue;
+      const n = nearestColor(idx, c); off.push({ key: hex(c), hint: n ? `${n.name} ${n.value}` : "", b: u.b });
+    }
+    return report(uses.length, off, "colour uses", (e) => `${e.key} ×${e.n}${e.hint ? ` (nearest token: ${e.hint})` : ""}`);
+  },
+  ds_type: async (a, idx, dsT) => {
+    const texts = a.styles.filter((u) => u.k === "text");
+    const off = [];
+    for (const t of texts) {
+      const s = dsT.typeSizes.some((v) => near(v, t.size, 0.25)), w = dsT.fontWeights.includes(t.weight);
+      if (!s || !w) off.push({ key: `${!s ? `${t.size}px` : ""}${!s && !w ? " " : ""}${!w ? `weight ${t.weight}` : ""}`, b: t.b });
+    }
+    const faces = new Set([await renderedFace(dsT.fontStacks.sansSerif), await renderedFace(dsT.fontStacks.monospace)].filter(Boolean));
+    const inFace = (fam) => [...faces].some((f) => fam === f || fam.startsWith(f + " "));
+    const faceShare = a.fonts.rendered.filter((f) => inFace(f.family)).reduce((s, f) => s + f.share, 0);
+    const r = report(texts.length, off, "text styles", (e) => `${e.key} ×${e.n}`);
+    const n = Math.round((0.7 * r.normalized + 0.3 * Math.min(1, faceShare)) * 1000) / 1000;
+    const foreign = a.fonts.rendered.filter((f) => !inFace(f.family) && f.share >= 0.02).map((f) => `${f.family} ${Math.round(f.share * 100)}%`);
+    return { ...r, normalized: n, rationale: r.rationale + `; ${Math.round(Math.min(1, faceShare) * 100)}% of glyphs in the system's faces (${[...faces].join(", ")})` + (foreign.length ? `, other faces: ${foreign.join(", ")}` : "") + `. Scale: ${dsT.typeSizes.join("/")} px, weights ${dsT.fontWeights.join("/")}` };
+  },
+  ds_space: (a, idx, dsT) => {
+    const uses = a.styles.filter((u) => u.k === "space");
+    // An inset is on the scale if the padding is, or padding + border is (a 16px row under a 1px rule, a 6px button inset).
+    // Hairline offsets (±1–2px margins that overlap borders) are border widths, not spacing.
+    const onScale = (v) => dsT.space.some((t) => near(Math.abs(v), t));
+    const off = uses.filter((u) => !(onScale(u.value) || (u.pad != null && onScale(u.pad)) || (u.prop.startsWith("margin") && dsT.borderWidths.includes(Math.abs(u.value)))))
+      .map((u) => ({ key: `${u.value}px`, b: u.b, prop: u.prop }));
+    return { ...report(uses.length, off, "spacing values (padding + border, margin, gap)", (e) => `${e.key} ×${e.n}`), rationale: report(uses.length, off, "spacing values (padding + border, margin, gap)", (e) => `${e.key} ×${e.n}`).rationale + `. Scale: ${dsT.space.filter((v) => v <= 64).join("/")} px` };
+  },
+  ds_components: (a, idx, dsT) => {
+    const parts = a.styles.filter((u) => u.k === "part");
+    const roots = dsT.components ?? [];
+    const isDs = (c) => roots.some((r) => c === r || c.startsWith(r + "-"));
+    const off = parts.filter((u) => !u.classes.some(isDs)).map((u) => ({ key: `custom ${u.tag}${u.classes.length ? "." + u.classes.slice(0, 2).join(".") : ""}`, b: u.b }));
+    const r = report(parts.length, off, "panels, badges, buttons, inputs and bars", (e) => `${e.key} ×${e.n}`);
+    return { ...r, rationale: r.rationale.replace(" are tokens", ` are ${dsT.designSystem.name} components`) + `. Components: ${roots.join(", ")}` };
+  },
+  ds_shape: (a, idx, dsT) => {
+    const uses = a.styles.filter((u) => u.k === "radius" || u.k === "borderWidth" || u.k === "shadow");
+    const off = [];
+    for (const u of uses) {
+      if (u.k === "radius" && !(dsT.radii.some((v) => near(v, u.value)) || (dsT.radiusFull && u.value >= Math.min(u.b.w, u.b.h) / 2 - 0.5))) off.push({ key: `radius ${u.value}px`, b: u.b });
+      if (u.k === "borderWidth" && !dsT.borderWidths.some((v) => near(v, u.value, 0.1))) off.push({ key: `border ${u.value}px`, b: u.b });
+      if (u.k === "shadow" && !shadowMatch(idx, u.value) && !hairline(idx, dsT, u.value)) off.push({ key: `shadow ${u.value.slice(0, 60)}`, b: u.b });
+    }
+    return { ...report(uses.length, off, "radii, border widths and shadows", (e) => `${e.key} ×${e.n}`), rationale: report(uses.length, off, "radii, border widths and shadows", (e) => `${e.key} ×${e.n}`).rationale + `. Radii ${dsT.radii.filter(Boolean).join("/")} px or full; borders ${dsT.borderWidths.filter(Boolean).join("/")} px; shadows: ${dsT.shadows.map((x) => x.name).join(", ")}` };
+  },
+};
+
 const score = {
   contrast: (a) => ({ normalized: a.contrast.total ? (a.contrast.total - a.contrast.failing) / a.contrast.total : 1, value: a.contrast.failing, boxes: a.contrast.boxes, rationale: `${a.contrast.total - a.contrast.failing}/${a.contrast.total} text elements pass WCAG AA` }),
   decoration: (a) => ({ normalized: clamp(1 - Math.max(0, a.decoration.count - 2) / 16), value: a.decoration.count, boxes: a.decoration.boxes, rationale: `${a.decoration.count} decorative effects (gradients, glass, glows); 2 are free` }),
@@ -304,12 +469,17 @@ createServer(async (req, res) => {
   try {
     const metric = /^\/audit\/([a-z_]+)$/.exec(req.url ?? "")?.[1];
     if (req.method === "GET" && req.url?.startsWith("/raw?url=")) return reply(200, await audit(decodeURIComponent(req.url.slice(9))));
-    if (req.method !== "POST" || !metric || !score[metric]) return reply(404, { error: `POST /audit/{${Object.keys(score).join("|")}}` });
+    if (req.method !== "POST" || !metric || !(score[metric] || ds[metric])) return reply(404, { error: `POST /audit/{${[...Object.keys(score), ...Object.keys(ds)].join("|")}}` });
     let body = ""; for await (const chunk of req) body += chunk;
     const { evidence = [] } = JSON.parse(body || "{}");
     const url = evidence.find((e) => e.kind === "url" && /^https?:/.test(e.source ?? ""))?.source;
     if (!url) return reply(400, { error: "no url evidence to render" });
-    const data = evidence.find((e) => e.json !== undefined && e.kind !== "url")?.json;
+    const dsT = evidence.find((e) => e.json?.designSystem)?.json;
+    const data = evidence.find((e) => e.json !== undefined && e.kind !== "url" && !e.json?.designSystem)?.json;
+    if (ds[metric]) {
+      if (!dsT) return reply(400, { error: "no design-system tokens (tokens.json with a designSystem key) in the evidence" });
+      return reply(200, await ds[metric](await audit(url), dsIndex(dsT), dsT));
+    }
     reply(200, score[metric](await audit(url), { data }));
   } catch (e) { reply(500, { error: String(e?.message ?? e) }); }
 }).listen(port, "127.0.0.1", () => console.log(`ui audit scorer on http://127.0.0.1:${port}`));

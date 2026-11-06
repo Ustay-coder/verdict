@@ -19,7 +19,7 @@ config_dir = os.environ.get("CLAUDE_CONFIG_DIR", os.path.expanduser("~/.claude")
 TOOLS = os.environ.get("REC_TOOLS", "Read,Edit,Write")
 ALLOWED = os.environ.get("REC_ALLOWED", "Read Edit Write mcp__verdict").split()
 MCP = ["--mcp-config", ".mcp.json"] if os.path.exists(os.path.join(cwd, ".mcp.json")) else []
-argv = ["claude", *MCP, "--strict-mcp-config", "--tools", TOOLS, "--allowedTools", *ALLOWED, "--permission-mode", "acceptEdits"]
+argv = ["claude", *MCP, "--strict-mcp-config", "--tools", TOOLS, "--allowedTools", *ALLOWED, "--permission-mode", os.environ.get("REC_MODE", "acceptEdits")]
 
 # A fresh, independent session: don't inherit this container's session identity or its sync channels,
 # and keep transcripts on (they land in the isolated CLAUDE_CONFIG_DIR).

@@ -1,0 +1,6 @@
+Rebuild index.html with GitHub's Primer design system, judged by Verdict. Work only in this folder.
+Step 1, install the system: npm install --legacy-peer-deps @primer/primitives@11.10.0 @primer/css@21.5.1
+Step 2, turn it into a rubric: node import-design-system.mjs (writes design-system/tokens.json, design-system/primer.css, design-system/specimen.png and design-system.yaml).
+Step 3, score the current page: create_rubric from design-system.yaml with the verdict MCP, then evaluate with a url input http://127.0.0.1:8771/ (screenshot true, tags ["ui"]), a file input design-system/tokens.json (tags ["ds"]), an image input design-system/specimen.png (tags ["specimen"]) and a file input data.json (tags ["data"]).
+Step 4, rebuild index.html with the system: link design-system/primer.css and use its components and tokens; you may discard the current layout. Evaluate after every rewrite and fix the weakest criterion, using the rationales (they name each off-token value and the nearest token). Stop when the evaluation says passed: true.
+Don't change data.json or anything in design-system/; every figure must derive from data.json. Finally print a SCORE HISTORY table.
