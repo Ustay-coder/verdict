@@ -1,0 +1,9 @@
+{
+  "note": "Fictional brand, creator and figures for a demo.",
+  "brand": "Tallyleaf",
+  "product": "A budgeting app: spending by category, forgotten-subscription alerts, shared household budgets",
+  "audience": "Renters aged 22–35 who want to stop overspending",
+  "must_not": ["guaranteed financial outcomes", "credit or loan approval claims", "investment returns", "comparisons naming competitors"],
+  "budget_usd": 4000,
+  "creator": { "channel": "Small Desk Studio", "rate_usd": 3500 }
+}

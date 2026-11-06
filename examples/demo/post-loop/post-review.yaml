@@ -1,0 +1,71 @@
+# Review a social post before it goes out. Judged against a brief of facts the post may use.
+# Inputs: -i post=<draft text or file> -i brief=brief.md
+name: Post review
+version: "1"
+description: Would developers on X stop, read and reply, and is every claim true?
+context: |
+  You review a draft post for X aimed at developers and designers who use coding agents. The brief lists the facts
+  the post may use. Judge the draft text only. Most drafts land in the middle.
+language: en
+scale: { type: numeric, min: 1, max: 5 }
+judges:
+  jev: { type: decision, provider: typesafe, model: jev-latest }
+  # Clef separates true from overclaiming drafts clearly (0.8–0.92 vs 0.36); Jev was a coin flip here (0.43–0.57).
+  clef: { type: decision, provider: cloudflare, model: "@cf/cloudflare/clef" }
+defaultJudge: { type: ref, ref: jev }
+criteria:
+  - id: hook
+    name: First line stops the scroll
+    weight: 3
+    inputs: [post]
+    levels:
+      - { value: 1, label: flat, description: "Opens with a greeting, an announcement or a generic statement" }
+      - { value: 3, label: ok, description: "Opens with the topic, but nothing surprising" }
+      - { value: 5, label: hook, description: "The first line alone makes a developer want the next line: a concrete surprise, a number or a tension" }
+  - id: specific
+    name: Concrete, not vague
+    weight: 2
+    inputs: [post]
+    levels:
+      - { value: 1, label: vague, description: "Adjectives and promises; no numbers or specifics" }
+      - { value: 3, label: some, description: "One concrete detail" }
+      - { value: 5, label: concrete, description: "Says exactly what happened, with the numbers that matter" }
+  - id: clear
+    name: One idea, plain words
+    weight: 2
+    inputs: [post]
+    levels:
+      - { value: 1, label: muddled, description: "Several ideas, jargon or hashtags crowd it" }
+      - { value: 3, label: mostly, description: "One idea, but wordy or with filler" }
+      - { value: 5, label: clear, description: "One idea a developer gets in one read" }
+  - id: reply
+    name: Invites a reply
+    weight: 1
+    inputs: [post]
+    levels:
+      - { value: 1, label: closed, description: "Nothing to respond to" }
+      - { value: 3, label: maybe, description: "Some readers might respond" }
+      - { value: 5, label: invites, description: "Developers will want to reply with their own case or a question" }
+  - id: no_hype
+    name: No hype
+    weight: 0
+    judge: { type: ref, ref: clef }
+    inputs: [post]
+    scale: { type: binary, labels: [hype, plain] }
+    anchors: { hype: "Uses hype or absolute claims: revolutionary, game-changing, perfect, any/every product, effortless, 10x, emoji rockets, a pile of hashtags", plain: "States what happened in plain words; no hype words or absolute promises" }
+  - id: true_to_brief
+    name: Every claim is in the brief
+    weight: 0
+    judge: { type: ref, ref: clef }
+    inputs: [post, brief]
+    scale: { type: binary, labels: [overclaims, "true"] }
+    anchors: { overclaims: "Claims something the brief doesn't say, or exaggerates it", "true": "Every claim matches the brief" }
+aggregation:
+  method: weighted_mean
+  normalize: [0, 100]
+  precision: 0
+  gates:
+    - { criterion: no_hype, min: 1, message: "Hype: plain words get more replies from developers" }
+    - { criterion: true_to_brief, min: 1, message: "Overclaims: says something the brief doesn't support" }
+  grades: [{ label: post it, min: 80 }, { label: close, min: 60 }, { label: rework, min: 0 }]
+  passThreshold: 80

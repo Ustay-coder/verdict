@@ -1,0 +1,4 @@
+Review this sponsored video script with Verdict before it goes to the brand. Work only in this folder.
+create_rubric from sponsor-review.yaml with the verdict MCP, then evaluate with a file input script.md (tags ["script"]) and a file input brief.json (tags ["brief"]).
+If it isn't approved, fix only what the evaluation points to, changing as little of the script as possible, and evaluate again. Stop when it is approved.
+Finally print a REVIEW table: round, score, grade, what changed.

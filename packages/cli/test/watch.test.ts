@@ -9,7 +9,7 @@ const rubric = { name: "Keywords", criteria: [
 
 describe("watchState", () => {
   it("is empty without evaluations", () => {
-    expect(watchState([])).toMatchObject({ view: "empty", entries: [] });
+    expect(watchState([])).toMatchObject({ view: "empty", entries: [], running: 0 });
   });
 
   it("shows the latest evaluation with the previous one of the same rubric and the score history", async () => {
@@ -40,6 +40,15 @@ describe("watchState", () => {
     s = watchState(await engine.store.listEvaluations());
     expect(s.aggregation).toEqual({ method: "formula", formula: "b_n" });
     expect(s.entries.map((e) => e.name)).toEqual(["beta only", "alpha only"]);
+  });
+
+  it("keeps the last finished result while a new evaluation runs", async () => {
+    const engine = new Engine();
+    const done = await engine.evaluate({ rubric, subject: { inputs: [{ type: "text", text: "alpha" }] } });
+    const running = { ...structuredClone(done), id: "eval_running", status: "running" as const, updatedAt: new Date(Date.now() + 1000).toISOString() };
+    const s = watchState([done, running]);
+    expect(s.entries[0]!.id).toBe(done.id);
+    expect(s.running).toBe(1);
   });
 
   it("surfaces failed gates", async () => {

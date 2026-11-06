@@ -1,0 +1,1 @@
+We gave Claude Code GitHub's Primer design system and asked Verdict to score a dashboard against it. It went from 19 to 82 in about 3 minutes.

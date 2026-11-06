@@ -1,0 +1,5 @@
+Write the X post that announces our demo video, judged by Verdict. Work only in this folder. brief.md has the only facts you may use.
+Write three different drafts to drafts/a.md, drafts/b.md and drafts/c.md: an announcement, a story, and a question.
+create_rubric from post-review.yaml with the verdict MCP, then compare the three drafts (subjects "Draft A", "Draft B", "Draft C"; each a file input tagged ["post"] plus brief.md tagged ["brief"]).
+Rewrite the lowest-scoring draft using its weakest criterion and compare all three again. Repeat until the best draft scores at least 90 and passes.
+Finally print a POSTS table (round, A, B, C) and the winning draft.

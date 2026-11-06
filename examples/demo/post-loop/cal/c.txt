@@ -1,0 +1,5 @@
+An AI-made dashboard scored 19/100 against GitHub's design system.
+
+3 minutes later: 82. Every colour, size and spacing value is now a Primer token.
+
+The agent turned Primer into a rubric and rebuilt the page until it passed. Which design system should it try next?

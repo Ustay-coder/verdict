@@ -24,6 +24,8 @@ export interface WatchState {
   previous?: WatchEntry;
   /** single: scores of this rubric's evaluations, oldest first. */
   history: Array<{ id: string; name: string; score?: number; grade?: string }>;
+  /** Evaluations still running (shown as a note; the page keeps the last finished result until they land). */
+  running: number;
 }
 
 const TEXT_KINDS = new Set(["text", "file", "json", "url", "youtube"]);
@@ -51,10 +53,11 @@ const rubricKey = (ev: Evaluation) => ev.rubricId ?? `${ev.rubric.name}@${ev.rub
 
 /** What the page shows for a set of stored evaluations. Pure: the same function drives the live page and replays. */
 export function watchState(evaluations: Evaluation[]): WatchState {
-  const evs = evaluations.filter((e) => e.status !== "queued").sort((a, b) => a.updatedAt.localeCompare(b.updatedAt) || a.createdAt.localeCompare(b.createdAt));
+  const running = evaluations.filter((e) => e.status === "queued" || e.status === "running").length;
+  const evs = evaluations.filter((e) => e.status !== "queued" && e.status !== "running").sort((a, b) => a.updatedAt.localeCompare(b.updatedAt) || a.createdAt.localeCompare(b.createdAt));
   const latest = evs.at(-1);
-  if (!latest) return { view: "empty", entries: [], history: [] };
-  const base = { updatedAt: latest.updatedAt, rubric: { name: latest.rubric.name, version: latest.rubric.version },
+  if (!latest) return { view: "empty", entries: [], history: [], running };
+  const base = { running, updatedAt: latest.updatedAt, rubric: { name: latest.rubric.name, version: latest.rubric.version },
     aggregation: { method: latest.rubric.aggregation.method, formula: latest.rubric.aggregation.formula } };
   if (latest.batchId) {
     const batch = evs.filter((e) => e.batchId === latest.batchId);
@@ -156,9 +159,11 @@ function render(s){
     const sc=r.querySelector(".lscore").dataset.s; if(prevScores.has(r.dataset.k)&&prevScores.get(r.dataset.k)!==sc) r.classList.add("flash"); prevScores.set(r.dataset.k,sc);
     if(was!=null&&was!==now){ r.style.transition="none"; r.style.transform="translateY("+(was-now)+"px)"; requestAnimationFrame(()=>requestAnimationFrame(()=>{ r.style.transition=""; r.style.transform=""; })); } });
   prevRects=new Map();
-  if(s.updatedAt) $("#upd").textContent="updated "+new Date(s.updatedAt).toLocaleTimeString();
+  $("#upd").textContent=s.running?("evaluating"+(s.running>1?" "+s.running+" subjects":"")+"…"):s.updatedAt?"updated "+new Date(s.updatedAt).toLocaleTimeString():"waiting for evaluations";
 }
-async function tick(){ try{ const r=await fetch("/api/state",{cache:"no-store"}); const t=await r.text(); if(t!==last){ last=t; render(JSON.parse(t)); } }catch{} setTimeout(tick,700); }
-tick();
+async function refresh(){ try{ const r=await fetch("/api/state",{cache:"no-store"}); const t=await r.text(); if(t!==last){ last=t; render(JSON.parse(t)); } }catch{} }
+// Polls; refresh() is also exposed so a recorder or test can update the page on demand.
+window.verdictWatchRefresh=refresh;
+(function tick(){ refresh().finally(()=>setTimeout(tick,700)); })();
 </script></body></html>`;
 }

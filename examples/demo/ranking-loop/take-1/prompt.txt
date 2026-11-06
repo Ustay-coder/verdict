@@ -1,0 +1,4 @@
+Judge the five hackathon entries in entries/ with Verdict. Work only in this folder.
+create_rubric from hackathon-judging.yaml with the verdict MCP, then compare the five entries (one subject per file, named after the entry's title, each a file input).
+Then, without judging again, re-rank the same evaluations twice with the reaggregate tool (evaluationIds: all five, persist: true): first with { "method": "min" } (weakest link), then with { "method": "formula", "formula": "impact_n * 0.5 + originality_n * 0.5" } (moonshot).
+Finally print a WINNERS table: aggregation, winner, score, and how many judge calls the re-ranking needed.

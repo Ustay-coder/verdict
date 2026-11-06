@@ -1,0 +1,42 @@
+# Hackathon judging: four criteria, judged once. Change only the aggregation and the winner changes.
+# Inputs: one file per entry (compare / batches). Try:  reaggregate with { method: min } or a formula.
+name: Hackathon judging
+version: "1"
+description: Four criteria, judged once by Jev; the aggregation decides the winner.
+context: |
+  You judge one hackathon entry from its write-up. Judge each criterion on its own: a strong entry can still score
+  low on one criterion. Most entries land in the middle.
+language: en
+scale: { type: numeric, min: 1, max: 5 }
+judges:
+  jev: { type: decision, provider: typesafe, model: jev-latest }
+defaultJudge: { type: ref, ref: jev }
+criteria:
+  - id: impact
+    name: Impact
+    levels:
+      - { value: 1, label: minor, description: "A small convenience for a few people" }
+      - { value: 3, label: useful, description: "A real problem for a clear group of people" }
+      - { value: 5, label: major, description: "A serious problem for very many people" }
+  - id: feasibility
+    name: Feasibility
+    levels:
+      - { value: 1, label: speculative, description: "Mostly unbuilt; the hard parts are unsolved" }
+      - { value: 3, label: partial, description: "A working core, with important parts missing" }
+      - { value: 5, label: proven, description: "Works end to end and is already used by real people" }
+  - id: originality
+    name: Originality
+    levels:
+      - { value: 1, label: familiar, description: "Works like many existing products" }
+      - { value: 3, label: fresh_angle, description: "A familiar idea with a new angle or audience" }
+      - { value: 5, label: new, description: "Nobody does this today" }
+  - id: execution
+    name: Execution
+    levels:
+      - { value: 1, label: sketch, description: "A mock-up or a prompt; little was built" }
+      - { value: 3, label: demo, description: "A working demo with rough edges" }
+      - { value: 5, label: polished, description: "A complete, polished build with real results" }
+aggregation:
+  method: weighted_mean
+  normalize: [0, 100]
+  precision: 1
