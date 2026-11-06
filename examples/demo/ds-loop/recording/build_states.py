@@ -3,7 +3,7 @@
 
 usage: build_states.py <take-dir> <original-file> <target-name> <out-dir>
   take-dir      holds landing.cast-style `<name>.cast.markers` and `session.jsonl` (see recording/record.py)
-  original-file the file as it was before the run (e.g. ui-loop/start/index.html)
+  original-file the file as it was before the run (e.g. ds-loop/start/index.html)
   target-name   basename the agent edited (e.g. index.html)
 Writes <out-dir>/states/NN.html and <out-dir>/timeline.json: each state with its cast time (seconds, aligned to the
 recording via the prompt-submit marker) plus every evaluate result (score, grade, per-criterion normalized and rationale).

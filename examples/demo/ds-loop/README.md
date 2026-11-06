@@ -2,18 +2,19 @@
 
 **Status: Take E recorded, and a plain two-pane working video rendered (real time, 3× and 5×).**
 
-The founder's verdict on Takes B–D was that the redesigns didn't look better, only different. Taste is hard to score.
+Earlier redesigns, judged by a rubric of dashboard principles, didn't look better to the founder, only different (those takes are in git history before `examples/demo/ui-loop/` was removed). Taste is hard to score.
 A design system isn't: it names every colour, size, step and component. Here an agent imports
 [GitHub's Primer](https://github.com/primer/primitives) (MIT), turns it into a Verdict rubric, and rebuilds the AI
 one-shot dashboard until the rubric passes.
 
 | | |
 | --- | --- |
-| Start page | [`../ui-loop/start/`](../ui-loop/start) (the AI one-shot and its fictional data) |
+| Start page | [`start/`](start) (the AI one-shot and its fictional data) |
 | Importer | [`import-design-system.mjs`](import-design-system.mjs) |
+| Recorder | [`../landing-loop/recording/record.py`](../landing-loop/recording/record.py) (`REC_TOOLS`, `REC_ALLOWED`, `REC_MODE=dontAsk`) · states: [`recording/build_states.py`](recording/build_states.py) |
 | Rubric (generated) | [`design-system.yaml`](design-system.yaml), built from `@primer/primitives@11.10.0` and `@primer/css@21.5.1` |
 | Tokens and specimen | [`design-system/`](design-system): `tokens.json`, and `specimen.png` rendered from Primer's own stylesheet |
-| Scorer | [`../ui-loop/audit/server.mjs`](../ui-loop/audit/server.mjs) (`ds_*` metrics) |
+| Scorer | [`audit/server.mjs`](audit/server.mjs) (`ds_*` metrics) |
 | Take E | [`take-e/`](take-e): prompt, the page at each evaluation, `evaluations.json`, the final page |
 
 ## The importer: a design system → a rubric
@@ -59,7 +60,7 @@ gate requiring `native` ≥ 3 of 5. "Ship it" is at **80**.
 | --- | --- |
 | AI one-shot | 19 |
 | Bare HTML | 21 |
-| Take D (principles rubric) | 47 |
+| A principles-led redesign (an earlier take) | 47 |
 | A dashboard hand-built from Primer components ([`calibration/primer-reference/`](calibration/primer-reference)) | 82, twice |
 | Primer's own specimen | 84 |
 
@@ -84,7 +85,7 @@ Verified:
 
 **Three runs before this one, and what each taught the rubric:**
 1. The recorder split the allow rule `Bash(npm install:*)` at the space, so npm was denied and the run stopped at step 1.
-   Fixed in `record.py`.
+   Fixed in [`../landing-loop/recording/record.py`](../landing-loop/recording/record.py).
 2. The rubric still said 85. The agent plateaued at 83 for three rounds with every measured criterion near 100%. That
    bar was above Primer's own specimen, so it was set to the calibrated 80.
 3. The run passed at 81, but seven signup bars painted nothing. The agent had used `color-bg-neutral-emphasis`, which
@@ -93,7 +94,7 @@ Verified:
 
 ## Plain working video (no effects)
 
-Built by [`../ui-loop/recording/plain2pane-html.mjs`](../ui-loop/recording/plain2pane-html.mjs) with
+Built by [`recording/plain2pane-html.mjs`](recording/plain2pane-html.mjs) with
 `--assets <work folder>`, so the page's linked `design-system/primer.css` loads.
 - **Left:** Take E's recorded terminal bytes, played at their recorded times.
 - **Right:** the real page, reloaded at the moment each Write/Edit landed, 1280 px wide at 0.875×.

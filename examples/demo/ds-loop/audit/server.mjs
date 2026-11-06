@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Render-audit scorer for Verdict's `http` benchmark judge.
 //
-//   node examples/demo/ui-loop/audit/server.mjs [port=7788]
+//   node examples/demo/ds-loop/audit/server.mjs [port=7788]
 //   rubric: judge: { type: benchmark, method: http, url: "http://127.0.0.1:7788/audit/contrast" }
 //
 // Verdict POSTs { criterion, evidence, text }. We take the first `url` evidence source, render it in Chromium
