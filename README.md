@@ -57,7 +57,18 @@ pnpm verdict reaggregate eval_… --formula "problem_n*0.6 + team_n*0.4"
 
 # 5. rank many subjects
 pnpm verdict compare -r rubric.yaml -s "Acme=deck-a.pdf" -s "Beta=deck-b.pdf,https://beta.example"
+
+# 6. watch results land: a live local page over .verdict/ (or VERDICT_DATA_DIR)
+pnpm verdict watch -p 4600
 ```
+
+`verdict watch` shows the most recently updated evaluation, with:
+- its score, grade, failed gates and criteria;
+- the evaluated text, with the lines that changed since the previous evaluation of the same rubric marked;
+- the score history.
+
+A batch shows as a leaderboard, and re-aggregating it re-ranks the rows in place. Evaluations of one batch share a
+`batchId`. To watch an agent, give the MCP server a `VERDICT_DATA_DIR` and run `verdict watch` with the same one.
 
 ### Run the API
 
@@ -134,6 +145,7 @@ pnpm verdict eval -r ui.yaml -i http://localhost:5173/ --screenshot     # or -i 
 ```
 
 Tools: `validate_rubric`, `create_rubric`, `list_rubrics`, `evaluate`, `compare`, `get_evaluation`, `submit_human_score`, `reaggregate`, `list_human_tasks`.
+`reaggregate` takes `evaluationIds` to re-rank a whole batch under one aggregation; no judges are called.
 
 ## A rubric, end to end
 

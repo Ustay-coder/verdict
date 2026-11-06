@@ -46,6 +46,8 @@ export interface EvaluateRequest {
   id?: string;
   /** Called as soon as the evaluation record exists in the store. */
   onStarted?: (evaluation: Evaluation) => void;
+  /** Set by evaluateBatch: every evaluation of one batch shares it (leaderboards, `verdict watch`). */
+  batchId?: string;
 }
 
 export interface ScoreSubmission {
@@ -124,7 +126,7 @@ export class Engine {
     const started = Date.now();
     const { rubric, rubricId } = await this.resolveRubric(req.rubric, req.tenantId);
     const ev = initialEvaluation(req, rubric, rubricId);
-    if (queued) { ev.job = { ...queued.job! }; ev.createdAt = queued.createdAt; ev.rubricId = queued.rubricId; }
+    if (queued) { ev.job = { ...queued.job! }; ev.createdAt = queued.createdAt; ev.rubricId = queued.rubricId; if (queued.batchId) ev.batchId = queued.batchId; }
     await this.store.putEvaluation(queued ? structuredClone(ev) : ev);
     this.onEvent?.({ type: "evaluation.started", evaluation: ev });
     req.onStarted?.(ev);
@@ -245,7 +247,7 @@ export class Engine {
   /** Reserve a fetchable document before handing work to a host's background lifetime. */
   async evaluateBackground(req: EvaluateRequest, background: (work: Promise<unknown>) => void) {
     const start = async (ev: Evaluation) => {
-      const work = this.evaluate({ ...req, rubric: ev.rubric, subject: ev.subject, id: ev.id });
+      const work = this.evaluate({ ...req, rubric: ev.rubric, subject: ev.subject, id: ev.id, batchId: ev.batchId });
       background(work);
       return ev;
     };
@@ -308,7 +310,8 @@ export class Engine {
   /** Evaluate many subjects against one rubric and rank them. */
   async evaluateBatch(rubricRef: EvaluateRequest["rubric"], subjects: Array<Subject | Record<string, unknown>>, opts: Omit<EvaluateRequest, "rubric" | "subject"> = {}) {
     const { rubric } = await this.resolveRubric(rubricRef, opts.tenantId);
-    const evaluations = await mapLimit(subjects, Math.max(1, Math.floor(this.concurrency / 2)), (subject) => this.evaluate({ ...opts, rubric, subject }));
+    const batchId = opts.batchId ?? newId("bat");
+    const evaluations = await mapLimit(subjects, Math.max(1, Math.floor(this.concurrency / 2)), (subject) => this.evaluate({ ...opts, rubric, subject, batchId }));
     const ranking = rankEvaluations(evaluations);
     return { evaluations, ranking };
   }
@@ -355,7 +358,8 @@ export class Engine {
         const recordToStore = { tenantId: req.tenantId, key: req.idempotencyKey, fingerprint: hash, targetType,
           targetId: targetType === "evaluation" ? ids[0] : undefined, evaluationIds: targetType === "batch" ? ids : undefined,
           createdAt: new Date().toISOString(), expiresAt: new Date(Date.now() + this.idempotencyTtlMs).toISOString() };
-        const initial = subjects.map((subject, i) => prepare(initialEvaluation({ ...req, subject, id: ids[i] }, rubric, rubricId)));
+        const batchId = targetType === "batch" ? newId("bat") : undefined;
+        const initial = subjects.map((subject, i) => prepare(initialEvaluation({ ...req, subject, id: ids[i], batchId }, rubric, rubricId)));
         if (this.store.reserveIdempotency) {
           if (!await this.store.reserveIdempotency(recordToStore, initial)) continue;
         } else {
@@ -363,7 +367,7 @@ export class Engine {
           for (const evaluation of initial) await this.store.putEvaluation(evaluation);
         }
         release();
-        const evaluations = await mapLimit(subjects, Math.max(1, Math.floor(this.concurrency / 2)), (subject, i) => after ? after(initial[i]!) : this.evaluate({ ...req, rubric, subject, id: ids[i] }));
+        const evaluations = await mapLimit(subjects, Math.max(1, Math.floor(this.concurrency / 2)), (subject, i) => after ? after(initial[i]!) : this.evaluate({ ...req, rubric, subject, id: ids[i], batchId }));
         return { evaluations, replayed: false };
       }
     } finally {
@@ -549,6 +553,7 @@ function initialEvaluation(req: EvaluateRequest, rubric: Rubric, rubricId?: stri
     usage: { decisionCalls: 0, llmCalls: 0, inputTokens: 0, outputTokens: 0, durationMs: 0 },
     metadata: req.metadata,
     webhook: req.webhook,
+    ...(req.batchId ? { batchId: req.batchId } : {}),
     createdAt: now,
     updatedAt: now,
   };

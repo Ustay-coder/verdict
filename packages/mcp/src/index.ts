@@ -1,6 +1,6 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import { calibrate, Engine, FileStore, MemoryStore, lazyPlaywrightScreenshot, loadRubricText, parseRubric, type Evaluation } from "@verdict/core";
+import { calibrate, Engine, FileStore, MemoryStore, lazyPlaywrightScreenshot, loadRubricText, parseRubric, rankEvaluations, type Evaluation } from "@verdict/core";
 import { Verdict } from "@verdict/sdk";
 
 /**
@@ -129,9 +129,16 @@ export function createMcpServer(opts: McpOptions = {}) {
 
   server.registerTool("reaggregate", {
     title: "Re-aggregate",
-    description: "Recompute the total with a different aggregation (method, formula, weights via gates/grades/passThreshold) without re-running judges. Useful for what-if analysis.",
-    inputSchema: { evaluationId: z.string(), aggregation: z.record(z.string(), z.unknown()), persist: z.boolean().default(false) },
-  }, async ({ evaluationId, aggregation, persist }) => text(summarize(client ? (await client.evaluations.reaggregate(evaluationId, aggregation as never, persist)) as unknown as Evaluation : await engine!.reaggregate(evaluationId, aggregation as never, undefined, persist))));
+    description: "Recompute the total with a different aggregation (method, formula, weights via gates/grades/passThreshold) without re-running judges. Useful for what-if analysis. Pass evaluationIds (for example every evaluation of a compare batch) to re-rank them all with one aggregation; the result then includes the new ranking.",
+    inputSchema: { evaluationId: z.string().optional(), evaluationIds: z.array(z.string()).min(1).optional(), aggregation: z.record(z.string(), z.unknown()), persist: z.boolean().default(false) },
+  }, async ({ evaluationId, evaluationIds, aggregation, persist }) => {
+    const ids = evaluationIds ?? (evaluationId ? [evaluationId] : []);
+    if (!ids.length) return text({ error: "pass evaluationId or evaluationIds" });
+    const one = (id: string) => client ? client.evaluations.reaggregate(id, aggregation as never, persist) as unknown as Promise<Evaluation> : engine!.reaggregate(id, aggregation as never, undefined, persist);
+    if (ids.length === 1 && !evaluationIds) return text(summarize(await one(ids[0]!)));
+    const evaluations = await Promise.all(ids.map(one));
+    return text({ judgesCalled: 0, ranking: rankEvaluations(evaluations), evaluations: evaluations.map(summarize) });
+  });
 
   server.registerTool("list_human_tasks", { title: "List human tasks", description: "Criteria waiting on human raters.", inputSchema: { rater: z.string().optional() } }, async ({ rater }) => {
     if (client) return text((await client.tasks.list(rater)).data);

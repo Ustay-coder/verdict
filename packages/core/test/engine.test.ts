@@ -69,13 +69,18 @@ describe("engine", () => {
   it("ranks a batch", async () => {
     const engine = new Engine();
     const r = { name: "b", criteria: [{ id: "k", name: "k", judge: { type: "benchmark", method: "keywords", keywords: ["alpha", "beta"] } }] };
-    const { ranking } = await engine.evaluateBatch(r, [
+    const { ranking, evaluations } = await engine.evaluateBatch(r, [
       { name: "none", inputs: [{ type: "text", text: "gamma" }] },
       { name: "both", inputs: [{ type: "text", text: "alpha beta" }] },
       { name: "one", inputs: [{ type: "text", text: "alpha" }] },
     ]);
     expect(ranking.map((x) => x.subject)).toEqual(["both", "one", "none"]);
     expect(ranking[0]!.rank).toBe(1);
+    // One batch id, shared by its evaluations and kept by re-aggregation (leaderboards and `verdict watch` group on it).
+    expect(evaluations[0]!.batchId).toMatch(/^bat_/);
+    expect(new Set(evaluations.map((e) => e.batchId)).size).toBe(1);
+    expect((await engine.reaggregate(evaluations[0]!.id, { method: "min" })).batchId).toBe(evaluations[0]!.batchId);
+    expect((await engine.evaluate({ rubric: r, subject: { inputs: [{ type: "text", text: "alpha" }] } })).batchId).toBeUndefined();
   });
 
   it("rejects invalid rubrics with useful messages", async () => {

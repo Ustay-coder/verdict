@@ -306,6 +306,12 @@ export function buildCli() {
   });
 
 
+  program.command("watch").description("serve a live page of the evaluations in .verdict/ (or VERDICT_DATA_DIR): scores, gates, changed lines, leaderboards")
+    .option("-p, --port <port>", "port", "4600").option("--host <host>", "host", "127.0.0.1").action(async (o) => {
+      const { serveWatch } = await import("./watch.js");
+      await serveWatch(new FileStore(dataDir()), { port: Number(o.port), host: o.host, dataDir: dataDir() });
+      console.log(`verdict watch on http://${o.host}:${o.port}/  (reading ${dataDir()})`);
+    });
   program.command("mcp").description("run the MCP server over stdio (local engine, or remote if VERDICT_API_URL is set)").action(async () => {
     const { createMcpServer } = await import("@verdict/mcp");
     const { StdioServerTransport } = await import("@modelcontextprotocol/sdk/server/stdio.js");

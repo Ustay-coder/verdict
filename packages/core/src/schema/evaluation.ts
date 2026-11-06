@@ -84,6 +84,8 @@ export interface Evaluation {
   usage: { decisionCalls: number; llmCalls: number; inputTokens: number; outputTokens: number; durationMs: number };
   metadata?: Record<string, unknown>;
   webhook?: string;
+  /** Shared by the evaluations of one batch (POST /v1/batches, `compare`). */
+  batchId?: string;
   createdAt: string;
   updatedAt: string;
 }
