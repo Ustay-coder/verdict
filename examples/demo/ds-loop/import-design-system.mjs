@@ -168,8 +168,11 @@ aggregation:
   gates:
     - { criterion: numbers_true, min: 1, message: "A figure on the page doesn't match data.json" }
     - { criterion: native, min: 3, message: "Doesn't look like ${T.designSystem.name}" }
-  grades: [{ label: ship it, min: 85 }, { label: almost, min: 65 }, { label: rework, min: 0 }]
-  passThreshold: 85
+  # Calibrated: AI one-shot 19, bare page 21, a principles-led redesign 47, a dashboard hand-built from the system's
+  # components 82, the system's own specimen 84. The vision judges spread probability over neighbouring levels, so
+  # "native" tops out near 0.88 even for the specimen; "ship it" sits just under the hand-built reference.
+  grades: [{ label: ship it, min: 80 }, { label: almost, min: 60 }, { label: rework, min: 0 }]
+  passThreshold: 80
 `;
 writeFileSync(rubricPath, yaml);
 console.log(`${ds} (${T.designSystem.theme}): ${T.colors.length} colours (${T.dataColors.length} for data), type ${T.typeSizes.join("/")} px, weights ${T.fontWeights.join("/")}, ` +
