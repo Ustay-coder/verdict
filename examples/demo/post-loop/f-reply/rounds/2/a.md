@@ -1,0 +1,1 @@
+This post was scored before we posted it. Claude Code wrote three drafts, Verdict compared them, and the lowest one was rewritten each round. The draft you just read went 80 → 91, from last to first. 21-second video below.
