@@ -1,0 +1,583 @@
+{
+  "id": "eval_mw4hbqj8svsv7fw9",
+  "rubricId": "rub_mw4hbffkkv7nvdef",
+  "rubric": {
+    "name": "상세페이지 심사",
+    "version": "1",
+    "description": "이 상세페이지를 그대로 스마트스토어에 올려도 되는가?",
+    "context": "건강기능식품 상세페이지 문구를 브랜드 브리프에 비추어 심사합니다. 브리프에는 타깃 고객, 인정된 기능성 표현,\n절대 쓰면 안 되는 표현이 적혀 있습니다. 상세페이지 문구만 판단하세요.\n",
+    "language": "ko",
+    "scale": {
+      "type": "numeric",
+      "min": 1,
+      "max": 5
+    },
+    "judges": {
+      "jev": {
+        "type": "decision",
+        "provider": "typesafe",
+        "model": "jev-latest",
+        "onLowConfidence": "accept",
+        "escalateTo": []
+      },
+      "clef": {
+        "type": "decision",
+        "provider": "cloudflare",
+        "model": "@cf/cloudflare/clef",
+        "onLowConfidence": "accept",
+        "escalateTo": []
+      }
+    },
+    "defaultJudge": {
+      "type": "ref",
+      "ref": "jev"
+    },
+    "criteria": [
+      {
+        "id": "empathy",
+        "name": "타깃 고객의 상황에서 시작한다",
+        "weight": 3,
+        "levels": [
+          {
+            "value": 1,
+            "label": "무관",
+            "description": "브리프의 타깃과 상관없는 이야기로 시작한다"
+          },
+          {
+            "value": 3,
+            "label": "일부",
+            "description": "타깃을 언급하지만 그들의 구체적인 상황은 없다"
+          },
+          {
+            "value": 5,
+            "label": "정확",
+            "description": "브리프의 타깃이 겪는 구체적인 상황에서 시작한다"
+          }
+        ],
+        "inputs": [
+          "page",
+          "brief"
+        ],
+        "optional": false
+      },
+      {
+        "id": "specifics",
+        "name": "제품 정보가 구체적이다",
+        "weight": 2,
+        "levels": [
+          {
+            "value": 1,
+            "label": "모호",
+            "description": "원료, 섭취법, 용량, 가격 같은 정보가 없다"
+          },
+          {
+            "value": 3,
+            "label": "일부",
+            "description": "일부 정보만 있다"
+          },
+          {
+            "value": 5,
+            "label": "구체적",
+            "description": "원료, 섭취법, 용량, 가격, 인정된 기능성이 모두 분명하다"
+          }
+        ],
+        "inputs": [
+          "page",
+          "brief"
+        ],
+        "optional": false
+      },
+      {
+        "id": "trust",
+        "name": "믿을 근거가 있다",
+        "weight": 1,
+        "levels": [
+          {
+            "value": 1,
+            "label": "없음",
+            "description": "주장만 있고 근거가 없다"
+          },
+          {
+            "value": 3,
+            "label": "약함",
+            "description": "근거가 하나 있지만 약하다"
+          },
+          {
+            "value": 5,
+            "label": "분명",
+            "description": "인정 원료, 섭취 후기, 주의사항처럼 확인할 수 있는 근거가 있다"
+          }
+        ],
+        "inputs": [
+          "page"
+        ],
+        "optional": false
+      },
+      {
+        "id": "ad_compliant",
+        "name": "광고 기준 준수",
+        "weight": 0,
+        "scale": {
+          "type": "binary",
+          "labels": [
+            "위반",
+            "준수"
+          ]
+        },
+        "anchors": {
+          "위반": "질병 예방·치료 효능, 의약품 오인, 효과 보장처럼 브리프의 금지 표현이 하나라도 있다",
+          "준수": "모든 표현이 브리프의 인정된 기능성 범위 안에 있고, 금지 표현이 없다"
+        },
+        "judge": {
+          "type": "ref",
+          "ref": "clef"
+        },
+        "inputs": [
+          "page",
+          "brief"
+        ],
+        "optional": false
+      }
+    ],
+    "aggregation": {
+      "method": "formula",
+      "formula": "ad_compliant_n < 0.5 ? 0 : (empathy_n * 3 + specifics_n * 2 + trust_n) / 6",
+      "rater": "mean",
+      "normalize": [
+        0,
+        100
+      ],
+      "missing": "exclude",
+      "gates": [
+        {
+          "criterion": "ad_compliant",
+          "min": 1,
+          "message": "광고 기준 위반: 브리프의 금지 표현(질병 치료·의약품 오인·효과 보장)이 있습니다"
+        }
+      ],
+      "grades": [
+        {
+          "label": "게시 가능",
+          "min": 75
+        },
+        {
+          "label": "수정 필요",
+          "min": 50
+        },
+        {
+          "label": "반려",
+          "min": 0
+        }
+      ],
+      "passThreshold": 75,
+      "precision": 0
+    },
+    "id": "rub_mw4hbffkkv7nvdef",
+    "createdAt": "2026-11-06T04:33:16.256Z",
+    "updatedAt": "2026-11-06T04:33:16.256Z"
+  },
+  "subject": {
+    "name": "detail.md 2회차",
+    "inputs": [
+      {
+        "type": "file",
+        "path": "/root/detail-page/detail.md",
+        "tags": [
+          "page"
+        ]
+      },
+      {
+        "type": "file",
+        "path": "/root/detail-page/brief.json",
+        "tags": [
+          "brief"
+        ]
+      }
+    ]
+  },
+  "evidence": [
+    {
+      "inputIndex": 0,
+      "kind": "file",
+      "label": "detail.md",
+      "tags": [
+        "page"
+      ],
+      "text": "# 숲결 바나바 정 | 식후가 편해지는 30일\n\n건강검진 결과지에 '혈당 관리 필요'라고 적혀 있었나요?\n점심 먹고 나면 유난히 나른한 오후가 계속된다면, 식후부터 챙겨보세요.\n\n## 왜 바나바잎 추출물인가요?\n숲결 바나바 정은 식약처가 기능성을 인정한 원료, 바나바잎 추출물로 만들었습니다.\n식후 혈당상승 억제에 도움을 줄 수 있습니다.\n\n## 하루 한 알, 식사 전에\n1일 1회 1정. 물과 함께 식사 30분 전에 드세요.\n작은 정제라 삼키기 편하고, 한 통으로 30일을 챙길 수 있습니다.\n\n## 꾸준히 드신 분들의 이야기\n\"점심 먹고 커피를 덜 찾게 됐어요.\" (49세, 회사원)\n\"알람 맞춰두고 3주째 빠짐없이 먹고 있어요.\" (52세, 자영업)\n\n## 이것만은 꼭 알려드려요\n숲결 바나바 정은 질병의 예방 및 치료를 위한 의약품이 아닙니다. 복용 중인 약은 임의로 중단하지 마세요.\n\n## 구매 안내\n29,000원 / 30일분. 첫 구매 시 무료배송.\n질환이 있거나 약을 복용 중이라면 섭취 전 전문가와 상담하세요.\n",
+      "truncated": false,
+      "stats": {
+        "chars": 518,
+        "words": 130,
+        "lines": 23
+      },
+      "source": "detail.md"
+    },
+    {
+      "inputIndex": 1,
+      "kind": "file",
+      "label": "brief.json",
+      "tags": [
+        "brief"
+      ],
+      "text": "{\n  \"note\": \"데모용 가상 브랜드·제품·수치입니다.\",\n  \"brand\": \"숲결\",\n  \"product\": \"숲결 바나바 정 (건강기능식품, 바나바잎 추출물)\",\n  \"approved_function\": \"식후 혈당상승 억제에 도움을 줄 수 있음\",\n  \"audience\": \"건강검진에서 혈당 관리를 권유받은 40~50대 직장인\",\n  \"must_not\": [\n    \"질병의 예방·치료 효능 표방 (예: 당뇨 치료, 약을 끊을 수 있다)\",\n    \"의약품으로 오인하게 하는 표현\",\n    \"효과를 보장하거나 100%라고 단정하는 표현\",\n    \"인정받지 않은 기능성 표현\"\n  ],\n  \"facts\": {\n    \"daily_dose\": \"1일 1회 1정\",\n    \"price_krw\": 29000,\n    \"supply_days\": 30,\n    \"certification\": \"식약처 인정 기능성 원료 (바나바잎 추출물)\"\n  }\n}",
+      "truncated": false,
+      "stats": {
+        "chars": 480,
+        "words": 75,
+        "lines": 19
+      },
+      "source": "brief.json",
+      "json": {
+        "note": "데모용 가상 브랜드·제품·수치입니다.",
+        "brand": "숲결",
+        "product": "숲결 바나바 정 (건강기능식품, 바나바잎 추출물)",
+        "approved_function": "식후 혈당상승 억제에 도움을 줄 수 있음",
+        "audience": "건강검진에서 혈당 관리를 권유받은 40~50대 직장인",
+        "must_not": [
+          "질병의 예방·치료 효능 표방 (예: 당뇨 치료, 약을 끊을 수 있다)",
+          "의약품으로 오인하게 하는 표현",
+          "효과를 보장하거나 100%라고 단정하는 표현",
+          "인정받지 않은 기능성 표현"
+        ],
+        "facts": {
+          "daily_dose": "1일 1회 1정",
+          "price_krw": 29000,
+          "supply_days": 30,
+          "certification": "식약처 인정 기능성 원료 (바나바잎 추출물)"
+        }
+      }
+    }
+  ],
+  "status": "completed",
+  "criteria": [
+    {
+      "criterionId": "empathy",
+      "name": "타깃 고객의 상황에서 시작한다",
+      "weight": 3,
+      "status": "scored",
+      "ratings": [
+        {
+          "id": "rat_qw6ten0bmw4hbqp3",
+          "criterionId": "empathy",
+          "raterId": "jev",
+          "judgeType": "decision",
+          "createdAt": "2026-11-06T04:33:30.855Z",
+          "status": "scored",
+          "score": 4.86,
+          "normalized": 0.9650000000000001,
+          "confidence": 0.9,
+          "probabilities": {
+            "무관": 0,
+            "일부": 0.07,
+            "정확": 0.93
+          },
+          "rationale": "typesafe/jev-1.14.0 distribution: 무관=0% 일부=7% 정확=93%",
+          "raw": {
+            "provider": "typesafe",
+            "model": "jev-1.14.0",
+            "question": {
+              "type": "score",
+              "instructions": "Context: 건강기능식품 상세페이지 문구를 브랜드 브리프에 비추어 심사합니다. 브리프에는 타깃 고객, 인정된 기능성 표현,\n절대 쓰면 안 되는 표현이 적혀 있습니다. 상세페이지 문구만 판단하세요.\n Criterion \"타깃 고객의 상황에서 시작한다\". Place the input on the ordered levels below (worst to best). Judge only this criterion using the evidence in the state.",
+              "criteria": [
+                "무관: 브리프의 타깃과 상관없는 이야기로 시작한다",
+                "일부: 타깃을 언급하지만 그들의 구체적인 상황은 없다",
+                "정확: 브리프의 타깃이 겪는 구체적인 상황에서 시작한다"
+              ]
+            },
+            "answer": {
+              "type": "score",
+              "score": 1.93,
+              "confidence": 0.9,
+              "legend": {
+                "0": "무관: 브리프의 타깃과 상관없는 이야기로 시작한다",
+                "1": "일부: 타깃을 언급하지만 그들의 구체적인 상황은 없다",
+                "2": "정확: 브리프의 타깃이 겪는 구체적인 상황에서 시작한다"
+              },
+              "probabilities": {
+                "0": 0,
+                "1": 0.07,
+                "2": 0.93
+              }
+            },
+            "levels": [
+              {
+                "value": 1,
+                "label": "무관",
+                "description": "브리프의 타깃과 상관없는 이야기로 시작한다"
+              },
+              {
+                "value": 3,
+                "label": "일부",
+                "description": "타깃을 언급하지만 그들의 구체적인 상황은 없다"
+              },
+              {
+                "value": 5,
+                "label": "정확",
+                "description": "브리프의 타깃이 겪는 구체적인 상황에서 시작한다"
+              }
+            ],
+            "latencyMs": 209,
+            "lowConfidence": false,
+            "stateChars": 1155,
+            "stateTruncated": false
+          }
+        }
+      ],
+      "pending": 0,
+      "score": 4.86,
+      "normalized": 0.9650000000000001
+    },
+    {
+      "criterionId": "specifics",
+      "name": "제품 정보가 구체적이다",
+      "weight": 2,
+      "status": "scored",
+      "ratings": [
+        {
+          "id": "rat_7mskxdrumw4hbqp3",
+          "criterionId": "specifics",
+          "raterId": "jev",
+          "judgeType": "decision",
+          "createdAt": "2026-11-06T04:33:30.855Z",
+          "status": "scored",
+          "score": 4.98,
+          "normalized": 0.9950000000000001,
+          "confidence": 0.98,
+          "probabilities": {
+            "모호": 0,
+            "일부": 0.01,
+            "구체적": 0.99
+          },
+          "rationale": "typesafe/jev-1.14.0 distribution: 모호=0% 일부=1% 구체적=99%",
+          "raw": {
+            "provider": "typesafe",
+            "model": "jev-1.14.0",
+            "question": {
+              "type": "score",
+              "instructions": "Context: 건강기능식품 상세페이지 문구를 브랜드 브리프에 비추어 심사합니다. 브리프에는 타깃 고객, 인정된 기능성 표현,\n절대 쓰면 안 되는 표현이 적혀 있습니다. 상세페이지 문구만 판단하세요.\n Criterion \"제품 정보가 구체적이다\". Place the input on the ordered levels below (worst to best). Judge only this criterion using the evidence in the state.",
+              "criteria": [
+                "모호: 원료, 섭취법, 용량, 가격 같은 정보가 없다",
+                "일부: 일부 정보만 있다",
+                "구체적: 원료, 섭취법, 용량, 가격, 인정된 기능성이 모두 분명하다"
+              ]
+            },
+            "answer": {
+              "type": "score",
+              "score": 1.99,
+              "confidence": 0.98,
+              "legend": {
+                "0": "모호: 원료, 섭취법, 용량, 가격 같은 정보가 없다",
+                "1": "일부: 일부 정보만 있다",
+                "2": "구체적: 원료, 섭취법, 용량, 가격, 인정된 기능성이 모두 분명하다"
+              },
+              "probabilities": {
+                "0": 0,
+                "1": 0.01,
+                "2": 0.99
+              }
+            },
+            "levels": [
+              {
+                "value": 1,
+                "label": "모호",
+                "description": "원료, 섭취법, 용량, 가격 같은 정보가 없다"
+              },
+              {
+                "value": 3,
+                "label": "일부",
+                "description": "일부 정보만 있다"
+              },
+              {
+                "value": 5,
+                "label": "구체적",
+                "description": "원료, 섭취법, 용량, 가격, 인정된 기능성이 모두 분명하다"
+              }
+            ],
+            "latencyMs": 209,
+            "lowConfidence": false,
+            "stateChars": 1155,
+            "stateTruncated": false
+          }
+        }
+      ],
+      "pending": 0,
+      "score": 4.98,
+      "normalized": 0.9950000000000001
+    },
+    {
+      "criterionId": "trust",
+      "name": "믿을 근거가 있다",
+      "weight": 1,
+      "status": "scored",
+      "ratings": [
+        {
+          "id": "rat_76ras2vmmw4hbqup",
+          "criterionId": "trust",
+          "raterId": "jev",
+          "judgeType": "decision",
+          "createdAt": "2026-11-06T04:33:31.057Z",
+          "status": "scored",
+          "score": 4.88,
+          "normalized": 0.9699999999999998,
+          "confidence": 0.91,
+          "probabilities": {
+            "없음": 0,
+            "약함": 0.06,
+            "분명": 0.94
+          },
+          "rationale": "typesafe/jev-1.14.0 distribution: 없음=0% 약함=6% 분명=94%",
+          "raw": {
+            "provider": "typesafe",
+            "model": "jev-1.14.0",
+            "question": {
+              "type": "score",
+              "instructions": "Context: 건강기능식품 상세페이지 문구를 브랜드 브리프에 비추어 심사합니다. 브리프에는 타깃 고객, 인정된 기능성 표현,\n절대 쓰면 안 되는 표현이 적혀 있습니다. 상세페이지 문구만 판단하세요.\n Criterion \"믿을 근거가 있다\". Place the input on the ordered levels below (worst to best). Judge only this criterion using the evidence in the state.",
+              "criteria": [
+                "없음: 주장만 있고 근거가 없다",
+                "약함: 근거가 하나 있지만 약하다",
+                "분명: 인정 원료, 섭취 후기, 주의사항처럼 확인할 수 있는 근거가 있다"
+              ]
+            },
+            "answer": {
+              "type": "score",
+              "score": 1.93,
+              "confidence": 0.91,
+              "legend": {
+                "0": "없음: 주장만 있고 근거가 없다",
+                "1": "약함: 근거가 하나 있지만 약하다",
+                "2": "분명: 인정 원료, 섭취 후기, 주의사항처럼 확인할 수 있는 근거가 있다"
+              },
+              "probabilities": {
+                "0": 0,
+                "1": 0.06,
+                "2": 0.94
+              }
+            },
+            "levels": [
+              {
+                "value": 1,
+                "label": "없음",
+                "description": "주장만 있고 근거가 없다"
+              },
+              {
+                "value": 3,
+                "label": "약함",
+                "description": "근거가 하나 있지만 약하다"
+              },
+              {
+                "value": 5,
+                "label": "분명",
+                "description": "인정 원료, 섭취 후기, 주의사항처럼 확인할 수 있는 근거가 있다"
+              }
+            ],
+            "latencyMs": 410,
+            "lowConfidence": false,
+            "stateChars": 595,
+            "stateTruncated": false
+          }
+        }
+      ],
+      "pending": 0,
+      "score": 4.88,
+      "normalized": 0.97
+    },
+    {
+      "criterionId": "ad_compliant",
+      "name": "광고 기준 준수",
+      "weight": 0,
+      "status": "scored",
+      "ratings": [
+        {
+          "id": "rat_u4aq443imw4hbr1r",
+          "criterionId": "ad_compliant",
+          "raterId": "clef",
+          "judgeType": "decision",
+          "createdAt": "2026-11-06T04:33:31.311Z",
+          "status": "scored",
+          "score": 1,
+          "normalized": 1,
+          "confidence": 0.8902,
+          "probabilities": {
+            "위반": 0.0549,
+            "준수": 0.9451
+          },
+          "rationale": "cloudflare/@cf/cloudflare/clef distribution: 위반=5% 준수=95%",
+          "raw": {
+            "provider": "cloudflare",
+            "model": "@cf/cloudflare/clef",
+            "question": {
+              "type": "noul",
+              "instructions": "Context: 건강기능식품 상세페이지 문구를 브랜드 브리프에 비추어 심사합니다. 브리프에는 타깃 고객, 인정된 기능성 표현,\n절대 쓰면 안 되는 표현이 적혀 있습니다. 상세페이지 문구만 판단하세요.\n Criterion \"광고 기준 준수\". Is the input \"준수\" for this criterion?",
+              "criteria": {
+                "true": "모든 표현이 브리프의 인정된 기능성 범위 안에 있고, 금지 표현이 없다",
+                "false": "질병 예방·치료 효능, 의약품 오인, 효과 보장처럼 브리프의 금지 표현이 하나라도 있다"
+              }
+            },
+            "answer": {
+              "type": "noul",
+              "noul": 0.9451
+            },
+            "levels": [
+              {
+                "value": 0,
+                "label": "위반",
+                "description": "질병 예방·치료 효능, 의약품 오인, 효과 보장처럼 브리프의 금지 표현이 하나라도 있다"
+              },
+              {
+                "value": 1,
+                "label": "준수",
+                "description": "모든 표현이 브리프의 인정된 기능성 범위 안에 있고, 금지 표현이 없다"
+              }
+            ],
+            "latencyMs": 663,
+            "lowConfidence": false,
+            "stateChars": 1155,
+            "stateTruncated": false
+          }
+        }
+      ],
+      "pending": 0,
+      "score": 1,
+      "normalized": 1,
+      "gate": {
+        "passed": true
+      }
+    }
+  ],
+  "aggregate": {
+    "method": "formula",
+    "range": [
+      0,
+      100
+    ],
+    "gates": [
+      {
+        "criterion": "ad_compliant",
+        "passed": true
+      }
+    ],
+    "partial": false,
+    "included": [
+      "empathy",
+      "specifics",
+      "trust"
+    ],
+    "excluded": [
+      "ad_compliant"
+    ],
+    "raw": 0.975833,
+    "score": 98,
+    "grade": "게시 가능",
+    "passed": true
+  },
+  "pendingTasks": [],
+  "usage": {
+    "decisionCalls": 3,
+    "llmCalls": 0,
+    "inputTokens": 3098,
+    "outputTokens": 50,
+    "durationMs": 669
+  },
+  "createdAt": "2026-11-06T04:33:30.644Z",
+  "updatedAt": "2026-11-06T04:33:31.312Z"
+}

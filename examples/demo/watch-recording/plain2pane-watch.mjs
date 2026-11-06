@@ -46,7 +46,8 @@ const css = readFileSync(join(mods, "@xterm/xterm/css/xterm.css"), "utf8"), xter
 const J = (x) => JSON.stringify(x).replace(/</g, "\\u003c");
 const VERT = opt("layout", "wide") === "vertical";
 const VW = VERT ? 1080 : 1920, VH = VERT ? 1920 : 1080;
-const SCALE = VERT ? 1040 / 1280 : 0.875, PW = 1280 * SCALE;
+const PAGEW = VERT ? 860 : 1280; // the watch page is laid out this wide, then scaled into the pane (larger text on phones)
+const SCALE = VERT ? 1040 / PAGEW : 0.875, PW = PAGEW * SCALE;
 const TFS = VERT ? 16.4 : 12.2, TH = 32 + 16 + 30 * TFS * 1.2 + 8; // terminal: 100×30 cells
 const GEO = VERT
   ? { tw: `left:20px;top:${VH - TH - 20}px;width:${VW - 40}px;height:${TH}px`, pw: `left:20px;top:20px;width:${PW}px;height:${VH - TH - 100}px`,
@@ -60,7 +61,7 @@ html,body{margin:0;width:${VW}px;height:${VH}px;background:#1c1c1e;overflow:hidd
 #tw{${GEO.tw};background:#141414}#term{padding:8px 10px}
 #pw{${GEO.pw};background:#f6f7f9}
 #chip{position:absolute;${GEO.chip};font:500 22px Inter,NanumGothic;color:#9a9aa2}
-#vp{position:absolute;top:32px;left:0;width:1280px;height:${GEO.vpH}px;transform:scale(${SCALE});transform-origin:0 0;border:0;background:#f6f7f9}
+#vp{position:absolute;top:32px;left:0;width:${PAGEW}px;height:${GEO.vpH}px;transform:scale(${SCALE});transform-origin:0 0;border:0;background:#f6f7f9}
 </style></head><body><div id="chip"></div>
 <div class="win" id="tw"><div class="bar">${TITLE}</div><div id="term"></div></div>
 <div class="win" id="pw"><div class="bar">${URL_LABEL}</div><iframe id="vp" src="http://watch.local/"></iframe></div>

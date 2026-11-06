@@ -1,8 +1,8 @@
 #!/bin/bash
 # score.sh <c|e> <round>: compare the three drafts of one post with post-review.yaml (brief swapped per video)
-P=$(cd "$(dirname "$0")" && pwd); V=$1
+P=$(cd "$(dirname "$0")" && pwd); V=$1; RUB=${RUBRIC:-$P/post-review.yaml}
 cd /home/user/verdict
-NODE_USE_ENV_PROXY=1 VERDICT_DATA_DIR=$P/$V/.verdict node packages/cli/dist/bin.js compare -r $P/post-review.yaml \
+NODE_USE_ENV_PROXY=1 VERDICT_DATA_DIR=$P/$V/.verdict node packages/cli/dist/bin.js compare -r $RUB \
   -s "Draft A=post=$P/$V/drafts/a.md,brief=$P/$V/brief.md" -s "Draft B=post=$P/$V/drafts/b.md,brief=$P/$V/brief.md" -s "Draft C=post=$P/$V/drafts/c.md,brief=$P/$V/brief.md" --json 2>/dev/null > /dev/null
 python3 - "$P/$V/.verdict/evaluations" "$2" <<'PY'
 import json,os,sys

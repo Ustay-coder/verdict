@@ -1,0 +1,70 @@
+# 게시 전 캡션 심사 (한국어, 인스타그램 Reels). brief에 적힌 사실만 쓸 수 있습니다.
+# Inputs: -i post=<캡션> -i brief=brief.md
+name: 캡션 심사
+version: "1"
+description: 스마트스토어 셀러와 마케터가 멈춰서 읽고, 저장하거나 댓글을 달 캡션인가? 모든 주장이 사실인가?
+context: |
+  인스타그램 Reels 캡션 초안을 심사합니다. 독자는 스마트스토어 셀러, 온라인 마케터, 브랜드 담당자입니다.
+  brief에는 캡션이 쓸 수 있는 사실이 적혀 있습니다. 캡션 문구만 판단하세요. 대부분의 초안은 중간에 위치합니다.
+language: ko
+scale: { type: numeric, min: 1, max: 5 }
+judges:
+  jev: { type: decision, provider: typesafe, model: jev-latest }
+  clef: { type: decision, provider: cloudflare, model: "@cf/cloudflare/clef" }
+defaultJudge: { type: ref, ref: jev }
+criteria:
+  - id: hook
+    name: 첫 줄에서 멈추게 한다
+    weight: 3
+    inputs: [post]
+    levels:
+      - { value: 1, label: 밋밋함, description: "인사, 공지, 일반적인 문장으로 시작한다" }
+      - { value: 3, label: 보통, description: "주제는 바로 나오지만 놀라움은 없다" }
+      - { value: 5, label: 훅, description: "첫 줄만 읽어도 다음 줄이 궁금하다: 구체적인 반전, 숫자, 긴장" }
+  - id: specific
+    name: 구체적이다
+    weight: 2
+    inputs: [post]
+    levels:
+      - { value: 1, label: 모호, description: "형용사와 약속뿐, 숫자나 구체적 사실이 없다" }
+      - { value: 3, label: 일부, description: "구체적인 사실이 하나 있다" }
+      - { value: 5, label: 구체적, description: "무슨 일이 있었는지 중요한 숫자와 함께 정확히 말한다" }
+  - id: clear
+    name: 한 가지를 쉬운 말로
+    weight: 2
+    inputs: [post]
+    levels:
+      - { value: 1, label: 복잡, description: "여러 이야기, 전문용어, 해시태그가 뒤섞여 있다" }
+      - { value: 3, label: 대체로, description: "한 가지 이야기지만 군더더기가 있다" }
+      - { value: 5, label: 명확, description: "셀러가 한 번 읽고 바로 이해하는 한 가지 이야기다" }
+  - id: engage
+    name: 저장하거나 댓글을 달고 싶다
+    weight: 1
+    inputs: [post]
+    levels:
+      - { value: 1, label: 닫힘, description: "반응할 거리가 없다" }
+      - { value: 3, label: 약간, description: "일부 독자는 반응할 수 있다" }
+      - { value: 5, label: 유도, description: "셀러가 자기 사례를 댓글로 달거나 나중을 위해 저장하고 싶어진다" }
+  - id: no_hype
+    name: 과장 없음
+    weight: 0
+    judge: { type: ref, ref: clef }
+    inputs: [post]
+    scale: { type: binary, labels: [과장, 담백] }
+    anchors: { 과장: "혁신적, 완벽, 무조건, 100%, 모든 문제 해결 같은 과장이나 단정, 이모지와 해시태그 남발", 담백: "일어난 일을 담백하게 말하고 과장이나 단정이 없다" }
+  - id: true_to_brief
+    name: 모든 주장이 brief에 있다
+    weight: 0
+    judge: { type: ref, ref: clef }
+    inputs: [post, brief]
+    scale: { type: binary, labels: [사실아님, 사실] }
+    anchors: { 사실아님: "brief에 없는 내용을 주장하거나 부풀린다", 사실: "모든 주장이 brief와 일치한다" }
+aggregation:
+  method: weighted_mean
+  normalize: [0, 100]
+  precision: 0
+  gates:
+    - { criterion: no_hype, min: 1, message: "과장: 담백한 문장이 셀러에게 더 믿음을 줍니다" }
+    - { criterion: true_to_brief, min: 1, message: "brief에 없는 주장이 있습니다" }
+  grades: [{ label: 게시, min: 80 }, { label: 근접, min: 60 }, { label: 다시, min: 0 }]
+  passThreshold: 80
