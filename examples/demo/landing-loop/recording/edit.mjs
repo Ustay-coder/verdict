@@ -17,7 +17,10 @@ const [dataPath, outPath, ...rest] = process.argv.slice(2);
 const opt = (n, d) => { const i = rest.indexOf(`--${n}`); return i >= 0 ? rest[i + 1] : d; };
 const fps = Number(opt("fps", 30));
 const stillAt = opt("still", null), stillOut = stillAt != null ? rest[rest.indexOf("--still") + 2] : null;
+// Claude Code's header names the model and the plan; both are blanked (same width, so nothing else moves).
+const redact = (s) => s.replace(/(Opus|Sonnet|Haiku|Fable) \d+(\.\d+)? · Claude (API|Max|Pro|Team|Enterprise)/g, (m) => " ".repeat(m.length));
 const data = JSON.parse(readFileSync(dataPath, "utf8"));
+data.cast = data.cast.map(([t, s]) => [t, redact(s)]);
 
 // ---- timeline (video seconds) ----
 const T = { introA: 0, introB: 2.3, yaml: 5.3, split: 8.3 };

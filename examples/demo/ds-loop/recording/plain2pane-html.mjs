@@ -28,7 +28,9 @@ const stillAt = opt("still", null), stillOut = stillAt != null ? rest[rest.index
 
 const WARP = opt("warp", null) ? JSON.parse(readFileSync(opt("warp"), "utf8")) : null;
 const castFile = readdirSync(takeDir).find((f) => f.endsWith(".cast"));
-const cast = readFileSync(join(takeDir, castFile), "utf8").trim().split("\n").slice(1).map((l) => JSON.parse(l)).filter((e) => e[1] === "o").map((e) => [e[0], e[2]]);
+// Claude Code's header names the model and the plan; both are blanked (same width, so nothing else moves).
+const redact = (s) => s.replace(/(Opus|Sonnet|Haiku|Fable) \d+(\.\d+)? · Claude (API|Max|Pro|Team|Enterprise)/g, (m) => " ".repeat(m.length));
+const cast = readFileSync(join(takeDir, castFile), "utf8").trim().split("\n").slice(1).map((l) => JSON.parse(l)).filter((e) => e[1] === "o").map((e) => [e[0], redact(e[2])]);
 const markers = Object.fromEntries(readFileSync(join(takeDir, castFile + ".markers"), "utf8").trim().split("\n").map((l) => l.split("\t")).map(([t, k]) => [k, Number(t)]));
 const tl = JSON.parse(readFileSync(join(statesDir, "timeline.json"), "utf8"));
 const states = tl.states.map((s) => ({ src: s.src, file: s.file.split("/").pop() }));

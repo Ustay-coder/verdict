@@ -18,7 +18,10 @@ const [dataPath, outPath, ...rest] = process.argv.slice(2);
 const opt = (n, d) => { const i = rest.indexOf(`--${n}`); return i >= 0 ? rest[i + 1] : d; };
 const fps = 30, FROM = Number(opt("from", 10)), TAIL = Number(opt("tail", 2.5));
 const stillAt = opt("still", null), stillOut = stillAt != null ? rest[rest.indexOf("--still") + 2] : null;
+// Claude Code's header names the model and the plan; both are blanked (same width, so nothing else moves).
+const redact = (s) => s.replace(/(Opus|Sonnet|Haiku|Fable) \d+(\.\d+)? · Claude (API|Max|Pro|Team|Enterprise)/g, (m) => " ".repeat(m.length));
 const D = JSON.parse(readFileSync(dataPath, "utf8"));
+D.cast = D.cast.map(([t, s]) => [t, redact(s)]);
 const doneSrc = D.cast.at(-1)[0];
 const END = Math.min(doneSrc, Number(opt("end", 141))) + TAIL;
 const total = END - FROM;
