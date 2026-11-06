@@ -1,0 +1,1 @@
+New demo: Verdict judges five hackathon entries once, then re-ranks them with three different aggregations. Weighted mean, weakest link and an impact + originality formula each pick a different winner, with zero extra judge calls. 18-second video below.

@@ -1,0 +1,1 @@
+New demo: Verdict reviews a sponsored video script against the brand's brief. It scores 0/100 because of a brand-safety gate. The agent deletes one sentence and the script scores 94. 16-second video below.
