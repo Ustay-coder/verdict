@@ -17,7 +17,7 @@ STARTUP_WAIT = 12          # seconds before typing: lets the verdict MCP server 
 config_dir = os.environ.get("CLAUDE_CONFIG_DIR", os.path.expanduser("~/.claude"))
 
 TOOLS = os.environ.get("REC_TOOLS", "Read,Edit,Write")
-ALLOWED = os.environ.get("REC_ALLOWED", "Read Edit Write mcp__verdict").split()
+ALLOWED = re.findall(r"\S+\([^)]*\)|\S+", os.environ.get("REC_ALLOWED", "Read Edit Write mcp__verdict"))  # keeps "Bash(npm install:*)" whole
 MCP = ["--mcp-config", ".mcp.json"] if os.path.exists(os.path.join(cwd, ".mcp.json")) else []
 argv = ["claude", *MCP, "--strict-mcp-config", "--tools", TOOLS, "--allowedTools", *ALLOWED, "--permission-mode", os.environ.get("REC_MODE", "acceptEdits")]
 
