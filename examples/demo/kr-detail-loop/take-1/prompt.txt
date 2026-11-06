@@ -1,0 +1,4 @@
+스마트스토어에 올리기 전에 이 상세페이지를 Verdict로 심사해줘. 이 폴더 안에서만 작업해.
+detail-review.yaml을 읽어서 그 YAML 내용으로 verdict MCP의 create_rubric을 호출하고, file 입력 detail.md(tags ["page"])와 file 입력 brief.json(tags ["brief"])으로 evaluate 해줘.
+통과하지 못하면 평가가 지적한 부분만, 상세페이지를 최소한으로 고친 뒤 다시 evaluate 해. 통과하면 멈춰.
+마지막에 심사 기록 표(회차, 점수, 등급, 바꾼 내용)를 한국어로 출력해.

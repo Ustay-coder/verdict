@@ -99,7 +99,7 @@ export function watchPage(source = ".verdict"): string {
 <title>verdict watch</title>
 <style>
 :root{--bg:#f6f7f9;--panel:#fff;--line:#e3e6ea;--text:#16181d;--muted:#667085;--accent:#2f5bd3;--good:#18794e;--warn:#a15c07;--bad:#c4320a;--add:#e8f5ec;--addline:#9fd4b0}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:14px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:14px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR","Noto Sans CJK KR",NanumGothic,sans-serif}
 header{display:flex;align-items:center;gap:12px;padding:12px 24px;background:var(--panel);border-bottom:1px solid var(--line)}
 header b{font-size:15px}header .src{color:var(--muted);font:12px ui-monospace,Menlo,monospace}header .live{margin-left:auto;color:var(--muted);font-size:12px}
 .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--good);margin-right:6px;vertical-align:1px}
@@ -107,7 +107,7 @@ main{padding:20px 24px}.panel{background:var(--panel);border:1px solid var(--lin
 .title{display:flex;align-items:baseline;gap:10px;margin-bottom:14px}.title h1{font-size:20px;margin:0}.chip{font-size:12px;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:1px 8px;background:var(--panel)}
 .grid{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:16px;align-items:start}
 .doc .hd{padding:10px 14px;border-bottom:1px solid var(--line);display:flex;gap:8px;color:var(--muted);font-size:12px}.doc .hd b{color:var(--text)}
-.doc pre{margin:0;padding:8px 0;font:12.5px/1.6 ui-monospace,SFMono-Regular,Menlo,monospace;white-space:pre-wrap;word-break:break-word}
+.doc pre{margin:0;padding:8px 0;font:12.5px/1.6 ui-monospace,SFMono-Regular,Menlo,D2Coding,NanumGothicCoding,monospace;white-space:pre-wrap;word-break:break-word}
 .doc pre div{padding:0 14px}.doc pre .chg{background:var(--add);box-shadow:inset 3px 0 var(--addline)}
 .doc pre .del{background:#fdecea;box-shadow:inset 3px 0 #f2a99d;color:#9b2c1c;text-decoration:line-through;text-decoration-color:#d9826f}.doc pre .gone{display:none}
 .score{padding:16px}.big{font-size:44px;font-weight:650;letter-spacing:-.02em;font-variant-numeric:tabular-nums}.big small{font-size:18px;color:var(--muted);font-weight:500}
