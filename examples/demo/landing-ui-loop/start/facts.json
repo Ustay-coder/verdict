@@ -1,0 +1,47 @@
+{
+  "_note": "Fictional product, made up for a demo. Every figure a page shows must come from this file.",
+  "product": "Tideline",
+  "what": "Uptime and cron-job monitoring for small engineering teams",
+  "audience": {
+    "text": "Teams of 2 to 20 engineers who run their own services",
+    "team_size_min": 2,
+    "team_size_max": 20
+  },
+  "how": {
+    "check_interval_seconds": 30,
+    "regions": 6,
+    "regions_that_must_agree": 2,
+    "alert_channels": [
+      "Slack",
+      "email",
+      "SMS",
+      "PagerDuty",
+      "webhooks"
+    ]
+  },
+  "cron_monitoring": "Each job pings a unique URL when it finishes; a missed ping alerts after a grace period you set",
+  "status_pages": "One public status page per project, on your own domain",
+  "setup": {
+    "text": "Paste a URL. The first check runs within 60 seconds.",
+    "first_check_within_seconds": 60
+  },
+  "pricing": {
+    "free": {
+      "price_usd_per_month": 0,
+      "monitors": 5
+    },
+    "team": {
+      "price_usd_per_month": 19,
+      "monitors": 100
+    }
+  },
+  "trial": {
+    "days": 14,
+    "card_required": false
+  },
+  "beta": {
+    "since": "March 2026",
+    "teams": 412
+  },
+  "customer_quotes": []
+}

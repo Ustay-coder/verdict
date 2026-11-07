@@ -1,0 +1,929 @@
+{
+  "id": "eval_mw611peaiwickzgv",
+  "rubricId": "rub_mw60tcgdu854nkxu",
+  "rubric": {
+    "name": "Landing page review (strict)",
+    "version": "1",
+    "description": "Could this landing page go live for the product described in facts.json?",
+    "context": "You review a product landing page (a screenshot of its first screen and its text) against facts.json, which lists\neverything true about the product. Be strict: when in doubt, judge it as failing. Each criterion looks only at the\nkind of problem it names; ignore other kinds of problems when judging it.\n",
+    "language": "en",
+    "scale": {
+      "type": "numeric",
+      "min": 1,
+      "max": 5
+    },
+    "judges": {
+      "clef": {
+        "type": "decision",
+        "provider": "cloudflare",
+        "model": "@cf/cloudflare/clef",
+        "onLowConfidence": "accept",
+        "escalateTo": []
+      }
+    },
+    "defaultJudge": {
+      "type": "ref",
+      "ref": "clef"
+    },
+    "criteria": [
+      {
+        "id": "clarity",
+        "name": "The first screen says what it is, for whom, and what to do next",
+        "weight": 3,
+        "levels": [
+          {
+            "value": 1,
+            "label": "unclear",
+            "description": "A slogan or mood; a stranger can't tell what the product does or who it is for"
+          },
+          {
+            "value": 3,
+            "label": "partly",
+            "description": "The product is named, but the audience, the concrete job or the next step is missing or buried"
+          },
+          {
+            "value": 5,
+            "label": "clear",
+            "description": "In plain words: what it does, for whom, and one obvious next step, all on the first screen"
+          }
+        ],
+        "inputs": [
+          "page",
+          "facts"
+        ],
+        "optional": false
+      },
+      {
+        "id": "look",
+        "name": "Designed for this product, not a template",
+        "weight": 2,
+        "levels": [
+          {
+            "value": 1,
+            "label": "template",
+            "description": "Generic AI SaaS look: dark navy with glows, gradient text, glass cards, the same rounded card everywhere"
+          },
+          {
+            "value": 3,
+            "label": "tidy",
+            "description": "Clean but generic; nothing about it belongs to this product"
+          },
+          {
+            "value": 5,
+            "label": "specific",
+            "description": "Calm and deliberate, with type, colour and imagery chosen for this product and its users"
+          }
+        ],
+        "inputs": [
+          "page"
+        ],
+        "optional": false
+      },
+      {
+        "id": "focus",
+        "name": "One focal point and a clear reading order",
+        "weight": 1,
+        "levels": [
+          {
+            "value": 1,
+            "label": "noisy",
+            "description": "Many things compete for attention; no obvious place to start"
+          },
+          {
+            "value": 3,
+            "label": "uneven",
+            "description": "A focal point exists, but other elements pull against it"
+          },
+          {
+            "value": 5,
+            "label": "focused",
+            "description": "One obvious focal point, then a clear order: headline, explanation, action"
+          }
+        ],
+        "inputs": [
+          "page"
+        ],
+        "optional": false
+      },
+      {
+        "id": "honest_proof",
+        "name": "No invented social proof",
+        "weight": 0,
+        "scale": {
+          "type": "binary",
+          "labels": [
+            "invented",
+            "honest"
+          ]
+        },
+        "anchors": {
+          "invented": "The page shows testimonials, quotes, star ratings, customer logos, 'used by' counts or named customers that facts.json doesn't contain",
+          "honest": "Every testimonial, logo, rating and customer count on the page is in facts.json (facts.json has no customer quotes, so there are none). Other figures and claims are judged elsewhere"
+        },
+        "inputs": [
+          "page",
+          "facts"
+        ],
+        "optional": false
+      },
+      {
+        "id": "facts_true",
+        "name": "Every figure comes from facts.json",
+        "weight": 0,
+        "judge": {
+          "type": "benchmark",
+          "method": "http",
+          "url": "http://127.0.0.1:7788/audit/numbers_true"
+        },
+        "inputs": [
+          "page",
+          "facts"
+        ],
+        "optional": false
+      },
+      {
+        "id": "decoration",
+        "name": "No gradient washes, glows or glass (2 effects allowed)",
+        "weight": 0,
+        "judge": {
+          "type": "benchmark",
+          "method": "http",
+          "url": "http://127.0.0.1:7788/audit/decoration"
+        },
+        "inputs": [
+          "page"
+        ],
+        "optional": false
+      },
+      {
+        "id": "motion",
+        "name": "No looping ambient animation",
+        "weight": 0,
+        "judge": {
+          "type": "benchmark",
+          "method": "http",
+          "url": "http://127.0.0.1:7788/audit/motion"
+        },
+        "inputs": [
+          "page"
+        ],
+        "optional": false
+      },
+      {
+        "id": "template_chrome",
+        "name": "No template chrome (ALL-CAPS eyebrows, accented headline words, icon tiles, fake numbering)",
+        "weight": 0,
+        "judge": {
+          "type": "benchmark",
+          "method": "http",
+          "url": "http://127.0.0.1:7788/audit/template_chrome"
+        },
+        "inputs": [
+          "page"
+        ],
+        "optional": false
+      },
+      {
+        "id": "contrast",
+        "name": "All text passes WCAG AA contrast",
+        "weight": 0,
+        "judge": {
+          "type": "benchmark",
+          "method": "http",
+          "url": "http://127.0.0.1:7788/audit/contrast"
+        },
+        "inputs": [
+          "page"
+        ],
+        "optional": false
+      },
+      {
+        "id": "plain_copy",
+        "name": "Headings are descriptions, not slogans",
+        "weight": 0,
+        "scale": {
+          "type": "binary",
+          "labels": [
+            "slogans",
+            "descriptions"
+          ]
+        },
+        "anchors": {
+          "slogans": "At least one heading or button is a slogan, joke or emotional promise rather than a description of what the product does (for example 'From zero to monitored before your coffee cools', 'Teams sleep better', 'Your next outage is coming')",
+          "descriptions": "Every heading and button names what that part of the page shows or does, in plain words, with no jokes or promises"
+        },
+        "inputs": [
+          "page"
+        ],
+        "optional": false
+      }
+    ],
+    "aggregation": {
+      "method": "formula",
+      "formula": "honest_proof_n < 0.5 ? 0 : (clarity_n * 3 + look_n * 2 + focus_n) / 6 * (1 + (facts_true_n >= 1) + (decoration_n >= 1) + (motion_n >= 1) + (template_chrome_n >= 1) + (contrast_n >= 1) + plain_copy_n) / 7",
+      "rater": "mean",
+      "normalize": [
+        0,
+        100
+      ],
+      "missing": "exclude",
+      "gates": [
+        {
+          "criterion": "honest_proof",
+          "min": 1,
+          "message": "Invented testimonials, logos or user counts (FTC 16 CFR Part 465)"
+        }
+      ],
+      "grades": [
+        {
+          "label": "ship it",
+          "min": 85
+        },
+        {
+          "label": "almost",
+          "min": 60
+        },
+        {
+          "label": "rework",
+          "min": 0
+        }
+      ],
+      "passThreshold": 85,
+      "precision": 0
+    },
+    "id": "rub_mw60tcgdu854nkxu",
+    "createdAt": "2026-11-07T06:26:51.084Z",
+    "updatedAt": "2026-11-07T06:26:51.084Z"
+  },
+  "subject": {
+    "name": "Tideline round 9",
+    "inputs": [
+      {
+        "type": "url",
+        "url": "http://127.0.0.1:8772/index.html",
+        "screenshot": true,
+        "tags": [
+          "page"
+        ]
+      },
+      {
+        "type": "file",
+        "path": "/root/tideline/facts.json",
+        "tags": [
+          "facts"
+        ]
+      }
+    ]
+  },
+  "evidence": [
+    {
+      "inputIndex": 0,
+      "kind": "url",
+      "label": "Tideline — Uptime monitoring for small engineering teams",
+      "tags": [
+        "page"
+      ],
+      "text": "Tideline\nSign in Start free\nNew Status pages on your own domain  →\n\nKNOW IT'S DOWN BEFORE YOUR USERS DO.\n\nTideline checks your APIs, sites, and cron jobs from 6 regions every 30 seconds, and alerts you only when at least 2 regions agree something is down.\n\nStart monitoring free → See how it works\nFree for 5 monitors No credit card First check within 60 seconds\napp.tideline.dev/acme\n\nMONITORS ALL SYSTEMS OPERATIONAL\n\nCHECKING REGIONS\n\n6\niadsfolhrfrasinsyd\n\nCHECK INTERVAL\n\n30s\n\nMONITORING WITHOUT THE ENTERPRISE OVERHEAD.\n\nBuilt for teams of 2 to 20 engineers who run their own services, and quiet unless something is genuinely wrong.\n\nCHECKS FROM 6 REGIONS, EVERY 30 SECONDS\n\nEvery monitor is checked from 6 regions. You find out about a regional outage in Singapore even when your laptop in Ohio says everything's fine.\n\nALERTS ONLY WHEN 2 REGIONS AGREE\n\nBefore anyone gets alerted, the failure has to be seen from at least 2 of the 6 regions.\n\nFailfra timeout\nOkiad\nOksin\nHeldNot alerted: only one region failed\n\nSTATUS PAGES PEOPLE TRUST\n\nOne public status page per project, on your own domain.\n\nAcme Statusstatus.acme.dev\nAll systems operational\nAPIOperational\nDashboardOperational\nWebhooksOperational\n\nHEARTBEATS FOR CRON JOBS\n\nEach job pings a unique URL when it finishes. If a ping is missed, Tideline alerts you after a grace period you set.\n\n# end of backup.sh curl -fsS https://hb.tideline.dev/your-job-id\n\nALERTS WHEREVER YOU WORK\n\nSend alerts to Slack, email, SMS, PagerDuty or your own webhooks.\n\nSlack Email SMS PagerDuty Webhooks\n\nMONITORS AS CODE\n\nKeep monitors in a tideline.yml next to your service. Apply them from CI with our CLI or Terraform provider.\n\nFROM ZERO TO MONITORED BEFORE YOUR COFFEE COOLS.\n\nPASTE A URL\n\nAdd an endpoint, a host, or a heartbeat. The first check runs within 60 seconds.\n\nCHOOSE WHO GETS WOKEN\n\nConnect Slack, email, SMS, PagerDuty or a webhook.\n\nGET BACK TO BUILDING\n\nTideline keeps watch. When something breaks you get one clear alert with the context to fix it.\n\nSIMPLE PRICING THAT DOESN'T GROW PER SEAT.\n\nYou pay for monitors, not headcount.\n\nFREE\n\nFor side projects and trying Tideline out.\n\n$0/ month\nStart free\n * 5 monitors\n * Uptime and cron-job monitoring\n\nTEAM\n\nFor teams of 2 to 20 engineers running production services.\n\n$19/ month\nStart 14-day trial →\n * 100 monitors\n * 14-day trial, no card required\n\nQUESTIONS, ANSWERED.\n\nHow does Tideline avoid false alarms?+\n\nEvery monitor is checked from 6 regions. You're alerted only when at least 2 of them agree the service is down, so one flaky network path won't wake you.\n\nDo you charge per user?+\n\nNo. Pricing is based on how many monitors you run.\n\nCan I migrate from my current tool?+\n\nYes. Import monitors from a CSV or from most popular uptime tools' export formats.\n\nWhat happens when I hit my monitor limit?+\n\nYour existing monitors keep running. We'll ask you to upgrade or archive a monitor before you add another. We never switch off monitoring without warning.\n\nIs there an API?+\n\nYes. There's a full REST API, a CLI, and a Terraform provider. Anything you can do in the dashboard, you can also script.\n\nYOUR NEXT OUTAGE IS COMING. BE THE FIRST TO KNOW.\n\nThe free plan includes 5 monitors. The Team plan is $19 a month for 100 monitors, with a 14-day trial and no card required.\n\nWork email Start free →\n\n\n\n[screenshot of http://127.0.0.1:8772/index.html attached: 1280×800 PNG]",
+      "truncated": false,
+      "stats": {
+        "chars": 3402,
+        "words": 564,
+        "lines": 133
+      },
+      "source": "http://127.0.0.1:8772/index.html",
+      "images": [
+        {
+          "mimeType": "image/png",
+          "bytes": 93113,
+          "width": 1280,
+          "height": 800
+        }
+      ]
+    },
+    {
+      "inputIndex": 1,
+      "kind": "file",
+      "label": "facts.json",
+      "tags": [
+        "facts"
+      ],
+      "text": "{\n  \"_note\": \"Fictional product, made up for a demo. Every figure a page shows must come from this file.\",\n  \"product\": \"Tideline\",\n  \"what\": \"Uptime and cron-job monitoring for small engineering teams\",\n  \"audience\": {\n    \"text\": \"Teams of 2 to 20 engineers who run their own services\",\n    \"team_size_min\": 2,\n    \"team_size_max\": 20\n  },\n  \"how\": {\n    \"check_interval_seconds\": 30,\n    \"regions\": 6,\n    \"regions_that_must_agree\": 2,\n    \"alert_channels\": [\n      \"Slack\",\n      \"email\",\n      \"SMS\",\n      \"PagerDuty\",\n      \"webhooks\"\n    ]\n  },\n  \"cron_monitoring\": \"Each job pings a unique URL when it finishes; a missed ping alerts after a grace period you set\",\n  \"status_pages\": \"One public status page per project, on your own domain\",\n  \"setup\": {\n    \"text\": \"Paste a URL. The first check runs within 60 seconds.\",\n    \"first_check_within_seconds\": 60\n  },\n  \"pricing\": {\n    \"free\": {\n      \"price_usd_per_month\": 0,\n      \"monitors\": 5\n    },\n    \"team\": {\n      \"price_usd_per_month\": 19,\n      \"monitors\": 100\n    }\n  },\n  \"trial\": {\n    \"days\": 14,\n    \"card_required\": false\n  },\n  \"beta\": {\n    \"since\": \"March 2026\",\n    \"teams\": 412\n  },\n  \"customer_quotes\": []\n}",
+      "truncated": false,
+      "stats": {
+        "chars": 1187,
+        "words": 148,
+        "lines": 47
+      },
+      "source": "facts.json",
+      "json": {
+        "_note": "Fictional product, made up for a demo. Every figure a page shows must come from this file.",
+        "product": "Tideline",
+        "what": "Uptime and cron-job monitoring for small engineering teams",
+        "audience": {
+          "text": "Teams of 2 to 20 engineers who run their own services",
+          "team_size_min": 2,
+          "team_size_max": 20
+        },
+        "how": {
+          "check_interval_seconds": 30,
+          "regions": 6,
+          "regions_that_must_agree": 2,
+          "alert_channels": [
+            "Slack",
+            "email",
+            "SMS",
+            "PagerDuty",
+            "webhooks"
+          ]
+        },
+        "cron_monitoring": "Each job pings a unique URL when it finishes; a missed ping alerts after a grace period you set",
+        "status_pages": "One public status page per project, on your own domain",
+        "setup": {
+          "text": "Paste a URL. The first check runs within 60 seconds.",
+          "first_check_within_seconds": 60
+        },
+        "pricing": {
+          "free": {
+            "price_usd_per_month": 0,
+            "monitors": 5
+          },
+          "team": {
+            "price_usd_per_month": 19,
+            "monitors": 100
+          }
+        },
+        "trial": {
+          "days": 14,
+          "card_required": false
+        },
+        "beta": {
+          "since": "March 2026",
+          "teams": 412
+        },
+        "customer_quotes": []
+      }
+    }
+  ],
+  "status": "completed",
+  "criteria": [
+    {
+      "criterionId": "clarity",
+      "name": "The first screen says what it is, for whom, and what to do next",
+      "weight": 3,
+      "status": "scored",
+      "ratings": [
+        {
+          "id": "rat_6dsdfo94mw611rrn",
+          "criterionId": "clarity",
+          "raterId": "clef",
+          "judgeType": "decision",
+          "createdAt": "2026-11-07T06:33:24.179Z",
+          "status": "scored",
+          "score": 4.209,
+          "normalized": 0.8022500000000001,
+          "confidence": 0.2932,
+          "probabilities": {
+            "unclear": 0.0772,
+            "partly": 0.2411,
+            "clear": 0.6817
+          },
+          "rationale": "cloudflare/@cf/cloudflare/clef distribution: unclear=8% partly=24% clear=68%",
+          "raw": {
+            "provider": "cloudflare",
+            "model": "@cf/cloudflare/clef",
+            "question": {
+              "type": "score",
+              "instructions": "Context: You review a product landing page (a screenshot of its first screen and its text) against facts.json, which lists\neverything true about the product. Be strict: when in doubt, judge it as failing. Each criterion looks only at the\nkind of problem it names; ignore other kinds of problems when judging it.\n Criterion \"The first screen says what it is, for whom, and what to do next\". Place the input on the ordered levels below (worst to best). Judge only this criterion using the evidence in the state.",
+              "criteria": [
+                "unclear: A slogan or mood; a stranger can't tell what the product does or who it is for",
+                "partly: The product is named, but the audience, the concrete job or the next step is missing or buried",
+                "clear: In plain words: what it does, for whom, and one obvious next step, all on the first screen"
+              ]
+            },
+            "answer": {
+              "type": "score",
+              "score": 1.6045,
+              "legend": {
+                "0": "unclear: A slogan or mood; a stranger can't tell what the product does or who it is for",
+                "1": "partly: The product is named, but the audience, the concrete job or the next step is missing or buried",
+                "2": "clear: In plain words: what it does, for whom, and one obvious next step, all on the first screen"
+              },
+              "probabilities": {
+                "0": 0.0772,
+                "1": 0.2411,
+                "2": 0.6817
+              },
+              "confidence": 0.2932
+            },
+            "levels": [
+              {
+                "value": 1,
+                "label": "unclear",
+                "description": "A slogan or mood; a stranger can't tell what the product does or who it is for"
+              },
+              {
+                "value": 3,
+                "label": "partly",
+                "description": "The product is named, but the audience, the concrete job or the next step is missing or buried"
+              },
+              {
+                "value": 5,
+                "label": "clear",
+                "description": "In plain words: what it does, for whom, and one obvious next step, all on the first screen"
+              }
+            ],
+            "latencyMs": 793,
+            "lowConfidence": false,
+            "stateChars": 4814,
+            "stateTruncated": false,
+            "images": {
+              "attached": 1,
+              "sent": 1
+            }
+          }
+        }
+      ],
+      "pending": 0,
+      "score": 4.209,
+      "normalized": 0.8022499999999999
+    },
+    {
+      "criterionId": "look",
+      "name": "Designed for this product, not a template",
+      "weight": 2,
+      "status": "scored",
+      "ratings": [
+        {
+          "id": "rat_mlci9a5smw611ry2",
+          "criterionId": "look",
+          "raterId": "clef",
+          "judgeType": "decision",
+          "createdAt": "2026-11-07T06:33:24.410Z",
+          "status": "scored",
+          "score": 4.296,
+          "normalized": 0.82405,
+          "confidence": 0.4167,
+          "probabilities": {
+            "template": 0.1156,
+            "tidy": 0.1207,
+            "specific": 0.7637
+          },
+          "rationale": "cloudflare/@cf/cloudflare/clef distribution: template=12% tidy=12% specific=76%",
+          "raw": {
+            "provider": "cloudflare",
+            "model": "@cf/cloudflare/clef",
+            "question": {
+              "type": "score",
+              "instructions": "Context: You review a product landing page (a screenshot of its first screen and its text) against facts.json, which lists\neverything true about the product. Be strict: when in doubt, judge it as failing. Each criterion looks only at the\nkind of problem it names; ignore other kinds of problems when judging it.\n Criterion \"Designed for this product, not a template\". Place the input on the ordered levels below (worst to best). Judge only this criterion using the evidence in the state.",
+              "criteria": [
+                "template: Generic AI SaaS look: dark navy with glows, gradient text, glass cards, the same rounded card everywhere",
+                "tidy: Clean but generic; nothing about it belongs to this product",
+                "specific: Calm and deliberate, with type, colour and imagery chosen for this product and its users"
+              ]
+            },
+            "answer": {
+              "type": "score",
+              "score": 1.6481,
+              "legend": {
+                "0": "template: Generic AI SaaS look: dark navy with glows, gradient text, glass cards, the same rounded card everywhere",
+                "1": "tidy: Clean but generic; nothing about it belongs to this product",
+                "2": "specific: Calm and deliberate, with type, colour and imagery chosen for this product and its users"
+              },
+              "probabilities": {
+                "0": 0.1156,
+                "1": 0.1207,
+                "2": 0.7637
+              },
+              "confidence": 0.4167
+            },
+            "levels": [
+              {
+                "value": 1,
+                "label": "template",
+                "description": "Generic AI SaaS look: dark navy with glows, gradient text, glass cards, the same rounded card everywhere"
+              },
+              {
+                "value": 3,
+                "label": "tidy",
+                "description": "Clean but generic; nothing about it belongs to this product"
+              },
+              {
+                "value": 5,
+                "label": "specific",
+                "description": "Calm and deliberate, with type, colour and imagery chosen for this product and its users"
+              }
+            ],
+            "latencyMs": 1022,
+            "lowConfidence": false,
+            "stateChars": 3547,
+            "stateTruncated": false,
+            "images": {
+              "attached": 1,
+              "sent": 1
+            }
+          }
+        }
+      ],
+      "pending": 0,
+      "score": 4.296,
+      "normalized": 0.8240000000000001
+    },
+    {
+      "criterionId": "focus",
+      "name": "One focal point and a clear reading order",
+      "weight": 1,
+      "status": "scored",
+      "ratings": [
+        {
+          "id": "rat_qqhk5ad8mw611ry2",
+          "criterionId": "focus",
+          "raterId": "clef",
+          "judgeType": "decision",
+          "createdAt": "2026-11-07T06:33:24.410Z",
+          "status": "scored",
+          "score": 4.739,
+          "normalized": 0.93465,
+          "confidence": 0.7002,
+          "probabilities": {
+            "noisy": 0.0205,
+            "uneven": 0.0897,
+            "focused": 0.8898
+          },
+          "rationale": "cloudflare/@cf/cloudflare/clef distribution: noisy=2% uneven=9% focused=89%",
+          "raw": {
+            "provider": "cloudflare",
+            "model": "@cf/cloudflare/clef",
+            "question": {
+              "type": "score",
+              "instructions": "Context: You review a product landing page (a screenshot of its first screen and its text) against facts.json, which lists\neverything true about the product. Be strict: when in doubt, judge it as failing. Each criterion looks only at the\nkind of problem it names; ignore other kinds of problems when judging it.\n Criterion \"One focal point and a clear reading order\". Place the input on the ordered levels below (worst to best). Judge only this criterion using the evidence in the state.",
+              "criteria": [
+                "noisy: Many things compete for attention; no obvious place to start",
+                "uneven: A focal point exists, but other elements pull against it",
+                "focused: One obvious focal point, then a clear order: headline, explanation, action"
+              ]
+            },
+            "answer": {
+              "type": "score",
+              "score": 1.8692,
+              "legend": {
+                "0": "noisy: Many things compete for attention; no obvious place to start",
+                "1": "uneven: A focal point exists, but other elements pull against it",
+                "2": "focused: One obvious focal point, then a clear order: headline, explanation, action"
+              },
+              "probabilities": {
+                "0": 0.0205,
+                "1": 0.0897,
+                "2": 0.8898
+              },
+              "confidence": 0.7002
+            },
+            "levels": [
+              {
+                "value": 1,
+                "label": "noisy",
+                "description": "Many things compete for attention; no obvious place to start"
+              },
+              {
+                "value": 3,
+                "label": "uneven",
+                "description": "A focal point exists, but other elements pull against it"
+              },
+              {
+                "value": 5,
+                "label": "focused",
+                "description": "One obvious focal point, then a clear order: headline, explanation, action"
+              }
+            ],
+            "latencyMs": 1022,
+            "lowConfidence": false,
+            "stateChars": 3547,
+            "stateTruncated": false,
+            "images": {
+              "attached": 1,
+              "sent": 1
+            }
+          }
+        }
+      ],
+      "pending": 0,
+      "score": 4.739,
+      "normalized": 0.93475
+    },
+    {
+      "criterionId": "honest_proof",
+      "name": "No invented social proof",
+      "weight": 0,
+      "status": "scored",
+      "ratings": [
+        {
+          "id": "rat_ddxvd6s8mw611rrn",
+          "criterionId": "honest_proof",
+          "raterId": "clef",
+          "judgeType": "decision",
+          "createdAt": "2026-11-07T06:33:24.179Z",
+          "status": "scored",
+          "score": 1,
+          "normalized": 1,
+          "confidence": 0.8464,
+          "probabilities": {
+            "invented": 0.0768,
+            "honest": 0.9232
+          },
+          "rationale": "cloudflare/@cf/cloudflare/clef distribution: invented=8% honest=92%",
+          "raw": {
+            "provider": "cloudflare",
+            "model": "@cf/cloudflare/clef",
+            "question": {
+              "type": "noul",
+              "instructions": "Context: You review a product landing page (a screenshot of its first screen and its text) against facts.json, which lists\neverything true about the product. Be strict: when in doubt, judge it as failing. Each criterion looks only at the\nkind of problem it names; ignore other kinds of problems when judging it.\n Criterion \"No invented social proof\". Is the input \"honest\" for this criterion?",
+              "criteria": {
+                "true": "Every testimonial, logo, rating and customer count on the page is in facts.json (facts.json has no customer quotes, so there are none). Other figures and claims are judged elsewhere",
+                "false": "The page shows testimonials, quotes, star ratings, customer logos, 'used by' counts or named customers that facts.json doesn't contain"
+              }
+            },
+            "answer": {
+              "type": "noul",
+              "noul": 0.9232
+            },
+            "levels": [
+              {
+                "value": 0,
+                "label": "invented",
+                "description": "The page shows testimonials, quotes, star ratings, customer logos, 'used by' counts or named customers that facts.json doesn't contain"
+              },
+              {
+                "value": 1,
+                "label": "honest",
+                "description": "Every testimonial, logo, rating and customer count on the page is in facts.json (facts.json has no customer quotes, so there are none). Other figures and claims are judged elsewhere"
+              }
+            ],
+            "latencyMs": 793,
+            "lowConfidence": false,
+            "stateChars": 4814,
+            "stateTruncated": false,
+            "images": {
+              "attached": 1,
+              "sent": 1
+            }
+          }
+        }
+      ],
+      "pending": 0,
+      "score": 1,
+      "normalized": 1,
+      "gate": {
+        "passed": true
+      }
+    },
+    {
+      "criterionId": "facts_true",
+      "name": "Every figure comes from facts.json",
+      "weight": 0,
+      "status": "scored",
+      "ratings": [
+        {
+          "id": "rat_yc40v6y0mw611r5p",
+          "criterionId": "facts_true",
+          "raterId": "benchmark:http",
+          "judgeType": "benchmark",
+          "createdAt": "2026-11-07T06:33:23.389Z",
+          "status": "scored",
+          "normalized": 1,
+          "score": 5,
+          "confidence": 1,
+          "rationale": "all 18 figures derive from data.json",
+          "raw": {
+            "normalized": 1,
+            "value": 0,
+            "boxes": [],
+            "rationale": "all 18 figures derive from data.json"
+          }
+        }
+      ],
+      "pending": 0,
+      "score": 5,
+      "normalized": 1
+    },
+    {
+      "criterionId": "decoration",
+      "name": "No gradient washes, glows or glass (2 effects allowed)",
+      "weight": 0,
+      "status": "scored",
+      "ratings": [
+        {
+          "id": "rat_k6al1iynmw611r5p",
+          "criterionId": "decoration",
+          "raterId": "benchmark:http",
+          "judgeType": "benchmark",
+          "createdAt": "2026-11-07T06:33:23.389Z",
+          "status": "scored",
+          "normalized": 1,
+          "score": 5,
+          "confidence": 1,
+          "rationale": "0 decorative effects (gradients, glass, glows); 2 are free",
+          "raw": {
+            "normalized": 1,
+            "value": 0,
+            "boxes": [],
+            "rationale": "0 decorative effects (gradients, glass, glows); 2 are free"
+          }
+        }
+      ],
+      "pending": 0,
+      "score": 5,
+      "normalized": 1
+    },
+    {
+      "criterionId": "motion",
+      "name": "No looping ambient animation",
+      "weight": 0,
+      "status": "scored",
+      "ratings": [
+        {
+          "id": "rat_bm3u6vidmw611r5q",
+          "criterionId": "motion",
+          "raterId": "benchmark:http",
+          "judgeType": "benchmark",
+          "createdAt": "2026-11-07T06:33:23.390Z",
+          "status": "scored",
+          "normalized": 1,
+          "score": 5,
+          "confidence": 1,
+          "rationale": "0 infinite animations",
+          "raw": {
+            "normalized": 1,
+            "value": 0,
+            "boxes": [],
+            "rationale": "0 infinite animations"
+          }
+        }
+      ],
+      "pending": 0,
+      "score": 5,
+      "normalized": 1
+    },
+    {
+      "criterionId": "template_chrome",
+      "name": "No template chrome (ALL-CAPS eyebrows, accented headline words, icon tiles, fake numbering)",
+      "weight": 0,
+      "status": "scored",
+      "ratings": [
+        {
+          "id": "rat_m07snn2tmw611r5q",
+          "criterionId": "template_chrome",
+          "raterId": "benchmark:http",
+          "judgeType": "benchmark",
+          "createdAt": "2026-11-07T06:33:23.390Z",
+          "status": "scored",
+          "normalized": 1,
+          "score": 5,
+          "confidence": 1,
+          "rationale": "0 template habits (1 is free)",
+          "raw": {
+            "normalized": 1,
+            "value": 0,
+            "boxes": [],
+            "rationale": "0 template habits (1 is free)"
+          }
+        }
+      ],
+      "pending": 0,
+      "score": 5,
+      "normalized": 1
+    },
+    {
+      "criterionId": "contrast",
+      "name": "All text passes WCAG AA contrast",
+      "weight": 0,
+      "status": "scored",
+      "ratings": [
+        {
+          "id": "rat_1xt3skcqmw611r5q",
+          "criterionId": "contrast",
+          "raterId": "benchmark:http",
+          "judgeType": "benchmark",
+          "createdAt": "2026-11-07T06:33:23.390Z",
+          "status": "scored",
+          "normalized": 1,
+          "score": 5,
+          "confidence": 1,
+          "rationale": "156/156 text elements pass WCAG AA",
+          "raw": {
+            "normalized": 1,
+            "value": 0,
+            "boxes": [],
+            "rationale": "156/156 text elements pass WCAG AA"
+          }
+        }
+      ],
+      "pending": 0,
+      "score": 5,
+      "normalized": 1
+    },
+    {
+      "criterionId": "plain_copy",
+      "name": "Headings are descriptions, not slogans",
+      "weight": 0,
+      "status": "scored",
+      "ratings": [
+        {
+          "id": "rat_8ax0yrcnmw611ry2",
+          "criterionId": "plain_copy",
+          "raterId": "clef",
+          "judgeType": "decision",
+          "createdAt": "2026-11-07T06:33:24.410Z",
+          "status": "scored",
+          "score": 0,
+          "normalized": 0,
+          "confidence": 0.7002,
+          "probabilities": {
+            "slogans": 0.8501,
+            "descriptions": 0.1499
+          },
+          "rationale": "cloudflare/@cf/cloudflare/clef distribution: slogans=85% descriptions=15%",
+          "raw": {
+            "provider": "cloudflare",
+            "model": "@cf/cloudflare/clef",
+            "question": {
+              "type": "noul",
+              "instructions": "Context: You review a product landing page (a screenshot of its first screen and its text) against facts.json, which lists\neverything true about the product. Be strict: when in doubt, judge it as failing. Each criterion looks only at the\nkind of problem it names; ignore other kinds of problems when judging it.\n Criterion \"Headings are descriptions, not slogans\". Is the input \"descriptions\" for this criterion?",
+              "criteria": {
+                "true": "Every heading and button names what that part of the page shows or does, in plain words, with no jokes or promises",
+                "false": "At least one heading or button is a slogan, joke or emotional promise rather than a description of what the product does (for example 'From zero to monitored before your coffee cools', 'Teams sleep better', 'Your next outage is coming')"
+              }
+            },
+            "answer": {
+              "type": "noul",
+              "noul": 0.1499
+            },
+            "levels": [
+              {
+                "value": 0,
+                "label": "slogans",
+                "description": "At least one heading or button is a slogan, joke or emotional promise rather than a description of what the product does (for example 'From zero to monitored before your coffee cools', 'Teams sleep better', 'Your next outage is coming')"
+              },
+              {
+                "value": 1,
+                "label": "descriptions",
+                "description": "Every heading and button names what that part of the page shows or does, in plain words, with no jokes or promises"
+              }
+            ],
+            "latencyMs": 1022,
+            "lowConfidence": false,
+            "stateChars": 3547,
+            "stateTruncated": false,
+            "images": {
+              "attached": 1,
+              "sent": 1
+            }
+          }
+        }
+      ],
+      "pending": 0,
+      "score": 0,
+      "normalized": 0
+    }
+  ],
+  "aggregate": {
+    "method": "formula",
+    "range": [
+      0,
+      100
+    ],
+    "gates": [
+      {
+        "criterion": "honest_proof",
+        "passed": true
+      }
+    ],
+    "partial": false,
+    "included": [
+      "clarity",
+      "look",
+      "focus"
+    ],
+    "excluded": [
+      "honest_proof",
+      "facts_true",
+      "decoration",
+      "motion",
+      "template_chrome",
+      "contrast",
+      "plain_copy"
+    ],
+    "raw": 0.712786,
+    "score": 71,
+    "grade": "almost",
+    "passed": false
+  },
+  "pendingTasks": [],
+  "usage": {
+    "decisionCalls": 2,
+    "llmCalls": 0,
+    "inputTokens": 5639,
+    "outputTokens": 0,
+    "durationMs": 6751
+  },
+  "createdAt": "2026-11-07T06:33:21.106Z",
+  "updatedAt": "2026-11-07T06:33:27.856Z"
+}

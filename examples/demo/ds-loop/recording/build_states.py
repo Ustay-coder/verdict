@@ -35,6 +35,8 @@ for line in open(f"{take}/session.jsonl"):
         elif b.get("type") == "tool_result" and b.get("tool_use_id") in pending:
             name, inp = pending.pop(b["tool_use_id"])
             src = round(t - t0 + markers["submitted"], 3)
+            if b.get("is_error"):
+                continue  # a refused edit (e.g. old_string not unique) changed nothing
             if name in ("Edit", "Write") and os.path.basename(inp.get("file_path", "")) == target:
                 if name == "Edit":
                     assert inp["old_string"] in doc, f"edit {len(states)} does not apply"

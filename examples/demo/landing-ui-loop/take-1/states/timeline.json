@@ -1,0 +1,1145 @@
+{
+ "markers": {
+  "typing": 12.28,
+  "submitted": 24.74,
+  "done": 494.57
+ },
+ "states": [
+  {
+   "src": 0.0,
+   "file": "states/00.html"
+  },
+  {
+   "src": 65.473,
+   "file": "states/01.html"
+  },
+  {
+   "src": 70.276,
+   "file": "states/02.html"
+  },
+  {
+   "src": 71.453,
+   "file": "states/03.html"
+  },
+  {
+   "src": 90.224,
+   "file": "states/04.html"
+  },
+  {
+   "src": 90.337,
+   "file": "states/05.html"
+  },
+  {
+   "src": 91.362,
+   "file": "states/06.html"
+  },
+  {
+   "src": 92.256,
+   "file": "states/07.html"
+  },
+  {
+   "src": 93.11,
+   "file": "states/08.html"
+  },
+  {
+   "src": 94.909,
+   "file": "states/09.html"
+  },
+  {
+   "src": 95.704,
+   "file": "states/10.html"
+  },
+  {
+   "src": 96.438,
+   "file": "states/11.html"
+  },
+  {
+   "src": 121.56,
+   "file": "states/12.html"
+  },
+  {
+   "src": 125.061,
+   "file": "states/13.html"
+  },
+  {
+   "src": 126.357,
+   "file": "states/14.html"
+  },
+  {
+   "src": 127.87,
+   "file": "states/15.html"
+  },
+  {
+   "src": 129.867,
+   "file": "states/16.html"
+  },
+  {
+   "src": 130.978,
+   "file": "states/17.html"
+  },
+  {
+   "src": 132.909,
+   "file": "states/18.html"
+  },
+  {
+   "src": 134.311,
+   "file": "states/19.html"
+  },
+  {
+   "src": 136.82,
+   "file": "states/20.html"
+  },
+  {
+   "src": 137.808,
+   "file": "states/21.html"
+  },
+  {
+   "src": 139.161,
+   "file": "states/22.html"
+  },
+  {
+   "src": 140.511,
+   "file": "states/23.html"
+  },
+  {
+   "src": 141.609,
+   "file": "states/24.html"
+  },
+  {
+   "src": 142.738,
+   "file": "states/25.html"
+  },
+  {
+   "src": 144.971,
+   "file": "states/26.html"
+  },
+  {
+   "src": 146.365,
+   "file": "states/27.html"
+  },
+  {
+   "src": 147.31,
+   "file": "states/28.html"
+  },
+  {
+   "src": 148.205,
+   "file": "states/29.html"
+  },
+  {
+   "src": 156.521,
+   "file": "states/30.html"
+  },
+  {
+   "src": 157.727,
+   "file": "states/31.html"
+  },
+  {
+   "src": 161.378,
+   "file": "states/32.html"
+  },
+  {
+   "src": 162.542,
+   "file": "states/33.html"
+  },
+  {
+   "src": 163.32,
+   "file": "states/34.html"
+  },
+  {
+   "src": 179.449,
+   "file": "states/35.html"
+  },
+  {
+   "src": 180.436,
+   "file": "states/36.html"
+  },
+  {
+   "src": 184.009,
+   "file": "states/37.html"
+  },
+  {
+   "src": 199.27,
+   "file": "states/38.html"
+  },
+  {
+   "src": 200.289,
+   "file": "states/39.html"
+  },
+  {
+   "src": 201.34,
+   "file": "states/40.html"
+  },
+  {
+   "src": 202.1,
+   "file": "states/41.html"
+  },
+  {
+   "src": 202.835,
+   "file": "states/42.html"
+  },
+  {
+   "src": 203.607,
+   "file": "states/43.html"
+  },
+  {
+   "src": 204.802,
+   "file": "states/44.html"
+  },
+  {
+   "src": 205.839,
+   "file": "states/45.html"
+  },
+  {
+   "src": 206.639,
+   "file": "states/46.html"
+  },
+  {
+   "src": 207.506,
+   "file": "states/47.html"
+  },
+  {
+   "src": 208.388,
+   "file": "states/48.html"
+  },
+  {
+   "src": 209.25,
+   "file": "states/49.html"
+  },
+  {
+   "src": 210.095,
+   "file": "states/50.html"
+  },
+  {
+   "src": 210.954,
+   "file": "states/51.html"
+  },
+  {
+   "src": 211.756,
+   "file": "states/52.html"
+  },
+  {
+   "src": 212.657,
+   "file": "states/53.html"
+  },
+  {
+   "src": 219.78,
+   "file": "states/54.html"
+  },
+  {
+   "src": 221.239,
+   "file": "states/55.html"
+  },
+  {
+   "src": 222.487,
+   "file": "states/56.html"
+  },
+  {
+   "src": 223.689,
+   "file": "states/57.html"
+  },
+  {
+   "src": 225.139,
+   "file": "states/58.html"
+  },
+  {
+   "src": 226.495,
+   "file": "states/59.html"
+  },
+  {
+   "src": 227.743,
+   "file": "states/60.html"
+  },
+  {
+   "src": 228.789,
+   "file": "states/61.html"
+  },
+  {
+   "src": 248.786,
+   "file": "states/62.html"
+  },
+  {
+   "src": 249.991,
+   "file": "states/63.html"
+  },
+  {
+   "src": 301.483,
+   "file": "states/64.html"
+  },
+  {
+   "src": 302.487,
+   "file": "states/65.html"
+  },
+  {
+   "src": 303.535,
+   "file": "states/66.html"
+  },
+  {
+   "src": 304.591,
+   "file": "states/67.html"
+  },
+  {
+   "src": 305.591,
+   "file": "states/68.html"
+  },
+  {
+   "src": 306.497,
+   "file": "states/69.html"
+  },
+  {
+   "src": 310.891,
+   "file": "states/70.html"
+  },
+  {
+   "src": 312.324,
+   "file": "states/71.html"
+  },
+  {
+   "src": 319.637,
+   "file": "states/72.html"
+  },
+  {
+   "src": 321.455,
+   "file": "states/73.html"
+  },
+  {
+   "src": 325.308,
+   "file": "states/74.html"
+  },
+  {
+   "src": 326.508,
+   "file": "states/75.html"
+  },
+  {
+   "src": 328.675,
+   "file": "states/76.html"
+  },
+  {
+   "src": 331.966,
+   "file": "states/77.html"
+  },
+  {
+   "src": 333.237,
+   "file": "states/78.html"
+  },
+  {
+   "src": 334.566,
+   "file": "states/79.html"
+  },
+  {
+   "src": 335.665,
+   "file": "states/80.html"
+  },
+  {
+   "src": 338.269,
+   "file": "states/81.html"
+  },
+  {
+   "src": 354.619,
+   "file": "states/82.html"
+  },
+  {
+   "src": 356.012,
+   "file": "states/83.html"
+  },
+  {
+   "src": 357.013,
+   "file": "states/84.html"
+  },
+  {
+   "src": 358.135,
+   "file": "states/85.html"
+  },
+  {
+   "src": 359.327,
+   "file": "states/86.html"
+  },
+  {
+   "src": 360.132,
+   "file": "states/87.html"
+  },
+  {
+   "src": 365.065,
+   "file": "states/88.html"
+  },
+  {
+   "src": 366.302,
+   "file": "states/89.html"
+  },
+  {
+   "src": 386.233,
+   "file": "states/90.html"
+  },
+  {
+   "src": 388.635,
+   "file": "states/91.html"
+  },
+  {
+   "src": 391.962,
+   "file": "states/92.html"
+  },
+  {
+   "src": 427.944,
+   "file": "states/93.html"
+  },
+  {
+   "src": 428.704,
+   "file": "states/94.html"
+  },
+  {
+   "src": 429.659,
+   "file": "states/95.html"
+  },
+  {
+   "src": 430.612,
+   "file": "states/96.html"
+  },
+  {
+   "src": 431.377,
+   "file": "states/97.html"
+  },
+  {
+   "src": 455.017,
+   "file": "states/98.html"
+  },
+  {
+   "src": 456.576,
+   "file": "states/99.html"
+  },
+  {
+   "src": 457.678,
+   "file": "states/100.html"
+  },
+  {
+   "src": 458.582,
+   "file": "states/101.html"
+  },
+  {
+   "src": 459.432,
+   "file": "states/102.html"
+  },
+  {
+   "src": 460.301,
+   "file": "states/103.html"
+  },
+  {
+   "src": 461.119,
+   "file": "states/104.html"
+  },
+  {
+   "src": 461.98,
+   "file": "states/105.html"
+  },
+  {
+   "src": 462.853,
+   "file": "states/106.html"
+  },
+  {
+   "src": 464.292,
+   "file": "states/107.html"
+  },
+  {
+   "src": 465.143,
+   "file": "states/108.html"
+  },
+  {
+   "src": 465.942,
+   "file": "states/109.html"
+  },
+  {
+   "src": 466.974,
+   "file": "states/110.html"
+  }
+ ],
+ "evals": [
+  {
+   "src": 56.669,
+   "name": "Tideline round 1",
+   "score": 0,
+   "grade": "rework",
+   "state": 0,
+   "criteria": [
+    {
+     "id": "clarity",
+     "name": "The first screen says what it is, for whom, and what to do next",
+     "n": 0.76325,
+     "rationale": "cloudflare/@cf/cloudflare/clef distribution: unclear=7% partly=33% clear=60%"
+    },
+    {
+     "id": "look",
+     "name": "Designed for this product, not a template",
+     "n": 0.47675,
+     "rationale": "cloudflare/@cf/cloudflare/clef distribution: template=44% tidy=16% specific=39%"
+    },
+    {
+     "id": "focus",
+     "name": "One focal point and a clear reading order",
+     "n": 0.899,
+     "rationale": "cloudflare/@cf/cloudflare/clef distribution: noisy=4% uneven=13% focused=84%"
+    },
+    {
+     "id": "honest_proof",
+     "name": "No invented social proof",
+     "n": 0,
+     "rationale": "cloudflare/@cf/cloudflare/clef distribution: invented=87% honest=13%"
+    },
+    {
+     "id": "facts_true",
+     "name": "Every figure comes from facts.json",
+     "n": 0,
+     "rationale": "22 figure(s) not derivable from data.json: 12, 12%, 90, 24, 101, 237"
+    },
+    {
+     "id": "decoration",
+     "name": "No gradient washes, glows or glass (2 effects allowed)",
+     "n": 0,
+     "rationale": "32 decorative effects (gradients, glass, glows); 2 are free; gradient (::before) at <div.bg-fx>; filter at <div.orb.a>; filter at <div.orb.b>; filter at <div.orb.c>; gradient + glow at <span.logo-mark>; gradient + glow at <a.btn.btn-primary> \"Start free\"; glass blur at <a.pill.reveal> \"NEW Status pages on your own domain \u2026\"; gradient at <b> \"NEW\"; +24 more"
+    },
+    {
+     "id": "motion",
+     "name": "No looping ambient animation",
+     "n": 0,
+     "rationale": "40 infinite animations; infinite drift at <div.orb.a>; infinite drift at <div.orb.b>; infinite drift at <div.orb.c>; infinite shimmer at <span.grad-text> \"before your users do.\"; infinite ping at <span.status>; infinite ping at <span.status>; infinite ping at <span.status>; infinite ping at <span.status>; +32 more"
+    },
+    {
+     "id": "template_chrome",
+     "name": "No template chrome (ALL-CAPS eyebrows, accented headline words, icon tiles, fake numbering)",
+     "n": 0,
+     "rationale": "23 template habits (1 is free); tracked all-caps eyebrow at <h4> \"Avg response \u25cf live\"; tracked all-caps eyebrow at <span> \"\u25cf live\"; tracked all-caps eyebrow at <h4> \"Uptime \u00b7 90 days\"; tracked all-caps eyebrow at <p> \"Used by 2,400+ small engineering tea\u2026\"; tracked all-caps eyebrow at <span.eyebrow> \"Features\"; tracked all-caps eyebrow at <span.eyebrow> \"How it works\"; tracked all-caps eyebrow at <span.eyebrow> \"Loved by on-call humans\"; tracked all-caps eyebrow at <span.eyebrow> \"Pricing\"; +15 more"
+    },
+    {
+     "id": "contrast",
+     "name": "All text passes WCAG AA contrast",
+     "n": 0.8260000000000001,
+     "rationale": "209/253 text elements pass WCAG AA; contrast 4.47:1 (#6b789a on #050b1a, needs 4.5) at <span> \"Free for 10 monitors\"; contrast 4.47:1 (#6b789a on #050b1a, needs 4.5) at <span> \"No credit card\"; contrast 4.47:1 (#6b789a on #050b1a, needs 4.5) at <span> \"Set up in 2 minutes\"; contrast 3.77:1 (#6b789a on #141e36, needs 4.5) at <div.url> \"app.tideline.dev/acme\"; contrast 3.77:1 (#6b789a on #141e36, needs 4.5) at <span> \"24h\"; contrast 3.77:1 (#6b789a on #141e36, needs 4.5) at <span> \"7d\"; contrast 4.14:1 (#6b789a on #0b142e, needs 4.5) at <small> \"HTTPS \u00b7 30s\"; contrast 4.14:1 (#6b789a on #0b142e, needs 4.5) at <small> \"ms\"; +36 more"
+    },
+    {
+     "id": "plain_copy",
+     "name": "Headings are descriptions, not slogans",
+     "n": 0,
+     "rationale": "cloudflare/@cf/cloudflare/clef distribution: slogans=82% descriptions=18%"
+    }
+   ]
+  },
+  {
+   "src": 81.904,
+   "name": "Tideline round 2",
+   "score": 10,
+   "grade": "rework",
+   "state": 3,
+   "criteria": [
+    {
+     "id": "clarity",
+     "name": "The first screen says what it is, for whom, and what to do next",
+     "n": 0.8042499999999999,
+     "rationale": "cloudflare/@cf/cloudflare/clef distribution: unclear=9% partly=22% clear=70%"
+    },
+    {
+     "id": "look",
+     "name": "Designed for this product, not a template",
+     "n": 0.43374999999999997,
+     "rationale": "cloudflare/@cf/cloudflare/clef distribution: template=49% tidy=15% specific=36%"
+    },
+    {
+     "id": "focus",
+     "name": "One focal point and a clear reading order",
+     "n": 0.90675,
+     "rationale": "cloudflare/@cf/cloudflare/clef distribution: noisy=4% uneven=11% focused=85%"
+    },
+    {
+     "id": "honest_proof",
+     "name": "No invented social proof",
+     "n": 1,
+     "rationale": "cloudflare/@cf/cloudflare/clef distribution: invented=15% honest=85%"
+    },
+    {
+     "id": "facts_true",
+     "name": "Every figure comes from facts.json",
+     "n": 0,
+     "rationale": "21 figure(s) not derivable from data.json: 12, 12%, 90, 24, 132, 181"
+    },
+    {
+     "id": "decoration",
+     "name": "No gradient washes, glows or glass (2 effects allowed)",
+     "n": 0,
+     "rationale": "29 decorative effects (gradients, glass, glows); 2 are free; gradient (::before) at <div.bg-fx>; filter at <div.orb.a>; filter at <div.orb.b>; filter at <div.orb.c>; gradient + glow at <span.logo-mark>; gradient + glow at <a.btn.btn-primary> \"Start free\"; glass blur at <a.pill.reveal> \"NEW Status pages on your own domain \u2026\"; gradient at <b> \"NEW\"; +21 more"
+    },
+    {
+     "id": "motion",
+     "name": "No looping ambient animation",
+     "n": 0,
+     "rationale": "39 infinite animations; infinite drift at <div.orb.a>; infinite drift at <div.orb.b>; infinite drift at <div.orb.c>; infinite shimmer at <span.grad-text> \"before your users do.\"; infinite ping at <span.status>; infinite ping at <span.status>; infinite ping at <span.status>; infinite ping at <span.status>; +31 more"
+    },
+    {
+     "id": "template_chrome",
+     "name": "No template chrome (ALL-CAPS eyebrows, accented headline words, icon tiles, fake numbering)",
+     "n": 0,
+     "rationale": "21 template habits (1 is free); tracked all-caps eyebrow at <h4> \"Avg response \u25cf live\"; tracked all-caps eyebrow at <span> \"\u25cf live\"; tracked all-caps eyebrow at <h4> \"Uptime \u00b7 90 days\"; tracked all-caps eyebrow at <span.eyebrow> \"Features\"; tracked all-caps eyebrow at <span.eyebrow> \"How it works\"; tracked all-caps eyebrow at <span.eyebrow> \"Pricing\"; tracked all-caps eyebrow at <span.eyebrow> \"FAQ\"; tracked all-caps eyebrow at <span.eyebrow> \"Get started\"; +13 more"
+    },
+    {
+     "id": "contrast",
+     "name": "All text passes WCAG AA contrast",
+     "n": 0.81725,
+     "rationale": "179/219 text elements pass WCAG AA; contrast 4.47:1 (#6b789a on #050b1a, needs 4.5) at <span> \"Free for 10 monitors\"; contrast 4.47:1 (#6b789a on #050b1a, needs 4.5) at <span> \"No credit card\"; contrast 4.47:1 (#6b789a on #050b1a, needs 4.5) at <span> \"Set up in 2 minutes\"; contrast 3.77:1 (#6b789a on #141e36, needs 4.5) at <div.url> \"app.tideline.dev/acme\"; contrast 3.77:1 (#6b789a on #141e36, needs 4.5) at <span> \"24h\"; contrast 3.77:1 (#6b789a on #141e36, needs 4.5) at <span> \"7d\"; contrast 4.14:1 (#6b789a on #0b142e, needs 4.5) at <small> \"HTTPS \u00b7 30s\"; contrast 4.14:1 (#6b789a on #0b142e, needs 4.5) at <small> \"ms\"; +32 more"
+    },
+    {
+     "id": "plain_copy",
+     "name": "Headings are descriptions, not slogans",
+     "n": 0,
+     "rationale": "cloudflare/@cf/cloudflare/clef distribution: slogans=87% descriptions=13%"
+    }
+   ]
+  },
+  {
+   "src": 106.419,
+   "name": "Tideline round 3",
+   "score": 20,
+   "grade": "rework",
+   "state": 11,
+   "criteria": [
+    {
+     "id": "clarity",
+     "name": "The first screen says what it is, for whom, and what to do next",
+     "n": 0.79975,
+     "rationale": "cloudflare/@cf/cloudflare/clef distribution: unclear=6% partly=28% clear=66%"
+    },
+    {
+     "id": "look",
+     "name": "Designed for this product, not a template",
+     "n": 0.42900000000000005,
+     "rationale": "cloudflare/@cf/cloudflare/clef distribution: template=51% tidy=13% specific=36%"
+    },
+    {
+     "id": "focus",
+     "name": "One focal point and a clear reading order",
+     "n": 0.9027499999999999,
+     "rationale": "cloudflare/@cf/cloudflare/clef distribution: noisy=4% uneven=12% focused=84%"
+    },
+    {
+     "id": "honest_proof",
+     "name": "No invented social proof",
+     "n": 1,
+     "rationale": "cloudflare/@cf/cloudflare/clef distribution: invented=12% honest=88%"
+    },
+    {
+     "id": "facts_true",
+     "name": "Every figure comes from facts.json",
+     "n": 0,
+     "rationale": "21 figure(s) not derivable from data.json: 12, 12%, 90, 24, 131, 191"
+    },
+    {
+     "id": "decoration",
+     "name": "No gradient washes, glows or glass (2 effects allowed)",
+     "n": 0,
+     "rationale": "29 decorative effects (gradients, glass, glows); 2 are free; gradient (::before) at <div.bg-fx>; filter at <div.orb.a>; filter at <div.orb.b>; filter at <div.orb.c>; gradient + glow at <span.logo-mark>; gradient + glow at <a.btn.btn-primary> \"Start free\"; glass blur at <a.pill.reveal> \"NEW Status pages on your own domain \u2026\"; gradient at <b> \"NEW\"; +21 more"
+    },
+    {
+     "id": "motion",
+     "name": "No looping ambient animation",
+     "n": 1,
+     "rationale": "0 infinite animations"
+    },
+    {
+     "id": "template_chrome",
+     "name": "No template chrome (ALL-CAPS eyebrows, accented headline words, icon tiles, fake numbering)",
+     "n": 0,
+     "rationale": "21 template habits (1 is free); tracked all-caps eyebrow at <h4> \"Avg response \u25cf live\"; tracked all-caps eyebrow at <span> \"\u25cf live\"; tracked all-caps eyebrow at <h4> \"Uptime \u00b7 90 days\"; tracked all-caps eyebrow at <span.eyebrow> \"Features\"; tracked all-caps eyebrow at <span.eyebrow> \"How it works\"; tracked all-caps eyebrow at <span.eyebrow> \"Pricing\"; tracked all-caps eyebrow at <span.eyebrow> \"FAQ\"; tracked all-caps eyebrow at <span.eyebrow> \"Get started\"; +13 more"
+    },
+    {
+     "id": "contrast",
+     "name": "All text passes WCAG AA contrast",
+     "n": 0.81725,
+     "rationale": "179/219 text elements pass WCAG AA; contrast 4.47:1 (#6b789a on #050b1a, needs 4.5) at <span> \"Free for 10 monitors\"; contrast 4.47:1 (#6b789a on #050b1a, needs 4.5) at <span> \"No credit card\"; contrast 4.47:1 (#6b789a on #050b1a, needs 4.5) at <span> \"Set up in 2 minutes\"; contrast 3.77:1 (#6b789a on #141e36, needs 4.5) at <div.url> \"app.tideline.dev/acme\"; contrast 3.77:1 (#6b789a on #141e36, needs 4.5) at <span> \"24h\"; contrast 3.77:1 (#6b789a on #141e36, needs 4.5) at <span> \"7d\"; contrast 4.14:1 (#6b789a on #0b142e, needs 4.5) at <small> \"HTTPS \u00b7 30s\"; contrast 4.14:1 (#6b789a on #0b142e, needs 4.5) at <small> \"ms\"; +32 more"
+    },
+    {
+     "id": "plain_copy",
+     "name": "Headings are descriptions, not slogans",
+     "n": 0,
+     "rationale": "cloudflare/@cf/cloudflare/clef distribution: slogans=87% descriptions=13%"
+    }
+   ]
+  },
+  {
+   "src": 173.7,
+   "name": "Tideline round 4",
+   "score": 23,
+   "grade": "rework",
+   "state": 34,
+   "criteria": [
+    {
+     "id": "clarity",
+     "name": "The first screen says what it is, for whom, and what to do next",
+     "n": 0.7935000000000001,
+     "rationale": "cloudflare/@cf/cloudflare/clef distribution: unclear=9% partly=24% clear=68%"
+    },
+    {
+     "id": "look",
+     "name": "Designed for this product, not a template",
+     "n": 0.7345,
+     "rationale": "cloudflare/@cf/cloudflare/clef distribution: template=21% tidy=12% specific=67%"
+    },
+    {
+     "id": "focus",
+     "name": "One focal point and a clear reading order",
+     "n": 0.9137500000000001,
+     "rationale": "cloudflare/@cf/cloudflare/clef distribution: noisy=3% uneven=12% focused=85%"
+    },
+    {
+     "id": "honest_proof",
+     "name": "No invented social proof",
+     "n": 1,
+     "rationale": "cloudflare/@cf/cloudflare/clef distribution: invented=12% honest=88%"
+    },
+    {
+     "id": "facts_true",
+     "name": "Every figure comes from facts.json",
+     "n": 0,
+     "rationale": "21 figure(s) not derivable from data.json: 12, 12%, 90, 24, 103, 177"
+    },
+    {
+     "id": "decoration",
+     "name": "No gradient washes, glows or glass (2 effects allowed)",
+     "n": 0.9375,
+     "rationale": "3 decorative effects (gradients, glass, glows); 2 are free; glow at <span.logo-mark>; glow at <div.dash> \"app.tideline.dev/acme Monitors All s\u2026\"; glow at <span.logo-mark>"
+    },
+    {
+     "id": "motion",
+     "name": "No looping ambient animation",
+     "n": 1,
+     "rationale": "0 infinite animations"
+    },
+    {
+     "id": "template_chrome",
+     "name": "No template chrome (ALL-CAPS eyebrows, accented headline words, icon tiles, fake numbering)",
+     "n": 0,
+     "rationale": "21 template habits (1 is free); tracked all-caps eyebrow at <h4> \"Avg response \u25cf live\"; tracked all-caps eyebrow at <span> \"\u25cf live\"; tracked all-caps eyebrow at <h4> \"Uptime \u00b7 90 days\"; tracked all-caps eyebrow at <span.eyebrow> \"Features\"; tracked all-caps eyebrow at <span.eyebrow> \"How it works\"; tracked all-caps eyebrow at <span.eyebrow> \"Pricing\"; tracked all-caps eyebrow at <span.eyebrow> \"FAQ\"; tracked all-caps eyebrow at <span.eyebrow> \"Get started\"; +13 more"
+    },
+    {
+     "id": "contrast",
+     "name": "All text passes WCAG AA contrast",
+     "n": 0.80375,
+     "rationale": "176/219 text elements pass WCAG AA; contrast 1.00:1 (#050b1a on #050b1a, needs 3) at <span.grad-text> \"before your users do.\"; contrast 4.47:1 (#6b789a on #050b1a, needs 4.5) at <span> \"Free for 10 monitors\"; contrast 4.47:1 (#6b789a on #050b1a, needs 4.5) at <span> \"No credit card\"; contrast 4.47:1 (#6b789a on #050b1a, needs 4.5) at <span> \"Set up in 2 minutes\"; contrast 3.74:1 (#6b789a on #151e38, needs 4.5) at <div.url> \"app.tideline.dev/acme\"; contrast 3.74:1 (#6b789a on #151e38, needs 4.5) at <span> \"24h\"; contrast 3.74:1 (#6b789a on #151e38, needs 4.5) at <span> \"7d\"; contrast 4.10:1 (#6b789a on #0b1530, needs 4.5) at <small> \"HTTPS \u00b7 30s\"; +35 more"
+    },
+    {
+     "id": "plain_copy",
+     "name": "Headings are descriptions, not slogans",
+     "n": 0,
+     "rationale": "cloudflare/@cf/cloudflare/clef distribution: slogans=89% descriptions=11%"
+    }
+   ]
+  },
+  {
+   "src": 191.867,
+   "name": "Tideline round 5",
+   "score": 33,
+   "grade": "rework",
+   "state": 37,
+   "criteria": [
+    {
+     "id": "clarity",
+     "name": "The first screen says what it is, for whom, and what to do next",
+     "n": 0.7722500000000001,
+     "rationale": "cloudflare/@cf/cloudflare/clef distribution: unclear=8% partly=30% clear=62%"
+    },
+    {
+     "id": "look",
+     "name": "Designed for this product, not a template",
+     "n": 0.673,
+     "rationale": "cloudflare/@cf/cloudflare/clef distribution: template=25% tidy=16% specific=59%"
+    },
+    {
+     "id": "focus",
+     "name": "One focal point and a clear reading order",
+     "n": 0.9159999999999999,
+     "rationale": "cloudflare/@cf/cloudflare/clef distribution: noisy=3% uneven=11% focused=86%"
+    },
+    {
+     "id": "honest_proof",
+     "name": "No invented social proof",
+     "n": 1,
+     "rationale": "cloudflare/@cf/cloudflare/clef distribution: invented=15% honest=85%"
+    },
+    {
+     "id": "facts_true",
+     "name": "Every figure comes from facts.json",
+     "n": 0,
+     "rationale": "21 figure(s) not derivable from data.json: 12, 12%, 90, 24, 139, 234"
+    },
+    {
+     "id": "decoration",
+     "name": "No gradient washes, glows or glass (2 effects allowed)",
+     "n": 1,
+     "rationale": "0 decorative effects (gradients, glass, glows); 2 are free"
+    },
+    {
+     "id": "motion",
+     "name": "No looping ambient animation",
+     "n": 1,
+     "rationale": "0 infinite animations"
+    },
+    {
+     "id": "template_chrome",
+     "name": "No template chrome (ALL-CAPS eyebrows, accented headline words, icon tiles, fake numbering)",
+     "n": 0,
+     "rationale": "21 template habits (1 is free); tracked all-caps eyebrow at <h4> \"Avg response \u25cf live\"; tracked all-caps eyebrow at <span> \"\u25cf live\"; tracked all-caps eyebrow at <h4> \"Uptime \u00b7 90 days\"; tracked all-caps eyebrow at <span.eyebrow> \"Features\"; tracked all-caps eyebrow at <span.eyebrow> \"How it works\"; tracked all-caps eyebrow at <span.eyebrow> \"Pricing\"; tracked all-caps eyebrow at <span.eyebrow> \"FAQ\"; tracked all-caps eyebrow at <span.eyebrow> \"Get started\"; +13 more"
+    },
+    {
+     "id": "contrast",
+     "name": "All text passes WCAG AA contrast",
+     "n": 0.80375,
+     "rationale": "176/219 text elements pass WCAG AA; contrast 1.00:1 (#050b1a on #050b1a, needs 3) at <span.grad-text> \"before your users do.\"; contrast 4.47:1 (#6b789a on #050b1a, needs 4.5) at <span> \"Free for 10 monitors\"; contrast 4.47:1 (#6b789a on #050b1a, needs 4.5) at <span> \"No credit card\"; contrast 4.47:1 (#6b789a on #050b1a, needs 4.5) at <span> \"Set up in 2 minutes\"; contrast 3.74:1 (#6b789a on #151e38, needs 4.5) at <div.url> \"app.tideline.dev/acme\"; contrast 3.74:1 (#6b789a on #151e38, needs 4.5) at <span> \"24h\"; contrast 3.74:1 (#6b789a on #151e38, needs 4.5) at <span> \"7d\"; contrast 4.10:1 (#6b789a on #0b1530, needs 4.5) at <small> \"HTTPS \u00b7 30s\"; +35 more"
+    },
+    {
+     "id": "plain_copy",
+     "name": "Headings are descriptions, not slogans",
+     "n": 0,
+     "rationale": "cloudflare/@cf/cloudflare/clef distribution: slogans=89% descriptions=11%"
+    }
+   ]
+  },
+  {
+   "src": 238.668,
+   "name": "Tideline round 6",
+   "score": 34,
+   "grade": "rework",
+   "state": 61,
+   "criteria": [
+    {
+     "id": "clarity",
+     "name": "The first screen says what it is, for whom, and what to do next",
+     "n": 0.81525,
+     "rationale": "cloudflare/@cf/cloudflare/clef distribution: unclear=7% partly=23% clear=70%"
+    },
+    {
+     "id": "look",
+     "name": "Designed for this product, not a template",
+     "n": 0.725,
+     "rationale": "cloudflare/@cf/cloudflare/clef distribution: template=19% tidy=17% specific=64%"
+    },
+    {
+     "id": "focus",
+     "name": "One focal point and a clear reading order",
+     "n": 0.925,
+     "rationale": "cloudflare/@cf/cloudflare/clef distribution: noisy=2% uneven=10% focused=87%"
+    },
+    {
+     "id": "honest_proof",
+     "name": "No invented social proof",
+     "n": 1,
+     "rationale": "cloudflare/@cf/cloudflare/clef distribution: invented=12% honest=88%"
+    },
+    {
+     "id": "facts_true",
+     "name": "Every figure comes from facts.json",
+     "n": 0,
+     "rationale": "21 figure(s) not derivable from data.json: 12, 12%, 90, 24, 102, 194"
+    },
+    {
+     "id": "decoration",
+     "name": "No gradient washes, glows or glass (2 effects allowed)",
+     "n": 1,
+     "rationale": "0 decorative effects (gradients, glass, glows); 2 are free"
+    },
+    {
+     "id": "motion",
+     "name": "No looping ambient animation",
+     "n": 1,
+     "rationale": "0 infinite animations"
+    },
+    {
+     "id": "template_chrome",
+     "name": "No template chrome (ALL-CAPS eyebrows, accented headline words, icon tiles, fake numbering)",
+     "n": 0.75,
+     "rationale": "3 template habits (1 is free); icon tile at <span.logo-mark>; icon tile at <span.logo-mark>; default AI font (Inter renders 52% of glyphs)"
+    },
+    {
+     "id": "contrast",
+     "name": "All text passes WCAG AA contrast",
+     "n": 0.81725,
+     "rationale": "170/208 text elements pass WCAG AA; contrast 4.47:1 (#6b789a on #050b1a, needs 4.5) at <span> \"Free for 10 monitors\"; contrast 4.47:1 (#6b789a on #050b1a, needs 4.5) at <span> \"No credit card\"; contrast 4.47:1 (#6b789a on #050b1a, needs 4.5) at <span> \"Set up in 2 minutes\"; contrast 3.74:1 (#6b789a on #151e38, needs 4.5) at <div.url> \"app.tideline.dev/acme\"; contrast 3.74:1 (#6b789a on #151e38, needs 4.5) at <span> \"24h\"; contrast 3.74:1 (#6b789a on #151e38, needs 4.5) at <span> \"7d\"; contrast 4.10:1 (#6b789a on #0b1530, needs 4.5) at <small> \"HTTPS \u00b7 30s\"; contrast 4.10:1 (#6b789a on #0b1530, needs 4.5) at <small> \"ms\"; +30 more"
+    },
+    {
+     "id": "plain_copy",
+     "name": "Headings are descriptions, not slogans",
+     "n": 0,
+     "rationale": "cloudflare/@cf/cloudflare/clef distribution: slogans=80% descriptions=20%"
+    }
+   ]
+  },
+  {
+   "src": 258.178,
+   "name": "Tideline round 7",
+   "score": 49,
+   "grade": "rework",
+   "state": 63,
+   "criteria": [
+    {
+     "id": "clarity",
+     "name": "The first screen says what it is, for whom, and what to do next",
+     "n": 0.8140000000000001,
+     "rationale": "cloudflare/@cf/cloudflare/clef distribution: unclear=7% partly=23% clear=70%"
+    },
+    {
+     "id": "look",
+     "name": "Designed for this product, not a template",
+     "n": 0.8620000000000001,
+     "rationale": "cloudflare/@cf/cloudflare/clef distribution: template=9% tidy=9% specific=82%"
+    },
+    {
+     "id": "focus",
+     "name": "One focal point and a clear reading order",
+     "n": 0.9319999999999999,
+     "rationale": "cloudflare/@cf/cloudflare/clef distribution: noisy=2% uneven=9% focused=89%"
+    },
+    {
+     "id": "honest_proof",
+     "name": "No invented social proof",
+     "n": 1,
+     "rationale": "cloudflare/@cf/cloudflare/clef distribution: invented=10% honest=90%"
+    },
+    {
+     "id": "facts_true",
+     "name": "Every figure comes from facts.json",
+     "n": 0,
+     "rationale": "21 figure(s) not derivable from data.json: 12, 12%, 90, 24, 138, 219"
+    },
+    {
+     "id": "decoration",
+     "name": "No gradient washes, glows or glass (2 effects allowed)",
+     "n": 1,
+     "rationale": "0 decorative effects (gradients, glass, glows); 2 are free"
+    },
+    {
+     "id": "motion",
+     "name": "No looping ambient animation",
+     "n": 1,
+     "rationale": "0 infinite animations"
+    },
+    {
+     "id": "template_chrome",
+     "name": "No template chrome (ALL-CAPS eyebrows, accented headline words, icon tiles, fake numbering)",
+     "n": 1,
+     "rationale": "1 template habits (1 is free); default AI font (Inter renders 52% of glyphs)"
+    },
+    {
+     "id": "contrast",
+     "name": "All text passes WCAG AA contrast",
+     "n": 0.81725,
+     "rationale": "170/208 text elements pass WCAG AA; contrast 4.47:1 (#6b789a on #050b1a, needs 4.5) at <span> \"Free for 10 monitors\"; contrast 4.47:1 (#6b789a on #050b1a, needs 4.5) at <span> \"No credit card\"; contrast 4.47:1 (#6b789a on #050b1a, needs 4.5) at <span> \"Set up in 2 minutes\"; contrast 3.74:1 (#6b789a on #151e38, needs 4.5) at <div.url> \"app.tideline.dev/acme\"; contrast 3.74:1 (#6b789a on #151e38, needs 4.5) at <span> \"24h\"; contrast 3.74:1 (#6b789a on #151e38, needs 4.5) at <span> \"7d\"; contrast 4.10:1 (#6b789a on #0b1530, needs 4.5) at <small> \"HTTPS \u00b7 30s\"; contrast 4.10:1 (#6b789a on #0b1530, needs 4.5) at <small> \"ms\"; +30 more"
+    },
+    {
+     "id": "plain_copy",
+     "name": "Headings are descriptions, not slogans",
+     "n": 0,
+     "rationale": "cloudflare/@cf/cloudflare/clef distribution: slogans=86% descriptions=14%"
+    }
+   ]
+  },
+  {
+   "src": 404.195,
+   "name": "Tideline round 8",
+   "score": 58,
+   "grade": "rework",
+   "state": 92,
+   "criteria": [
+    {
+     "id": "clarity",
+     "name": "The first screen says what it is, for whom, and what to do next",
+     "n": 0.77875,
+     "rationale": "cloudflare/@cf/cloudflare/clef distribution: unclear=10% partly=24% clear=66%"
+    },
+    {
+     "id": "look",
+     "name": "Designed for this product, not a template",
+     "n": 0.8062499999999999,
+     "rationale": "cloudflare/@cf/cloudflare/clef distribution: template=12% tidy=14% specific=73%"
+    },
+    {
+     "id": "focus",
+     "name": "One focal point and a clear reading order",
+     "n": 0.9292499999999999,
+     "rationale": "cloudflare/@cf/cloudflare/clef distribution: noisy=2% uneven=10% focused=88%"
+    },
+    {
+     "id": "honest_proof",
+     "name": "No invented social proof",
+     "n": 1,
+     "rationale": "cloudflare/@cf/cloudflare/clef distribution: invented=7% honest=93%"
+    },
+    {
+     "id": "facts_true",
+     "name": "Every figure comes from facts.json",
+     "n": 1,
+     "rationale": "all 18 figures derive from data.json"
+    },
+    {
+     "id": "decoration",
+     "name": "No gradient washes, glows or glass (2 effects allowed)",
+     "n": 1,
+     "rationale": "0 decorative effects (gradients, glass, glows); 2 are free"
+    },
+    {
+     "id": "motion",
+     "name": "No looping ambient animation",
+     "n": 1,
+     "rationale": "0 infinite animations"
+    },
+    {
+     "id": "template_chrome",
+     "name": "No template chrome (ALL-CAPS eyebrows, accented headline words, icon tiles, fake numbering)",
+     "n": 1,
+     "rationale": "0 template habits (1 is free)"
+    },
+    {
+     "id": "contrast",
+     "name": "All text passes WCAG AA contrast",
+     "n": 0.83325,
+     "rationale": "130/156 text elements pass WCAG AA; contrast 4.47:1 (#6b789a on #050b1a, needs 4.5) at <span> \"Free for 5 monitors\"; contrast 4.47:1 (#6b789a on #050b1a, needs 4.5) at <span> \"No credit card\"; contrast 4.47:1 (#6b789a on #050b1a, needs 4.5) at <span> \"First check within 60 seconds\"; contrast 3.74:1 (#6b789a on #151e38, needs 4.5) at <div.url> \"app.tideline.dev/acme\"; contrast 4.10:1 (#6b789a on #0b1530, needs 4.5) at <small> \"HTTPS \u00b7 every 30s\"; contrast 4.10:1 (#6b789a on #0b1530, needs 4.5) at <small> \"Up\"; contrast 4.10:1 (#6b789a on #0b1530, needs 4.5) at <small> \"HTTPS \u00b7 every 30s\"; contrast 4.10:1 (#6b789a on #0b1530, needs 4.5) at <small> \"Up\"; +18 more"
+    },
+    {
+     "id": "plain_copy",
+     "name": "Headings are descriptions, not slogans",
+     "n": 0,
+     "rationale": "cloudflare/@cf/cloudflare/clef distribution: slogans=79% descriptions=21%"
+    }
+   ]
+  },
+  {
+   "src": 442.351,
+   "name": "Tideline round 9",
+   "score": 71,
+   "grade": "almost",
+   "state": 97,
+   "criteria": [
+    {
+     "id": "clarity",
+     "name": "The first screen says what it is, for whom, and what to do next",
+     "n": 0.8022499999999999,
+     "rationale": "cloudflare/@cf/cloudflare/clef distribution: unclear=8% partly=24% clear=68%"
+    },
+    {
+     "id": "look",
+     "name": "Designed for this product, not a template",
+     "n": 0.8240000000000001,
+     "rationale": "cloudflare/@cf/cloudflare/clef distribution: template=12% tidy=12% specific=76%"
+    },
+    {
+     "id": "focus",
+     "name": "One focal point and a clear reading order",
+     "n": 0.93475,
+     "rationale": "cloudflare/@cf/cloudflare/clef distribution: noisy=2% uneven=9% focused=89%"
+    },
+    {
+     "id": "honest_proof",
+     "name": "No invented social proof",
+     "n": 1,
+     "rationale": "cloudflare/@cf/cloudflare/clef distribution: invented=8% honest=92%"
+    },
+    {
+     "id": "facts_true",
+     "name": "Every figure comes from facts.json",
+     "n": 1,
+     "rationale": "all 18 figures derive from data.json"
+    },
+    {
+     "id": "decoration",
+     "name": "No gradient washes, glows or glass (2 effects allowed)",
+     "n": 1,
+     "rationale": "0 decorative effects (gradients, glass, glows); 2 are free"
+    },
+    {
+     "id": "motion",
+     "name": "No looping ambient animation",
+     "n": 1,
+     "rationale": "0 infinite animations"
+    },
+    {
+     "id": "template_chrome",
+     "name": "No template chrome (ALL-CAPS eyebrows, accented headline words, icon tiles, fake numbering)",
+     "n": 1,
+     "rationale": "0 template habits (1 is free)"
+    },
+    {
+     "id": "contrast",
+     "name": "All text passes WCAG AA contrast",
+     "n": 1,
+     "rationale": "156/156 text elements pass WCAG AA"
+    },
+    {
+     "id": "plain_copy",
+     "name": "Headings are descriptions, not slogans",
+     "n": 0,
+     "rationale": "cloudflare/@cf/cloudflare/clef distribution: slogans=85% descriptions=15%"
+    }
+   ]
+  },
+  {
+   "src": 477.93,
+   "name": "Tideline round 10",
+   "score": 93,
+   "grade": "ship it",
+   "state": 110,
+   "criteria": [
+    {
+     "id": "clarity",
+     "name": "The first screen says what it is, for whom, and what to do next",
+     "n": 0.9744999999999999,
+     "rationale": "cloudflare/@cf/cloudflare/clef distribution: unclear=1% partly=3% clear=96%"
+    },
+    {
+     "id": "look",
+     "name": "Designed for this product, not a template",
+     "n": 0.8480000000000001,
+     "rationale": "cloudflare/@cf/cloudflare/clef distribution: template=9% tidy=13% specific=78%"
+    },
+    {
+     "id": "focus",
+     "name": "One focal point and a clear reading order",
+     "n": 0.95425,
+     "rationale": "cloudflare/@cf/cloudflare/clef distribution: noisy=2% uneven=6% focused=93%"
+    },
+    {
+     "id": "honest_proof",
+     "name": "No invented social proof",
+     "n": 1,
+     "rationale": "cloudflare/@cf/cloudflare/clef distribution: invented=8% honest=92%"
+    },
+    {
+     "id": "facts_true",
+     "name": "Every figure comes from facts.json",
+     "n": 1,
+     "rationale": "all 19 figures derive from data.json"
+    },
+    {
+     "id": "decoration",
+     "name": "No gradient washes, glows or glass (2 effects allowed)",
+     "n": 1,
+     "rationale": "0 decorative effects (gradients, glass, glows); 2 are free"
+    },
+    {
+     "id": "motion",
+     "name": "No looping ambient animation",
+     "n": 1,
+     "rationale": "0 infinite animations"
+    },
+    {
+     "id": "template_chrome",
+     "name": "No template chrome (ALL-CAPS eyebrows, accented headline words, icon tiles, fake numbering)",
+     "n": 1,
+     "rationale": "1 template habits (1 is free); default AI font (Inter renders 52% of glyphs)"
+    },
+    {
+     "id": "contrast",
+     "name": "All text passes WCAG AA contrast",
+     "n": 1,
+     "rationale": "156/156 text elements pass WCAG AA"
+    },
+    {
+     "id": "plain_copy",
+     "name": "Headings are descriptions, not slogans",
+     "n": 1,
+     "rationale": "cloudflare/@cf/cloudflare/clef distribution: slogans=10% descriptions=90%"
+    }
+   ]
+  }
+ ]
+}

@@ -87,7 +87,9 @@ function measure() {
   const over = (top, under) => { const a = top.a + under.a * (1 - top.a); if (!a) return { r: 0, g: 0, b: 0, a: 0 }; return { r: (top.r * top.a + under.r * under.a * (1 - top.a)) / a, g: (top.g * top.a + under.g * under.a * (1 - top.a)) / a, b: (top.b * top.a + under.b * under.a * (1 - top.a)) / a, a }; };
   const stops = (img) => [...(img || "").matchAll(/rgba?\([^)]+\)/g)].map((m) => parse(m[0])).filter(Boolean);
   const avg = (cs) => cs.length ? { r: cs.reduce((s, c) => s + c.r, 0) / cs.length, g: cs.reduce((s, c) => s + c.g, 0) / cs.length, b: cs.reduce((s, c) => s + c.b, 0) / cs.length, a: cs.reduce((s, c) => s + c.a, 0) / cs.length } : null;
-  const box = (el, label) => { const r = el.getBoundingClientRect(); return { x: Math.round(r.left + scrollX), y: Math.round(r.top + scrollY), w: Math.round(r.width), h: Math.round(r.height), label }; };
+  // `at` names the element for rationales: tag, first classes and the start of its text
+  const where = (el) => { const cls = [...(el.classList ?? [])].slice(0, 2).map((c) => "." + c).join(""); const t = (el.textContent ?? "").trim().replace(/\s+/g, " ").slice(0, 36); return `<${el.tagName.toLowerCase()}${cls}>${t ? ` "${t}${(el.textContent ?? "").trim().length > 36 ? "…" : ""}"` : ""}`; };
+  const box = (el, label) => { const r = el.getBoundingClientRect(); return { x: Math.round(r.left + scrollX), y: Math.round(r.top + scrollY), w: Math.round(r.width), h: Math.round(r.height), label, at: where(el) }; };
   const visible = (el) => { const s = getComputedStyle(el); const r = el.getBoundingClientRect(); return s.visibility !== "hidden" && s.display !== "none" && Number(s.opacity) > 0.05 && r.width > 0 && r.height > 0; };
   const all = [...document.querySelectorAll("body *")].filter(visible);
 
@@ -116,12 +118,12 @@ function measure() {
     if (!fg) continue;
     const clipText = s.webkitBackgroundClip === "text" || s.backgroundClip === "text";
     if (clipText) { const g = avg(stops(s.backgroundImage)); if (g) fg = { ...g, a: 1 }; }
-    const bg = bgOf(el.parentElement || el);
+    const bg = bgOf(clipText ? el.parentElement || el : el); // its own background counts (buttons, chips), unless it paints the text
     const fgc = over({ ...fg, a: fg.a * Number(s.opacity) }, bg);
     const [L1, L2] = [lum(fgc), lum(bg)].sort((a, b) => b - a);
     const ratio = (L1 + 0.05) / (L2 + 0.05);
     const px = parseFloat(s.fontSize), large = px >= 24 || (px >= 18.66 && Number(s.fontWeight) >= 700);
-    if (ratio < (large ? 3 : 4.5)) fails.push(box(el, `contrast ${ratio.toFixed(2)}:1`));
+    if (ratio < (large ? 3 : 4.5)) { const hx = (c) => "#" + [c.r, c.g, c.b].map((v) => Math.round(v).toString(16).padStart(2, "0")).join(""); fails.push(box(el, `contrast ${ratio.toFixed(2)}:1 (${hx(fgc)} on ${hx(bg)}, needs ${large ? 3 : 4.5})`)); }
   }
 
   // decoration (elements + pseudo elements)
@@ -264,6 +266,7 @@ function measure() {
   };
 }
 
+const named = (boxes, n = 8) => (boxes.length ? `; ${boxes.slice(0, n).map((b) => (b.at ? `${b.label} at ${b.at}` : b.label)).join("; ")}${boxes.length > n ? `; +${boxes.length - n} more` : ""}` : "");
 const clamp = (x) => Math.max(0, Math.min(1, x));
 
 // Numbers derivable from data.json: every leaf, sums over arrays, shares of those sums, ratios between sibling
@@ -461,12 +464,12 @@ const ds = {
 };
 
 const score = {
-  contrast: (a) => ({ normalized: a.contrast.total ? (a.contrast.total - a.contrast.failing) / a.contrast.total : 1, value: a.contrast.failing, boxes: a.contrast.boxes, rationale: `${a.contrast.total - a.contrast.failing}/${a.contrast.total} text elements pass WCAG AA` }),
-  decoration: (a) => ({ normalized: clamp(1 - Math.max(0, a.decoration.count - 2) / 16), value: a.decoration.count, boxes: a.decoration.boxes, rationale: `${a.decoration.count} decorative effects (gradients, glass, glows); 2 are free` }),
-  motion: (a) => ({ normalized: clamp(1 - a.motion.count / 4), value: a.motion.count, boxes: a.motion.boxes, rationale: `${a.motion.count} infinite animations` }),
+  contrast: (a) => ({ normalized: a.contrast.total ? (a.contrast.total - a.contrast.failing) / a.contrast.total : 1, value: a.contrast.failing, boxes: a.contrast.boxes, rationale: `${a.contrast.total - a.contrast.failing}/${a.contrast.total} text elements pass WCAG AA${named(a.contrast.boxes)}` }),
+  decoration: (a) => ({ normalized: clamp(1 - Math.max(0, a.decoration.count - 2) / 16), value: a.decoration.count, boxes: a.decoration.boxes, rationale: `${a.decoration.count} decorative effects (gradients, glass, glows); 2 are free${named(a.decoration.boxes)}` }),
+  motion: (a) => ({ normalized: clamp(1 - a.motion.count / 4), value: a.motion.count, boxes: a.motion.boxes, rationale: `${a.motion.count} infinite animations${named(a.motion.boxes)}` }),
   type_scale: (a) => ({ normalized: clamp(1 - (a.type_scale.sizes.length - 5) / 7), value: a.type_scale.sizes.length, boxes: [], rationale: `${a.type_scale.sizes.length} font sizes: ${a.type_scale.sizes.join(", ")} px` }),
   chart_types: (a) => ({ normalized: a.chart_types.count === 0 ? 1 : a.chart_types.count === 1 ? 0.4 : 0, value: a.chart_types.count, boxes: a.chart_types.boxes, rationale: `${a.chart_types.count} angle/area charts (donut, pie, gauge)` }),
-  template_chrome: (a) => ({ normalized: clamp(1 - Math.max(0, a.template_chrome.count - 1) / 8), value: a.template_chrome.count, boxes: a.template_chrome.boxes, rationale: `${a.template_chrome.count} template habits (${[...new Set(a.template_chrome.boxes.map((b) => b.label))].join(", ") || "none"})` }),
+  template_chrome: (a) => ({ normalized: clamp(1 - Math.max(0, a.template_chrome.count - 1) / 8), value: a.template_chrome.count, boxes: a.template_chrome.boxes, rationale: `${a.template_chrome.count} template habits (1 is free)${named(a.template_chrome.boxes)}` }),
   repeated_figures: (a) => ({ normalized: clamp(1 - a.repeated_figures.values.length / 3), value: a.repeated_figures.values.length, boxes: a.repeated_figures.boxes, rationale: a.repeated_figures.values.length ? `repeated: ${a.repeated_figures.values.map((r) => `${r.value} ×${r.times}`).join(", ")}` : "every figure shown fewer than 3 times" }),
   numerals: (a) => ({ normalized: a.numerals.total ? a.numerals.tabular / a.numerals.total : 1, value: a.numerals.total - a.numerals.tabular, boxes: a.numerals.boxes, rationale: `${a.numerals.tabular}/${a.numerals.total} numeric labels use tabular figures` }),
   numbers_true: (a, ctx) => {

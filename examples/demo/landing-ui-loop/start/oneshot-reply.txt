@@ -1,0 +1,29 @@
+I've built the Tideline landing page as one self-contained file, `/root/landing-oneshot2/index.html`. It makes no external requests: system fonts only, inline SVG, and no libraries. I couldn't open it in a browser here because shell access was blocked, so I haven't seen it rendered or tested how it behaves.
+
+**Look:** dark navy with a teal → cyan → violet gradient, a faint grid background, slowly drifting glow blobs, and frosted-glass cards.
+
+**Sections, top to bottom:**
+1. **Sticky nav** that blurs once you scroll, with a menu button on phones.
+2. **Hero:** "Know it's down before your users do." Below it is a mock dashboard that tilts back slightly and settles flat as it scrolls into view, and tilts a little with the mouse. In the mock:
+   - five monitors with 90-day uptime bars, including amber and red days
+   - pulsing status dots and response times that update live
+   - a live response-time chart
+   - region tags that light up as checks run
+   - alert pop-ups cycling through "slow", "resolved" and an SSL expiry warning
+3. **Logo strip** that scrolls endlessly, using made-up company names.
+4. **Features grid** with a light that follows the cursor on each card:
+   - a world map with probe points pulsing and animated lines between them
+   - a "confirmed from 3 regions" panel showing a single failure that didn't page anyone
+   - a small white status page preview
+   - a one-line `curl` heartbeat for cron jobs
+   - alert channels (Slack, SMS, etc.), SSL/domain expiry warnings, and monitors-as-code
+5. **How it works** in three steps, then four stat counters that count up when you scroll to them.
+6. **Testimonials:** three, with the middle one highlighted.
+7. **Pricing:** Hobby, Team and Scale. The Team plan has a gradient border, and the monthly/yearly switch animates the prices.
+8. **FAQ** that expands and collapses, then a **signup section** with animated waves and an email check.
+
+It adapts down to phone width and turns off animations for visitors whose system is set to reduce motion.
+
+**Things to replace before it goes live:** the testimonials, company names, stats (4.1B checks a month, 94% fewer false pages) and the plan prices are placeholders I made up. Replace them with real figures before publishing.
+
+**One known flaw:** the faintest of the three waves at the bottom has a small jump each time its animation loops, roughly every 14 seconds. I tried to fix it, but my second edit to the file was blocked. The fix is to replace that wave's `<path d="…">` with an even curve that repeats exactly. I can make the change if you allow file edits.

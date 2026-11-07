@@ -1,0 +1,1799 @@
+{
+  "id": "eval_mw60uhzf6jr3f8yk",
+  "rubricId": "rub_mw60tcgdu854nkxu",
+  "rubric": {
+    "name": "Landing page review (strict)",
+    "version": "1",
+    "description": "Could this landing page go live for the product described in facts.json?",
+    "context": "You review a product landing page (a screenshot of its first screen and its text) against facts.json, which lists\neverything true about the product. Be strict: when in doubt, judge it as failing. Each criterion looks only at the\nkind of problem it names; ignore other kinds of problems when judging it.\n",
+    "language": "en",
+    "scale": {
+      "type": "numeric",
+      "min": 1,
+      "max": 5
+    },
+    "judges": {
+      "clef": {
+        "type": "decision",
+        "provider": "cloudflare",
+        "model": "@cf/cloudflare/clef",
+        "onLowConfidence": "accept",
+        "escalateTo": []
+      }
+    },
+    "defaultJudge": {
+      "type": "ref",
+      "ref": "clef"
+    },
+    "criteria": [
+      {
+        "id": "clarity",
+        "name": "The first screen says what it is, for whom, and what to do next",
+        "weight": 3,
+        "levels": [
+          {
+            "value": 1,
+            "label": "unclear",
+            "description": "A slogan or mood; a stranger can't tell what the product does or who it is for"
+          },
+          {
+            "value": 3,
+            "label": "partly",
+            "description": "The product is named, but the audience, the concrete job or the next step is missing or buried"
+          },
+          {
+            "value": 5,
+            "label": "clear",
+            "description": "In plain words: what it does, for whom, and one obvious next step, all on the first screen"
+          }
+        ],
+        "inputs": [
+          "page",
+          "facts"
+        ],
+        "optional": false
+      },
+      {
+        "id": "look",
+        "name": "Designed for this product, not a template",
+        "weight": 2,
+        "levels": [
+          {
+            "value": 1,
+            "label": "template",
+            "description": "Generic AI SaaS look: dark navy with glows, gradient text, glass cards, the same rounded card everywhere"
+          },
+          {
+            "value": 3,
+            "label": "tidy",
+            "description": "Clean but generic; nothing about it belongs to this product"
+          },
+          {
+            "value": 5,
+            "label": "specific",
+            "description": "Calm and deliberate, with type, colour and imagery chosen for this product and its users"
+          }
+        ],
+        "inputs": [
+          "page"
+        ],
+        "optional": false
+      },
+      {
+        "id": "focus",
+        "name": "One focal point and a clear reading order",
+        "weight": 1,
+        "levels": [
+          {
+            "value": 1,
+            "label": "noisy",
+            "description": "Many things compete for attention; no obvious place to start"
+          },
+          {
+            "value": 3,
+            "label": "uneven",
+            "description": "A focal point exists, but other elements pull against it"
+          },
+          {
+            "value": 5,
+            "label": "focused",
+            "description": "One obvious focal point, then a clear order: headline, explanation, action"
+          }
+        ],
+        "inputs": [
+          "page"
+        ],
+        "optional": false
+      },
+      {
+        "id": "honest_proof",
+        "name": "No invented social proof",
+        "weight": 0,
+        "scale": {
+          "type": "binary",
+          "labels": [
+            "invented",
+            "honest"
+          ]
+        },
+        "anchors": {
+          "invented": "The page shows testimonials, quotes, star ratings, customer logos, 'used by' counts or named customers that facts.json doesn't contain",
+          "honest": "Every testimonial, logo, rating and customer count on the page is in facts.json (facts.json has no customer quotes, so there are none). Other figures and claims are judged elsewhere"
+        },
+        "inputs": [
+          "page",
+          "facts"
+        ],
+        "optional": false
+      },
+      {
+        "id": "facts_true",
+        "name": "Every figure comes from facts.json",
+        "weight": 0,
+        "judge": {
+          "type": "benchmark",
+          "method": "http",
+          "url": "http://127.0.0.1:7788/audit/numbers_true"
+        },
+        "inputs": [
+          "page",
+          "facts"
+        ],
+        "optional": false
+      },
+      {
+        "id": "decoration",
+        "name": "No gradient washes, glows or glass (2 effects allowed)",
+        "weight": 0,
+        "judge": {
+          "type": "benchmark",
+          "method": "http",
+          "url": "http://127.0.0.1:7788/audit/decoration"
+        },
+        "inputs": [
+          "page"
+        ],
+        "optional": false
+      },
+      {
+        "id": "motion",
+        "name": "No looping ambient animation",
+        "weight": 0,
+        "judge": {
+          "type": "benchmark",
+          "method": "http",
+          "url": "http://127.0.0.1:7788/audit/motion"
+        },
+        "inputs": [
+          "page"
+        ],
+        "optional": false
+      },
+      {
+        "id": "template_chrome",
+        "name": "No template chrome (ALL-CAPS eyebrows, accented headline words, icon tiles, fake numbering)",
+        "weight": 0,
+        "judge": {
+          "type": "benchmark",
+          "method": "http",
+          "url": "http://127.0.0.1:7788/audit/template_chrome"
+        },
+        "inputs": [
+          "page"
+        ],
+        "optional": false
+      },
+      {
+        "id": "contrast",
+        "name": "All text passes WCAG AA contrast",
+        "weight": 0,
+        "judge": {
+          "type": "benchmark",
+          "method": "http",
+          "url": "http://127.0.0.1:7788/audit/contrast"
+        },
+        "inputs": [
+          "page"
+        ],
+        "optional": false
+      },
+      {
+        "id": "plain_copy",
+        "name": "Headings are descriptions, not slogans",
+        "weight": 0,
+        "scale": {
+          "type": "binary",
+          "labels": [
+            "slogans",
+            "descriptions"
+          ]
+        },
+        "anchors": {
+          "slogans": "At least one heading or button is a slogan, joke or emotional promise rather than a description of what the product does (for example 'From zero to monitored before your coffee cools', 'Teams sleep better', 'Your next outage is coming')",
+          "descriptions": "Every heading and button names what that part of the page shows or does, in plain words, with no jokes or promises"
+        },
+        "inputs": [
+          "page"
+        ],
+        "optional": false
+      }
+    ],
+    "aggregation": {
+      "method": "formula",
+      "formula": "honest_proof_n < 0.5 ? 0 : (clarity_n * 3 + look_n * 2 + focus_n) / 6 * (1 + (facts_true_n >= 1) + (decoration_n >= 1) + (motion_n >= 1) + (template_chrome_n >= 1) + (contrast_n >= 1) + plain_copy_n) / 7",
+      "rater": "mean",
+      "normalize": [
+        0,
+        100
+      ],
+      "missing": "exclude",
+      "gates": [
+        {
+          "criterion": "honest_proof",
+          "min": 1,
+          "message": "Invented testimonials, logos or user counts (FTC 16 CFR Part 465)"
+        }
+      ],
+      "grades": [
+        {
+          "label": "ship it",
+          "min": 85
+        },
+        {
+          "label": "almost",
+          "min": 60
+        },
+        {
+          "label": "rework",
+          "min": 0
+        }
+      ],
+      "passThreshold": 85,
+      "precision": 0
+    },
+    "id": "rub_mw60tcgdu854nkxu",
+    "createdAt": "2026-11-07T06:26:51.084Z",
+    "updatedAt": "2026-11-07T06:26:51.084Z"
+  },
+  "subject": {
+    "name": "Tideline round 3",
+    "inputs": [
+      {
+        "type": "url",
+        "url": "http://127.0.0.1:8772/index.html",
+        "screenshot": true,
+        "tags": [
+          "page"
+        ]
+      },
+      {
+        "type": "file",
+        "path": "/root/tideline/facts.json",
+        "tags": [
+          "facts"
+        ]
+      }
+    ]
+  },
+  "evidence": [
+    {
+      "inputIndex": 0,
+      "kind": "url",
+      "label": "Tideline — Uptime monitoring for small engineering teams",
+      "tags": [
+        "page"
+      ],
+      "text": "Tideline\nSign in Start free\nNEW Status pages on your own domain  →\n\nKNOW IT'S DOWN BEFORE YOUR USERS DO.\n\nTideline checks your APIs, sites, and cron jobs from 12 regions every 30 seconds, confirms every failure before it pages anyone, and sends the alert to the right person.\n\nStart monitoring free → See it in 90 seconds\nFree for 10 monitors No credit card Set up in 2 minutes\napp.tideline.dev/acme\n\nMONITORS ALL SYSTEMS OPERATIONAL\n\n24h7d90d\n\nAVG RESPONSE ● LIVE\n\n142ms↓ 12%\n\nUPTIME · 90 DAYS\n\n99.987%\niadsfogrulhrfrabomsinsyd\n\nFeatures\n\nMONITORING WITHOUT THE ENTERPRISE OVERHEAD.\n\nThe tools a five-person team actually needs, configured in minutes and quiet unless something is genuinely wrong.\n\nCHECKS FROM 12 REGIONS, EVERY 30 SECONDS\n\nHTTP, TCP, ping, DNS, and keyword checks from four continents. You find out about a regional outage in Singapore even when your laptop in Ohio says everything's fine.\n\nNO MORE 3AM FALSE ALARMS\n\nBefore anyone gets paged, the failure has to be confirmed from at least three regions.\n\nFAILfra-1 timeout03:12:04\nOKiad-2 20003:12:05\nOKsin-1 20003:12:05\nHELDNot paged, you slept✓\n\nSTATUS PAGES PEOPLE TRUST\n\nA branded status page on status.yourco.com that updates itself, with subscriber emails included.\n\nAcme Statusstatus.acme.dev\nAll systems operational\nAPIOperational\nDashboardOperational\nWebhooksOperational\n\nHEARTBEATS FOR CRON JOBS\n\nYour nightly backup pings us when it finishes. If the ping doesn't arrive, Tideline alerts you.\n\n# end of backup.sh curl -fsS https://hb.tideline.dev/k7f2q\n\nALERTS WHEREVER YOU WORK\n\nSimple on-call rotations with escalation built in. Nobody has to learn a pager product.\n\nSlack Discord SMS Email Webhooks Teams\n\nSSL AND DOMAIN EXPIRY WARNINGS\n\nYou get a reminder 30, 14, and 3 days before a certificate or domain lapses, so a forgotten renewal never takes the site down.\n\nMONITORS AS CODE\n\nKeep monitors in a tideline.yml next to your service. Apply them from CI with our CLI or Terraform provider.\n\nHow it works\n\nFROM ZERO TO MONITORED BEFORE YOUR COFFEE COOLS.\n\n01\n\nPASTE A URL\n\nAdd an endpoint, a host, or a heartbeat. Sensible defaults are already filled in.\n\n02\n\nCHOOSE WHO GETS WOKEN\n\nConnect Slack or SMS and set up a rotation. A two-person team takes about 40 seconds.\n\n03\n\nGET BACK TO BUILDING\n\nTideline keeps watch. When something breaks you get one clear alert with the context to fix it.\n\n0Bchecks run each month\n0probe regions worldwide\n<0sfrom failure to alert\n0%fewer false pages*\n\n*Compared with single-region checks, median across customer accounts in 2026.\n\nPricing\n\nSIMPLE PRICING THAT DOESN'T GROW PER SEAT.\n\nBring the whole team. You pay for monitors, not headcount.\n\nMonthly Yearly −20%\n\nHOBBY\n\nFor side projects and kicking the tires.\n\n$0/ forever\nStart free\n * 10 monitors, 3-minute checks\n * 4 regions\n * Email & Slack alerts\n * 1 public status page\n\nMost popular\n\nTEAM\n\nEverything a small product team needs to run production.\n\n$29/ month\nStart 14-day trial →\n * 50 monitors, 30-second checks\n * All 12 regions + multi-region confirmation\n * SMS, on-call rotations, escalations\n * Custom-domain status pages\n * Unlimited teammates\n\nSCALE\n\nFor growing teams with more services and stricter SLAs.\n\n$99/ month\nStart 14-day trial\n * 250 monitors, 10-second checks\n * Monitors as code, CLI + Terraform\n * SSO / SAML & audit log\n * SLA reports & 1-year history\n * Priority support\n\nFAQ\n\nQUESTIONS, ANSWERED.\n\nHow does Tideline avoid false alarms?+\n\nWhen a check fails, we re-run it right away from at least three other regions. You're alerted only if a majority of them agree the service is down, so one flaky network path won't wake you.\n\nDo you charge per user?+\n\nNo. Every paid plan includes unlimited teammates. Pricing is based on how many monitors you run and how often they check.\n\nCan I migrate from my current tool?+\n\nYes. Import monitors from a CSV or from most popular uptime tools' export formats. Most teams finish migrating in less than ten minutes.\n\nWhat happens when I hit my monitor limit?+\n\nYour existing monitors keep running. We'll ask you to upgrade or archive a monitor before you add another. We never switch off monitoring without warning.\n\nIs there an API?+\n\nYes. There's a full REST API, a CLI, and a Terraform provider. Anything you can do in the dashboard, you can also script.\n\nGet started\n\nYOUR NEXT OUTAGE IS COMING. BE THE FIRST TO KNOW.\n\nYour first 10 monitors are free forever. Upgrade when your team needs more.\n\nWork email Start free →\n\n\n\n[screenshot of http://127.0.0.1:8772/index.html attached: 1280×800 PNG]",
+      "truncated": false,
+      "stats": {
+        "chars": 4542,
+        "words": 732,
+        "lines": 183
+      },
+      "source": "http://127.0.0.1:8772/index.html",
+      "images": [
+        {
+          "mimeType": "image/png",
+          "bytes": 308470,
+          "width": 1280,
+          "height": 800
+        }
+      ]
+    },
+    {
+      "inputIndex": 1,
+      "kind": "file",
+      "label": "facts.json",
+      "tags": [
+        "facts"
+      ],
+      "text": "{\n  \"_note\": \"Fictional product, made up for a demo. Every figure a page shows must come from this file.\",\n  \"product\": \"Tideline\",\n  \"what\": \"Uptime and cron-job monitoring for small engineering teams\",\n  \"audience\": {\n    \"text\": \"Teams of 2 to 20 engineers who run their own services\",\n    \"team_size_min\": 2,\n    \"team_size_max\": 20\n  },\n  \"how\": {\n    \"check_interval_seconds\": 30,\n    \"regions\": 6,\n    \"regions_that_must_agree\": 2,\n    \"alert_channels\": [\n      \"Slack\",\n      \"email\",\n      \"SMS\",\n      \"PagerDuty\",\n      \"webhooks\"\n    ]\n  },\n  \"cron_monitoring\": \"Each job pings a unique URL when it finishes; a missed ping alerts after a grace period you set\",\n  \"status_pages\": \"One public status page per project, on your own domain\",\n  \"setup\": {\n    \"text\": \"Paste a URL. The first check runs within 60 seconds.\",\n    \"first_check_within_seconds\": 60\n  },\n  \"pricing\": {\n    \"free\": {\n      \"price_usd_per_month\": 0,\n      \"monitors\": 5\n    },\n    \"team\": {\n      \"price_usd_per_month\": 19,\n      \"monitors\": 100\n    }\n  },\n  \"trial\": {\n    \"days\": 14,\n    \"card_required\": false\n  },\n  \"beta\": {\n    \"since\": \"March 2026\",\n    \"teams\": 412\n  },\n  \"customer_quotes\": []\n}",
+      "truncated": false,
+      "stats": {
+        "chars": 1187,
+        "words": 148,
+        "lines": 47
+      },
+      "source": "facts.json",
+      "json": {
+        "_note": "Fictional product, made up for a demo. Every figure a page shows must come from this file.",
+        "product": "Tideline",
+        "what": "Uptime and cron-job monitoring for small engineering teams",
+        "audience": {
+          "text": "Teams of 2 to 20 engineers who run their own services",
+          "team_size_min": 2,
+          "team_size_max": 20
+        },
+        "how": {
+          "check_interval_seconds": 30,
+          "regions": 6,
+          "regions_that_must_agree": 2,
+          "alert_channels": [
+            "Slack",
+            "email",
+            "SMS",
+            "PagerDuty",
+            "webhooks"
+          ]
+        },
+        "cron_monitoring": "Each job pings a unique URL when it finishes; a missed ping alerts after a grace period you set",
+        "status_pages": "One public status page per project, on your own domain",
+        "setup": {
+          "text": "Paste a URL. The first check runs within 60 seconds.",
+          "first_check_within_seconds": 60
+        },
+        "pricing": {
+          "free": {
+            "price_usd_per_month": 0,
+            "monitors": 5
+          },
+          "team": {
+            "price_usd_per_month": 19,
+            "monitors": 100
+          }
+        },
+        "trial": {
+          "days": 14,
+          "card_required": false
+        },
+        "beta": {
+          "since": "March 2026",
+          "teams": 412
+        },
+        "customer_quotes": []
+      }
+    }
+  ],
+  "status": "completed",
+  "criteria": [
+    {
+      "criterionId": "clarity",
+      "name": "The first screen says what it is, for whom, and what to do next",
+      "weight": 3,
+      "status": "scored",
+      "ratings": [
+        {
+          "id": "rat_w4buqv3umw60ukcv",
+          "criterionId": "clarity",
+          "raterId": "clef",
+          "judgeType": "decision",
+          "createdAt": "2026-11-07T06:27:47.983Z",
+          "status": "scored",
+          "score": 4.199,
+          "normalized": 0.79965,
+          "confidence": 0.2757,
+          "probabilities": {
+            "unclear": 0.0603,
+            "partly": 0.2801,
+            "clear": 0.6596
+          },
+          "rationale": "cloudflare/@cf/cloudflare/clef distribution: unclear=6% partly=28% clear=66%",
+          "raw": {
+            "provider": "cloudflare",
+            "model": "@cf/cloudflare/clef",
+            "question": {
+              "type": "score",
+              "instructions": "Context: You review a product landing page (a screenshot of its first screen and its text) against facts.json, which lists\neverything true about the product. Be strict: when in doubt, judge it as failing. Each criterion looks only at the\nkind of problem it names; ignore other kinds of problems when judging it.\n Criterion \"The first screen says what it is, for whom, and what to do next\". Place the input on the ordered levels below (worst to best). Judge only this criterion using the evidence in the state.",
+              "criteria": [
+                "unclear: A slogan or mood; a stranger can't tell what the product does or who it is for",
+                "partly: The product is named, but the audience, the concrete job or the next step is missing or buried",
+                "clear: In plain words: what it does, for whom, and one obvious next step, all on the first screen"
+              ]
+            },
+            "answer": {
+              "type": "score",
+              "score": 1.5992,
+              "legend": {
+                "0": "unclear: A slogan or mood; a stranger can't tell what the product does or who it is for",
+                "1": "partly: The product is named, but the audience, the concrete job or the next step is missing or buried",
+                "2": "clear: In plain words: what it does, for whom, and one obvious next step, all on the first screen"
+              },
+              "probabilities": {
+                "0": 0.0603,
+                "1": 0.2801,
+                "2": 0.6596
+              },
+              "confidence": 0.2757
+            },
+            "levels": [
+              {
+                "value": 1,
+                "label": "unclear",
+                "description": "A slogan or mood; a stranger can't tell what the product does or who it is for"
+              },
+              {
+                "value": 3,
+                "label": "partly",
+                "description": "The product is named, but the audience, the concrete job or the next step is missing or buried"
+              },
+              {
+                "value": 5,
+                "label": "clear",
+                "description": "In plain words: what it does, for whom, and one obvious next step, all on the first screen"
+              }
+            ],
+            "latencyMs": 667,
+            "lowConfidence": false,
+            "stateChars": 5954,
+            "stateTruncated": false,
+            "images": {
+              "attached": 1,
+              "sent": 1
+            }
+          }
+        }
+      ],
+      "pending": 0,
+      "score": 4.199,
+      "normalized": 0.79975
+    },
+    {
+      "criterionId": "look",
+      "name": "Designed for this product, not a template",
+      "weight": 2,
+      "status": "scored",
+      "ratings": [
+        {
+          "id": "rat_s7s676ppmw60ul4y",
+          "criterionId": "look",
+          "raterId": "clef",
+          "judgeType": "decision",
+          "createdAt": "2026-11-07T06:27:48.994Z",
+          "status": "scored",
+          "score": 2.716,
+          "normalized": 0.42904999999999993,
+          "confidence": 0.1092,
+          "probabilities": {
+            "template": 0.5065,
+            "tidy": 0.1289,
+            "specific": 0.3646
+          },
+          "rationale": "cloudflare/@cf/cloudflare/clef distribution: template=51% tidy=13% specific=36%",
+          "raw": {
+            "provider": "cloudflare",
+            "model": "@cf/cloudflare/clef",
+            "question": {
+              "type": "score",
+              "instructions": "Context: You review a product landing page (a screenshot of its first screen and its text) against facts.json, which lists\neverything true about the product. Be strict: when in doubt, judge it as failing. Each criterion looks only at the\nkind of problem it names; ignore other kinds of problems when judging it.\n Criterion \"Designed for this product, not a template\". Place the input on the ordered levels below (worst to best). Judge only this criterion using the evidence in the state.",
+              "criteria": [
+                "template: Generic AI SaaS look: dark navy with glows, gradient text, glass cards, the same rounded card everywhere",
+                "tidy: Clean but generic; nothing about it belongs to this product",
+                "specific: Calm and deliberate, with type, colour and imagery chosen for this product and its users"
+              ]
+            },
+            "answer": {
+              "type": "score",
+              "score": 0.8581,
+              "legend": {
+                "0": "template: Generic AI SaaS look: dark navy with glows, gradient text, glass cards, the same rounded card everywhere",
+                "1": "tidy: Clean but generic; nothing about it belongs to this product",
+                "2": "specific: Calm and deliberate, with type, colour and imagery chosen for this product and its users"
+              },
+              "probabilities": {
+                "0": 0.5065,
+                "1": 0.1289,
+                "2": 0.3646
+              },
+              "confidence": 0.1092
+            },
+            "levels": [
+              {
+                "value": 1,
+                "label": "template",
+                "description": "Generic AI SaaS look: dark navy with glows, gradient text, glass cards, the same rounded card everywhere"
+              },
+              {
+                "value": 3,
+                "label": "tidy",
+                "description": "Clean but generic; nothing about it belongs to this product"
+              },
+              {
+                "value": 5,
+                "label": "specific",
+                "description": "Calm and deliberate, with type, colour and imagery chosen for this product and its users"
+              }
+            ],
+            "latencyMs": 1674,
+            "lowConfidence": false,
+            "stateChars": 4687,
+            "stateTruncated": false,
+            "images": {
+              "attached": 1,
+              "sent": 1
+            }
+          }
+        }
+      ],
+      "pending": 0,
+      "score": 2.716,
+      "normalized": 0.42900000000000005
+    },
+    {
+      "criterionId": "focus",
+      "name": "One focal point and a clear reading order",
+      "weight": 1,
+      "status": "scored",
+      "ratings": [
+        {
+          "id": "rat_nb0b93rjmw60ul4y",
+          "criterionId": "focus",
+          "raterId": "clef",
+          "judgeType": "decision",
+          "createdAt": "2026-11-07T06:27:48.994Z",
+          "status": "scored",
+          "score": 4.611,
+          "normalized": 0.9027000000000001,
+          "confidence": 0.5869,
+          "probabilities": {
+            "noisy": 0.0362,
+            "uneven": 0.1222,
+            "focused": 0.8416
+          },
+          "rationale": "cloudflare/@cf/cloudflare/clef distribution: noisy=4% uneven=12% focused=84%",
+          "raw": {
+            "provider": "cloudflare",
+            "model": "@cf/cloudflare/clef",
+            "question": {
+              "type": "score",
+              "instructions": "Context: You review a product landing page (a screenshot of its first screen and its text) against facts.json, which lists\neverything true about the product. Be strict: when in doubt, judge it as failing. Each criterion looks only at the\nkind of problem it names; ignore other kinds of problems when judging it.\n Criterion \"One focal point and a clear reading order\". Place the input on the ordered levels below (worst to best). Judge only this criterion using the evidence in the state.",
+              "criteria": [
+                "noisy: Many things compete for attention; no obvious place to start",
+                "uneven: A focal point exists, but other elements pull against it",
+                "focused: One obvious focal point, then a clear order: headline, explanation, action"
+              ]
+            },
+            "answer": {
+              "type": "score",
+              "score": 1.8054,
+              "legend": {
+                "0": "noisy: Many things compete for attention; no obvious place to start",
+                "1": "uneven: A focal point exists, but other elements pull against it",
+                "2": "focused: One obvious focal point, then a clear order: headline, explanation, action"
+              },
+              "probabilities": {
+                "0": 0.0362,
+                "1": 0.1222,
+                "2": 0.8416
+              },
+              "confidence": 0.5869
+            },
+            "levels": [
+              {
+                "value": 1,
+                "label": "noisy",
+                "description": "Many things compete for attention; no obvious place to start"
+              },
+              {
+                "value": 3,
+                "label": "uneven",
+                "description": "A focal point exists, but other elements pull against it"
+              },
+              {
+                "value": 5,
+                "label": "focused",
+                "description": "One obvious focal point, then a clear order: headline, explanation, action"
+              }
+            ],
+            "latencyMs": 1674,
+            "lowConfidence": false,
+            "stateChars": 4687,
+            "stateTruncated": false,
+            "images": {
+              "attached": 1,
+              "sent": 1
+            }
+          }
+        }
+      ],
+      "pending": 0,
+      "score": 4.611,
+      "normalized": 0.9027499999999999
+    },
+    {
+      "criterionId": "honest_proof",
+      "name": "No invented social proof",
+      "weight": 0,
+      "status": "scored",
+      "ratings": [
+        {
+          "id": "rat_6buqdg15mw60ukcw",
+          "criterionId": "honest_proof",
+          "raterId": "clef",
+          "judgeType": "decision",
+          "createdAt": "2026-11-07T06:27:47.984Z",
+          "status": "scored",
+          "score": 1,
+          "normalized": 1,
+          "confidence": 0.762,
+          "probabilities": {
+            "invented": 0.119,
+            "honest": 0.881
+          },
+          "rationale": "cloudflare/@cf/cloudflare/clef distribution: invented=12% honest=88%",
+          "raw": {
+            "provider": "cloudflare",
+            "model": "@cf/cloudflare/clef",
+            "question": {
+              "type": "noul",
+              "instructions": "Context: You review a product landing page (a screenshot of its first screen and its text) against facts.json, which lists\neverything true about the product. Be strict: when in doubt, judge it as failing. Each criterion looks only at the\nkind of problem it names; ignore other kinds of problems when judging it.\n Criterion \"No invented social proof\". Is the input \"honest\" for this criterion?",
+              "criteria": {
+                "true": "Every testimonial, logo, rating and customer count on the page is in facts.json (facts.json has no customer quotes, so there are none). Other figures and claims are judged elsewhere",
+                "false": "The page shows testimonials, quotes, star ratings, customer logos, 'used by' counts or named customers that facts.json doesn't contain"
+              }
+            },
+            "answer": {
+              "type": "noul",
+              "noul": 0.881
+            },
+            "levels": [
+              {
+                "value": 0,
+                "label": "invented",
+                "description": "The page shows testimonials, quotes, star ratings, customer logos, 'used by' counts or named customers that facts.json doesn't contain"
+              },
+              {
+                "value": 1,
+                "label": "honest",
+                "description": "Every testimonial, logo, rating and customer count on the page is in facts.json (facts.json has no customer quotes, so there are none). Other figures and claims are judged elsewhere"
+              }
+            ],
+            "latencyMs": 667,
+            "lowConfidence": false,
+            "stateChars": 5954,
+            "stateTruncated": false,
+            "images": {
+              "attached": 1,
+              "sent": 1
+            }
+          }
+        }
+      ],
+      "pending": 0,
+      "score": 1,
+      "normalized": 1,
+      "gate": {
+        "passed": true
+      }
+    },
+    {
+      "criterionId": "facts_true",
+      "name": "Every figure comes from facts.json",
+      "weight": 0,
+      "status": "scored",
+      "ratings": [
+        {
+          "id": "rat_yspktvuzmw60ujuj",
+          "criterionId": "facts_true",
+          "raterId": "benchmark:http",
+          "judgeType": "benchmark",
+          "createdAt": "2026-11-07T06:27:47.323Z",
+          "status": "scored",
+          "normalized": 0,
+          "score": 1,
+          "confidence": 1,
+          "rationale": "21 figure(s) not derivable from data.json: 12, 12%, 90, 24, 131, 191",
+          "raw": {
+            "normalized": 0,
+            "value": 21,
+            "boxes": [
+              {
+                "x": 330,
+                "y": 403,
+                "w": 620,
+                "h": 96,
+                "label": "not in data: 12"
+              },
+              {
+                "x": 869,
+                "y": 820,
+                "w": 48,
+                "h": 16,
+                "label": "not in data: 12%"
+              },
+              {
+                "x": 103,
+                "y": 1757,
+                "w": 691,
+                "h": 32,
+                "label": "not in data: 12"
+              },
+              {
+                "x": 490,
+                "y": 4454,
+                "w": 299,
+                "h": 46,
+                "label": "not in data: 12"
+              },
+              {
+                "x": 647,
+                "y": 533,
+                "w": 234,
+                "h": 52,
+                "label": "not in data: 90"
+              },
+              {
+                "x": 684,
+                "y": 767,
+                "w": 42,
+                "h": 26,
+                "label": "not in data: 90"
+              },
+              {
+                "x": 790,
+                "y": 969,
+                "w": 340,
+                "h": 19,
+                "label": "not in data: 90"
+              },
+              {
+                "x": 602,
+                "y": 767,
+                "w": 41,
+                "h": 26,
+                "label": "not in data: 24"
+              },
+              {
+                "x": 155,
+                "y": 1067,
+                "w": 104,
+                "h": 13,
+                "label": "not in data: 24"
+              },
+              {
+                "x": 663,
+                "y": 841,
+                "w": 63,
+                "h": 14,
+                "label": "not in data: 131"
+              },
+              {
+                "x": 663,
+                "y": 911,
+                "w": 63,
+                "h": 15,
+                "label": "not in data: 191"
+              },
+              {
+                "x": 663,
+                "y": 982,
+                "w": 64,
+                "h": 15,
+                "label": "not in data: 51"
+              },
+              {
+                "x": 663,
+                "y": 1126,
+                "w": 64,
+                "h": 15,
+                "label": "not in data: 80"
+              },
+              {
+                "x": 788,
+                "y": 805,
+                "w": 55,
+                "h": 35,
+                "label": "not in data: 136"
+              },
+              {
+                "x": 870,
+                "y": 1935,
+                "w": 307,
+                "h": 36,
+                "label": "not in data: 200"
+              },
+              {
+                "x": 870,
+                "y": 1979,
+                "w": 307,
+                "h": 36,
+                "label": "not in data: 200"
+              },
+              {
+                "x": 490,
+                "y": 3290,
+                "w": 300,
+                "h": 72,
+                "label": "not in data: 40"
+              },
+              {
+                "x": 521,
+                "y": 4306,
+                "w": 14,
+                "h": 17,
+                "label": "not in data: 29"
+              },
+              {
+                "x": 490,
+                "y": 4419,
+                "w": 299,
+                "h": 23,
+                "label": "not in data: 50"
+              },
+              {
+                "x": 904,
+                "y": 4342,
+                "w": 14,
+                "h": 17,
+                "label": "not in data: 99"
+              },
+              {
+                "x": 874,
+                "y": 4455,
+                "w": 299,
+                "h": 23,
+                "label": "not in data: 250"
+              }
+            ],
+            "rationale": "21 figure(s) not derivable from data.json: 12, 12%, 90, 24, 131, 191"
+          }
+        }
+      ],
+      "pending": 0,
+      "score": 1,
+      "normalized": 0
+    },
+    {
+      "criterionId": "decoration",
+      "name": "No gradient washes, glows or glass (2 effects allowed)",
+      "weight": 0,
+      "status": "scored",
+      "ratings": [
+        {
+          "id": "rat_983vkj77mw60ujuk",
+          "criterionId": "decoration",
+          "raterId": "benchmark:http",
+          "judgeType": "benchmark",
+          "createdAt": "2026-11-07T06:27:47.324Z",
+          "status": "scored",
+          "normalized": 0,
+          "score": 1,
+          "confidence": 1,
+          "rationale": "29 decorative effects (gradients, glass, glows); 2 are free; gradient (::before) at <div.bg-fx>; filter at <div.orb.a>; filter at <div.orb.b>; filter at <div.orb.c>; gradient + glow at <span.logo-mark>; gradient + glow at <a.btn.btn-primary> \"Start free\"; glass blur at <a.pill.reveal> \"NEW Status pages on your own domain …\"; gradient at <b> \"NEW\"; +21 more",
+          "raw": {
+            "normalized": 0,
+            "value": 29,
+            "boxes": [
+              {
+                "x": 0,
+                "y": 0,
+                "w": 1280,
+                "h": 800,
+                "label": "gradient (::before)",
+                "at": "<div.bg-fx>"
+              },
+              {
+                "x": -160,
+                "y": -260,
+                "w": 620,
+                "h": 620,
+                "label": "filter",
+                "at": "<div.orb.a>"
+              },
+              {
+                "x": 920,
+                "y": -180,
+                "w": 560,
+                "h": 560,
+                "label": "filter",
+                "at": "<div.orb.b>"
+              },
+              {
+                "x": 512,
+                "y": 440,
+                "w": 480,
+                "h": 480,
+                "label": "filter",
+                "at": "<div.orb.c>"
+              },
+              {
+                "x": 74,
+                "y": 18,
+                "w": 32,
+                "h": 32,
+                "label": "gradient + glow",
+                "at": "<span.logo-mark>"
+              },
+              {
+                "x": 1104,
+                "y": 13,
+                "w": 102,
+                "h": 42,
+                "label": "gradient + glow",
+                "at": "<a.btn.btn-primary> \"Start free\""
+              },
+              {
+                "x": 482,
+                "y": 141,
+                "w": 316,
+                "h": 38,
+                "label": "glass blur",
+                "at": "<a.pill.reveal> \"NEW Status pages on your own domain …\""
+              },
+              {
+                "x": 489,
+                "y": 148,
+                "w": 46,
+                "h": 24,
+                "label": "gradient",
+                "at": "<b> \"NEW\""
+              },
+              {
+                "x": 225,
+                "y": 284,
+                "w": 829,
+                "h": 104,
+                "label": "gradient text",
+                "at": "<span.grad-text> \"before your users do.\""
+              },
+              {
+                "x": 399,
+                "y": 533,
+                "w": 236,
+                "h": 52,
+                "label": "gradient + glow",
+                "at": "<a.btn.btn-primary> \"Start monitoring free →\""
+              },
+              {
+                "x": 110,
+                "y": 688,
+                "w": 1060,
+                "h": 514,
+                "label": "gradient + filter (::before)",
+                "at": "<div.stage> \"app.tideline.dev/acme Monitors All s…\""
+              },
+              {
+                "x": 105,
+                "y": 688,
+                "w": 1069,
+                "h": 503,
+                "label": "gradient + glow",
+                "at": "<div.dash> \"app.tideline.dev/acme Monitors All s…\""
+              },
+              {
+                "x": 74,
+                "y": 1474,
+                "w": 525,
+                "h": 65,
+                "label": "gradient text",
+                "at": "<span.grad-text> \"enterprise overhead.\""
+              },
+              {
+                "x": 103,
+                "y": 1869,
+                "w": 691,
+                "h": 190,
+                "label": "gradient",
+                "at": "<div.map>"
+              },
+              {
+                "x": 883,
+                "y": 2033,
+                "w": 42,
+                "h": 16,
+                "label": "gradient",
+                "at": "<span.chip.go> \"HELD\""
+              },
+              {
+                "x": 74,
+                "y": 3148,
+                "w": 1132,
+                "h": 186,
+                "label": "gradient (::before)",
+                "at": "<div.steps> \"01Paste a URLAdd an endpoint, a host…\""
+              },
+              {
+                "x": 228,
+                "y": 3176,
+                "w": 54,
+                "h": 54,
+                "label": "gradient (::after)",
+                "at": "<div.step-n> \"01\""
+              },
+              {
+                "x": 613,
+                "y": 3176,
+                "w": 54,
+                "h": 54,
+                "label": "gradient (::after)",
+                "at": "<div.step-n> \"02\""
+              },
+              {
+                "x": 998,
+                "y": 3176,
+                "w": 54,
+                "h": 54,
+                "label": "gradient (::after)",
+                "at": "<div.step-n> \"03\""
+              },
+              {
+                "x": 533,
+                "y": 4077,
+                "w": 92,
+                "h": 38,
+                "label": "gradient",
+                "at": "<span.knob>"
+              },
+              {
+                "x": 589,
+                "y": 4130,
+                "w": 102,
+                "h": 27,
+                "label": "gradient",
+                "at": "<span.tag> \"Most popular\""
+              },
+              {
+                "x": 490,
+                "y": 4351,
+                "w": 299,
+                "h": 42,
+                "label": "gradient + glow",
+                "at": "<a.btn.btn-primary> \"Start 14-day trial →\""
+              },
+              {
+                "x": 564,
+                "y": 5765,
+                "w": 347,
+                "h": 123,
+                "label": "gradient text",
+                "at": "<span.grad-text> \"Be the first to know.\""
+              },
+              {
+                "x": 744,
+                "y": 5998,
+                "w": 124,
+                "h": 42,
+                "label": "gradient + glow",
+                "at": "<button.btn.btn-primary> \"Start free →\""
+              },
+              {
+                "x": 74,
+                "y": 6377,
+                "w": 32,
+                "h": 32,
+                "label": "gradient + glow",
+                "at": "<span.logo-mark>"
+              },
+              {
+                "x": 80,
+                "y": 24,
+                "w": 20,
+                "h": 20,
+                "label": "svg gradient",
+                "at": "<svg>"
+              },
+              {
+                "x": 789,
+                "y": 852,
+                "w": 338,
+                "h": 72,
+                "label": "svg gradient",
+                "at": "<svg>"
+              },
+              {
+                "x": 789,
+                "y": 852,
+                "w": 338,
+                "h": 72,
+                "label": "svg gradient",
+                "at": "<svg>"
+              },
+              {
+                "x": 103,
+                "y": 1869,
+                "w": 691,
+                "h": 190,
+                "label": "svg gradient",
+                "at": "<svg>"
+              }
+            ],
+            "rationale": "29 decorative effects (gradients, glass, glows); 2 are free; gradient (::before) at <div.bg-fx>; filter at <div.orb.a>; filter at <div.orb.b>; filter at <div.orb.c>; gradient + glow at <span.logo-mark>; gradient + glow at <a.btn.btn-primary> \"Start free\"; glass blur at <a.pill.reveal> \"NEW Status pages on your own domain …\"; gradient at <b> \"NEW\"; +21 more"
+          }
+        }
+      ],
+      "pending": 0,
+      "score": 1,
+      "normalized": 0
+    },
+    {
+      "criterionId": "motion",
+      "name": "No looping ambient animation",
+      "weight": 0,
+      "status": "scored",
+      "ratings": [
+        {
+          "id": "rat_dnh1dah6mw60ujuk",
+          "criterionId": "motion",
+          "raterId": "benchmark:http",
+          "judgeType": "benchmark",
+          "createdAt": "2026-11-07T06:27:47.324Z",
+          "status": "scored",
+          "normalized": 1,
+          "score": 5,
+          "confidence": 1,
+          "rationale": "0 infinite animations",
+          "raw": {
+            "normalized": 1,
+            "value": 0,
+            "boxes": [],
+            "rationale": "0 infinite animations"
+          }
+        }
+      ],
+      "pending": 0,
+      "score": 5,
+      "normalized": 1
+    },
+    {
+      "criterionId": "template_chrome",
+      "name": "No template chrome (ALL-CAPS eyebrows, accented headline words, icon tiles, fake numbering)",
+      "weight": 0,
+      "status": "scored",
+      "ratings": [
+        {
+          "id": "rat_7fbg5u6amw60ujuk",
+          "criterionId": "template_chrome",
+          "raterId": "benchmark:http",
+          "judgeType": "benchmark",
+          "createdAt": "2026-11-07T06:27:47.324Z",
+          "status": "scored",
+          "normalized": 0,
+          "score": 1,
+          "confidence": 1,
+          "rationale": "21 template habits (1 is free); tracked all-caps eyebrow at <h4> \"Avg response ● live\"; tracked all-caps eyebrow at <span> \"● live\"; tracked all-caps eyebrow at <h4> \"Uptime · 90 days\"; tracked all-caps eyebrow at <span.eyebrow> \"Features\"; tracked all-caps eyebrow at <span.eyebrow> \"How it works\"; tracked all-caps eyebrow at <span.eyebrow> \"Pricing\"; tracked all-caps eyebrow at <span.eyebrow> \"FAQ\"; tracked all-caps eyebrow at <span.eyebrow> \"Get started\"; +13 more",
+          "raw": {
+            "normalized": 0,
+            "value": 21,
+            "boxes": [
+              {
+                "x": 788,
+                "y": 778,
+                "w": 334,
+                "h": 18,
+                "label": "tracked all-caps eyebrow",
+                "at": "<h4> \"Avg response ● live\""
+              },
+              {
+                "x": 1077,
+                "y": 778,
+                "w": 45,
+                "h": 18,
+                "label": "tracked all-caps eyebrow",
+                "at": "<span> \"● live\""
+              },
+              {
+                "x": 790,
+                "y": 969,
+                "w": 340,
+                "h": 19,
+                "label": "tracked all-caps eyebrow",
+                "at": "<h4> \"Uptime · 90 days\""
+              },
+              {
+                "x": 74,
+                "y": 1391,
+                "w": 100,
+                "h": 14,
+                "label": "tracked all-caps eyebrow",
+                "at": "<span.eyebrow> \"Features\""
+              },
+              {
+                "x": 571,
+                "y": 2974,
+                "w": 137,
+                "h": 14,
+                "label": "tracked all-caps eyebrow",
+                "at": "<span.eyebrow> \"How it works\""
+              },
+              {
+                "x": 595,
+                "y": 3872,
+                "w": 91,
+                "h": 14,
+                "label": "tracked all-caps eyebrow",
+                "at": "<span.eyebrow> \"Pricing\""
+              },
+              {
+                "x": 613,
+                "y": 4835,
+                "w": 54,
+                "h": 14,
+                "label": "tracked all-caps eyebrow",
+                "at": "<span.eyebrow> \"FAQ\""
+              },
+              {
+                "x": 576,
+                "y": 5682,
+                "w": 128,
+                "h": 14,
+                "label": "tracked all-caps eyebrow",
+                "at": "<span.eyebrow> \"Get started\""
+              },
+              {
+                "x": 225,
+                "y": 284,
+                "w": 829,
+                "h": 104,
+                "label": "accented headline word",
+                "at": "<span.grad-text> \"before your users do.\""
+              },
+              {
+                "x": 74,
+                "y": 1474,
+                "w": 525,
+                "h": 65,
+                "label": "accented headline word",
+                "at": "<span.grad-text> \"enterprise overhead.\""
+              },
+              {
+                "x": 564,
+                "y": 5765,
+                "w": 347,
+                "h": 123,
+                "label": "accented headline word",
+                "at": "<span.grad-text> \"Be the first to know.\""
+              },
+              {
+                "x": 74,
+                "y": 18,
+                "w": 32,
+                "h": 32,
+                "label": "icon tile",
+                "at": "<span.logo-mark>"
+              },
+              {
+                "x": 103,
+                "y": 1695,
+                "w": 44,
+                "h": 44,
+                "label": "icon tile",
+                "at": "<div.ticon>"
+              },
+              {
+                "x": 870,
+                "y": 1695,
+                "w": 44,
+                "h": 44,
+                "label": "icon tile",
+                "at": "<div.ticon.v>"
+              },
+              {
+                "x": 103,
+                "y": 2135,
+                "w": 44,
+                "h": 44,
+                "label": "icon tile",
+                "at": "<div.ticon.c>"
+              },
+              {
+                "x": 486,
+                "y": 2135,
+                "w": 44,
+                "h": 44,
+                "label": "icon tile",
+                "at": "<div.ticon>"
+              },
+              {
+                "x": 870,
+                "y": 2135,
+                "w": 44,
+                "h": 44,
+                "label": "icon tile",
+                "at": "<div.ticon.r>"
+              },
+              {
+                "x": 103,
+                "y": 2634,
+                "w": 44,
+                "h": 44,
+                "label": "icon tile",
+                "at": "<div.ticon.v>"
+              },
+              {
+                "x": 678,
+                "y": 2634,
+                "w": 44,
+                "h": 44,
+                "label": "icon tile",
+                "at": "<div.ticon.c>"
+              },
+              {
+                "x": 74,
+                "y": 6377,
+                "w": 32,
+                "h": 32,
+                "label": "icon tile",
+                "at": "<span.logo-mark>"
+              },
+              {
+                "x": 0,
+                "y": 0,
+                "w": 0,
+                "h": 0,
+                "label": "default AI font (Inter renders 52% of glyphs)"
+              }
+            ],
+            "rationale": "21 template habits (1 is free); tracked all-caps eyebrow at <h4> \"Avg response ● live\"; tracked all-caps eyebrow at <span> \"● live\"; tracked all-caps eyebrow at <h4> \"Uptime · 90 days\"; tracked all-caps eyebrow at <span.eyebrow> \"Features\"; tracked all-caps eyebrow at <span.eyebrow> \"How it works\"; tracked all-caps eyebrow at <span.eyebrow> \"Pricing\"; tracked all-caps eyebrow at <span.eyebrow> \"FAQ\"; tracked all-caps eyebrow at <span.eyebrow> \"Get started\"; +13 more"
+          }
+        }
+      ],
+      "pending": 0,
+      "score": 1,
+      "normalized": 0
+    },
+    {
+      "criterionId": "contrast",
+      "name": "All text passes WCAG AA contrast",
+      "weight": 0,
+      "status": "scored",
+      "ratings": [
+        {
+          "id": "rat_cfmvby5nmw60ujul",
+          "criterionId": "contrast",
+          "raterId": "benchmark:http",
+          "judgeType": "benchmark",
+          "createdAt": "2026-11-07T06:27:47.325Z",
+          "status": "scored",
+          "normalized": 0.817351598173516,
+          "score": 4.269,
+          "confidence": 1,
+          "rationale": "179/219 text elements pass WCAG AA; contrast 4.47:1 (#6b789a on #050b1a, needs 4.5) at <span> \"Free for 10 monitors\"; contrast 4.47:1 (#6b789a on #050b1a, needs 4.5) at <span> \"No credit card\"; contrast 4.47:1 (#6b789a on #050b1a, needs 4.5) at <span> \"Set up in 2 minutes\"; contrast 3.77:1 (#6b789a on #141e36, needs 4.5) at <div.url> \"app.tideline.dev/acme\"; contrast 3.77:1 (#6b789a on #141e36, needs 4.5) at <span> \"24h\"; contrast 3.77:1 (#6b789a on #141e36, needs 4.5) at <span> \"7d\"; contrast 4.14:1 (#6b789a on #0b142e, needs 4.5) at <small> \"HTTPS · 30s\"; contrast 4.14:1 (#6b789a on #0b142e, needs 4.5) at <small> \"ms\"; +32 more",
+          "raw": {
+            "normalized": 0.817351598173516,
+            "value": 40,
+            "boxes": [
+              {
+                "x": 420,
+                "y": 603,
+                "w": 148,
+                "h": 22,
+                "label": "contrast 4.47:1 (#6b789a on #050b1a, needs 4.5)",
+                "at": "<span> \"Free for 10 monitors\""
+              },
+              {
+                "x": 587,
+                "y": 603,
+                "w": 112,
+                "h": 22,
+                "label": "contrast 4.47:1 (#6b789a on #050b1a, needs 4.5)",
+                "at": "<span> \"No credit card\""
+              },
+              {
+                "x": 716,
+                "y": 603,
+                "w": 143,
+                "h": 22,
+                "label": "contrast 4.47:1 (#6b789a on #050b1a, needs 4.5)",
+                "at": "<span> \"Set up in 2 minutes\""
+              },
+              {
+                "x": 465,
+                "y": 702,
+                "w": 350,
+                "h": 26,
+                "label": "contrast 3.77:1 (#6b789a on #141e36, needs 4.5)",
+                "at": "<div.url> \"app.tideline.dev/acme\""
+              },
+              {
+                "x": 602,
+                "y": 767,
+                "w": 41,
+                "h": 26,
+                "label": "contrast 3.77:1 (#6b789a on #141e36, needs 4.5)",
+                "at": "<span> \"24h\""
+              },
+              {
+                "x": 647,
+                "y": 767,
+                "w": 33,
+                "h": 26,
+                "label": "contrast 3.77:1 (#6b789a on #141e36, needs 4.5)",
+                "at": "<span> \"7d\""
+              },
+              {
+                "x": 163,
+                "y": 854,
+                "w": 75,
+                "h": 13,
+                "label": "contrast 4.14:1 (#6b789a on #0b142e, needs 4.5)",
+                "at": "<small> \"HTTPS · 30s\""
+              },
+              {
+                "x": 713,
+                "y": 843,
+                "w": 13,
+                "h": 12,
+                "label": "contrast 4.14:1 (#6b789a on #0b142e, needs 4.5)",
+                "at": "<small> \"ms\""
+              },
+              {
+                "x": 160,
+                "y": 924,
+                "w": 76,
+                "h": 13,
+                "label": "contrast 4.14:1 (#6b789a on #0b142e, needs 4.5)",
+                "at": "<small> \"HTTPS · 30s\""
+              },
+              {
+                "x": 713,
+                "y": 913,
+                "w": 13,
+                "h": 12,
+                "label": "contrast 4.14:1 (#6b789a on #0b142e, needs 4.5)",
+                "at": "<small> \"ms\""
+              },
+              {
+                "x": 158,
+                "y": 995,
+                "w": 62,
+                "h": 13,
+                "label": "contrast 4.14:1 (#6b789a on #0b142e, needs 4.5)",
+                "at": "<small> \"TCP · 30s\""
+              },
+              {
+                "x": 714,
+                "y": 984,
+                "w": 13,
+                "h": 12,
+                "label": "contrast 4.14:1 (#6b789a on #0b142e, needs 4.5)",
+                "at": "<small> \"ms\""
+              },
+              {
+                "x": 155,
+                "y": 1067,
+                "w": 104,
+                "h": 13,
+                "label": "contrast 4.14:1 (#6b789a on #0b142e, needs 4.5)",
+                "at": "<small> \"Heartbeat · 24h\""
+              },
+              {
+                "x": 714,
+                "y": 1055,
+                "w": 13,
+                "h": 12,
+                "label": "contrast 4.14:1 (#6b789a on #0b142e, needs 4.5)",
+                "at": "<small> \"OK\""
+              },
+              {
+                "x": 152,
+                "y": 1139,
+                "w": 77,
+                "h": 13,
+                "label": "contrast 4.14:1 (#6b789a on #0b142e, needs 4.5)",
+                "at": "<small> \"HTTPS · 60s\""
+              },
+              {
+                "x": 715,
+                "y": 1128,
+                "w": 13,
+                "h": 12,
+                "label": "contrast 4.14:1 (#6b789a on #0b142e, needs 4.5)",
+                "at": "<small> \"ms\""
+              },
+              {
+                "x": 788,
+                "y": 778,
+                "w": 334,
+                "h": 18,
+                "label": "contrast 3.96:1 (#6b789a on #0f1932, needs 4.5)",
+                "at": "<h4> \"Avg response ● live\""
+              },
+              {
+                "x": 843,
+                "y": 818,
+                "w": 21,
+                "h": 19,
+                "label": "contrast 3.96:1 (#6b789a on #0f1932, needs 4.5)",
+                "at": "<span> \"ms\""
+              },
+              {
+                "x": 790,
+                "y": 969,
+                "w": 340,
+                "h": 19,
+                "label": "contrast 3.96:1 (#6b789a on #0f1932, needs 4.5)",
+                "at": "<h4> \"Uptime · 90 days\""
+              },
+              {
+                "x": 1104,
+                "y": 1902,
+                "w": 60,
+                "h": 14,
+                "label": "contrast 3.98:1 (#6b789a on #141927, needs 4.5)",
+                "at": "<span.t> \"03:12:04\""
+              },
+              {
+                "x": 1104,
+                "y": 1946,
+                "w": 60,
+                "h": 14,
+                "label": "contrast 3.98:1 (#6b789a on #141927, needs 4.5)",
+                "at": "<span.t> \"03:12:05\""
+              },
+              {
+                "x": 1104,
+                "y": 1990,
+                "w": 60,
+                "h": 14,
+                "label": "contrast 3.98:1 (#6b789a on #141927, needs 4.5)",
+                "at": "<span.t> \"03:12:05\""
+              },
+              {
+                "x": 1156,
+                "y": 2033,
+                "w": 8,
+                "h": 16,
+                "label": "contrast 3.98:1 (#6b789a on #141927, needs 4.5)",
+                "at": "<span.t> \"✓\""
+              },
+              {
+                "x": 120,
+                "y": 2383,
+                "w": 273,
+                "h": 41,
+                "label": "contrast 2.54:1 (#ffffff on #10b981, needs 4.5)",
+                "at": "<div.sp-ok> \"All systems operational\""
+              },
+              {
+                "x": 318,
+                "y": 2442,
+                "w": 73,
+                "h": 21,
+                "label": "contrast 2.41:1 (#10b981 on #f7f9fc, needs 4.5)",
+                "at": "<span> \"Operational\""
+              },
+              {
+                "x": 318,
+                "y": 2477,
+                "w": 73,
+                "h": 21,
+                "label": "contrast 2.41:1 (#10b981 on #f7f9fc, needs 4.5)",
+                "at": "<span> \"Operational\""
+              },
+              {
+                "x": 318,
+                "y": 2513,
+                "w": 73,
+                "h": 21,
+                "label": "contrast 2.41:1 (#10b981 on #f7f9fc, needs 4.5)",
+                "at": "<span> \"Operational\""
+              },
+              {
+                "x": 503,
+                "y": 2351,
+                "w": 135,
+                "h": 14,
+                "label": "contrast 3.41:1 (#56648a on #030817, needs 4.5)",
+                "at": "<span.c> \"# end of backup.sh\""
+              },
+              {
+                "x": 74,
+                "y": 3663,
+                "w": 1132,
+                "h": 20,
+                "label": "contrast 4.47:1 (#6b789a on #050b1a, needs 4.5)",
+                "at": "<p> \"*Compared with single-region checks,…\""
+              },
+              {
+                "x": 533,
+                "y": 4077,
+                "w": 92,
+                "h": 38,
+                "label": "contrast 1.03:1 (#041022 on #0e1422, needs 4.5)",
+                "at": "<button.on> \"Monthly\""
+              },
+              {
+                "x": 174,
+                "y": 4338,
+                "w": 58,
+                "h": 23,
+                "label": "contrast 4.29:1 (#6b789a on #0b111f, needs 4.5)",
+                "at": "<span> \"/ forever\""
+              },
+              {
+                "x": 521,
+                "y": 4306,
+                "w": 14,
+                "h": 17,
+                "label": "contrast 4.02:1 (#6b789a on #0c1734, needs 4.5)",
+                "at": "<span.amt> \"29\""
+              },
+              {
+                "x": 541,
+                "y": 4303,
+                "w": 53,
+                "h": 23,
+                "label": "contrast 4.02:1 (#6b789a on #0c1734, needs 4.5)",
+                "at": "<span> \"/ month\""
+              },
+              {
+                "x": 904,
+                "y": 4342,
+                "w": 14,
+                "h": 17,
+                "label": "contrast 4.29:1 (#6b789a on #0b111f, needs 4.5)",
+                "at": "<span.amt> \"99\""
+              },
+              {
+                "x": 925,
+                "y": 4339,
+                "w": 53,
+                "h": 23,
+                "label": "contrast 4.29:1 (#6b789a on #0b111f, needs 4.5)",
+                "at": "<span> \"/ month\""
+              },
+              {
+                "x": 74,
+                "y": 6612,
+                "w": 169,
+                "h": 22,
+                "label": "contrast 4.47:1 (#6b789a on #050b1a, needs 4.5)",
+                "at": "<span> \"© 2026 Tideline Labs, Inc.\""
+              },
+              {
+                "x": 1043,
+                "y": 6612,
+                "w": 163,
+                "h": 22,
+                "label": "contrast 4.47:1 (#6b789a on #050b1a, needs 4.5)",
+                "at": "<span> \"Privacy · Terms · Security\""
+              },
+              {
+                "x": 1043,
+                "y": 6614,
+                "w": 47,
+                "h": 16,
+                "label": "contrast 4.47:1 (#6b789a on #050b1a, needs 4.5)",
+                "at": "<a> \"Privacy\""
+              },
+              {
+                "x": 1102,
+                "y": 6614,
+                "w": 40,
+                "h": 16,
+                "label": "contrast 4.47:1 (#6b789a on #050b1a, needs 4.5)",
+                "at": "<a> \"Terms\""
+              },
+              {
+                "x": 1153,
+                "y": 6614,
+                "w": 53,
+                "h": 16,
+                "label": "contrast 4.47:1 (#6b789a on #050b1a, needs 4.5)",
+                "at": "<a> \"Security\""
+              }
+            ],
+            "rationale": "179/219 text elements pass WCAG AA; contrast 4.47:1 (#6b789a on #050b1a, needs 4.5) at <span> \"Free for 10 monitors\"; contrast 4.47:1 (#6b789a on #050b1a, needs 4.5) at <span> \"No credit card\"; contrast 4.47:1 (#6b789a on #050b1a, needs 4.5) at <span> \"Set up in 2 minutes\"; contrast 3.77:1 (#6b789a on #141e36, needs 4.5) at <div.url> \"app.tideline.dev/acme\"; contrast 3.77:1 (#6b789a on #141e36, needs 4.5) at <span> \"24h\"; contrast 3.77:1 (#6b789a on #141e36, needs 4.5) at <span> \"7d\"; contrast 4.14:1 (#6b789a on #0b142e, needs 4.5) at <small> \"HTTPS · 30s\"; contrast 4.14:1 (#6b789a on #0b142e, needs 4.5) at <small> \"ms\"; +32 more"
+          }
+        }
+      ],
+      "pending": 0,
+      "score": 4.269,
+      "normalized": 0.81725
+    },
+    {
+      "criterionId": "plain_copy",
+      "name": "Headings are descriptions, not slogans",
+      "weight": 0,
+      "status": "scored",
+      "ratings": [
+        {
+          "id": "rat_qem0pc92mw60ul4y",
+          "criterionId": "plain_copy",
+          "raterId": "clef",
+          "judgeType": "decision",
+          "createdAt": "2026-11-07T06:27:48.994Z",
+          "status": "scored",
+          "score": 0,
+          "normalized": 0,
+          "confidence": 0.733,
+          "probabilities": {
+            "slogans": 0.8665,
+            "descriptions": 0.1335
+          },
+          "rationale": "cloudflare/@cf/cloudflare/clef distribution: slogans=87% descriptions=13%",
+          "raw": {
+            "provider": "cloudflare",
+            "model": "@cf/cloudflare/clef",
+            "question": {
+              "type": "noul",
+              "instructions": "Context: You review a product landing page (a screenshot of its first screen and its text) against facts.json, which lists\neverything true about the product. Be strict: when in doubt, judge it as failing. Each criterion looks only at the\nkind of problem it names; ignore other kinds of problems when judging it.\n Criterion \"Headings are descriptions, not slogans\". Is the input \"descriptions\" for this criterion?",
+              "criteria": {
+                "true": "Every heading and button names what that part of the page shows or does, in plain words, with no jokes or promises",
+                "false": "At least one heading or button is a slogan, joke or emotional promise rather than a description of what the product does (for example 'From zero to monitored before your coffee cools', 'Teams sleep better', 'Your next outage is coming')"
+              }
+            },
+            "answer": {
+              "type": "noul",
+              "noul": 0.1335
+            },
+            "levels": [
+              {
+                "value": 0,
+                "label": "slogans",
+                "description": "At least one heading or button is a slogan, joke or emotional promise rather than a description of what the product does (for example 'From zero to monitored before your coffee cools', 'Teams sleep better', 'Your next outage is coming')"
+              },
+              {
+                "value": 1,
+                "label": "descriptions",
+                "description": "Every heading and button names what that part of the page shows or does, in plain words, with no jokes or promises"
+              }
+            ],
+            "latencyMs": 1674,
+            "lowConfidence": false,
+            "stateChars": 4687,
+            "stateTruncated": false,
+            "images": {
+              "attached": 1,
+              "sent": 1
+            }
+          }
+        }
+      ],
+      "pending": 0,
+      "score": 0,
+      "normalized": 0
+    }
+  ],
+  "aggregate": {
+    "method": "formula",
+    "range": [
+      0,
+      100
+    ],
+    "gates": [
+      {
+        "criterion": "honest_proof",
+        "passed": true
+      }
+    ],
+    "partial": false,
+    "included": [
+      "clarity",
+      "look",
+      "focus"
+    ],
+    "excluded": [
+      "honest_proof",
+      "facts_true",
+      "decoration",
+      "motion",
+      "template_chrome",
+      "contrast",
+      "plain_copy"
+    ],
+    "raw": 0.198095,
+    "score": 20,
+    "grade": "rework",
+    "passed": false
+  },
+  "pendingTasks": [],
+  "usage": {
+    "decisionCalls": 2,
+    "llmCalls": 0,
+    "inputTokens": 6297,
+    "outputTokens": 0,
+    "durationMs": 7020
+  },
+  "createdAt": "2026-11-07T06:27:44.907Z",
+  "updatedAt": "2026-11-07T06:27:51.926Z"
+}

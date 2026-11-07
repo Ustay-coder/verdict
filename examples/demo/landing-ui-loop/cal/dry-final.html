@@ -1,0 +1,655 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tideline — Uptime monitoring for small engineering teams</title>
+<meta name="description" content="Tideline watches your APIs, websites, and cron jobs from 6 regions every 30 seconds and alerts only when 2 regions agree.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230b1530'/%3E%3Cpath d='M5 19c3.5 0 3.5-4 7-4s3.5 4 7 4 3.5-4 7-4' stroke='%2322e5c8' stroke-width='3' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
+<style>
+:root{
+  --bg:#050b1a;
+  --bg-2:#081229;
+  --surface:rgba(255,255,255,.035);
+  --surface-2:rgba(255,255,255,.06);
+  --border:rgba(148,178,255,.12);
+  --border-2:rgba(148,178,255,.22);
+  --text:#e9efff;
+  --muted:#9aa7c7;
+  --dim:#8c99ba;
+  --teal:#22e5c8;
+  --cyan:#38bdf8;
+  --violet:#8b5cf6;
+  --coral:#ff6b6b;
+  --amber:#fbbf24;
+  --green:#34d399;
+  --grad:#22e5c8;
+  --radius:18px;
+  --shadow:0 30px 80px -20px rgba(0,0,0,.6),0 0 0 1px var(--border);
+  --font:"IBM Plex Sans","Source Sans 3","DejaVu Sans",sans-serif;
+  --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{
+  font-family:var(--font);background:var(--bg);color:var(--text);
+  line-height:1.6;overflow-x:hidden;-webkit-font-smoothing:antialiased;
+}
+a{color:inherit;text-decoration:none}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+img,svg{display:block}
+.wrap{max-width:1180px;margin:0 auto;padding:0 24px}
+::selection{background:rgba(34,229,200,.35)}
+:focus-visible{outline:2px solid var(--teal);outline-offset:3px;border-radius:8px}
+
+/* ---------- Background ---------- */
+.bg-fx{position:fixed;inset:0;z-index:-1;pointer-events:none;overflow:hidden}
+.bg-fx::before{
+  content:"";position:absolute;inset:0;
+  background-image:linear-gradient(rgba(148,178,255,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(148,178,255,.05) 1px,transparent 1px);
+  background-size:56px 56px;
+  mask-image:radial-gradient(ellipse 80% 60% at 50% 0%,#000 30%,transparent 75%);
+  -webkit-mask-image:radial-gradient(ellipse 80% 60% at 50% 0%,#000 30%,transparent 75%);
+}
+.orb{position:absolute;border-radius:50%;filter:blur(90px);opacity:.55}
+.orb.a{width:620px;height:620px;background:#0ea5b7;top:-260px;left:-160px}
+.orb.b{width:560px;height:560px;background:#6d28d9;top:-180px;right:-200px;animation-delay:-8s;opacity:.4}
+.orb.c{width:480px;height:480px;background:#0369a1;top:55%;left:40%;animation-delay:-14s;opacity:.25}
+@keyframes drift{to{transform:translate(80px,60px) scale(1.1)}}
+
+/* ---------- Nav ---------- */
+.nav{position:sticky;top:0;z-index:50;transition:background .3s,border-color .3s,backdrop-filter .3s;border-bottom:1px solid transparent}
+.nav.scrolled{background:var(--bg);border-color:var(--border)}
+.nav .wrap{display:flex;align-items:center;justify-content:space-between;height:68px}
+.logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:19px;letter-spacing:-.02em}
+.logo-mark{display:inline-flex;align-items:center}
+.nav-links{display:flex;gap:30px;font-size:14.5px;color:var(--muted)}
+.nav-links a{transition:color .2s}
+.nav-links a:hover{color:var(--text)}
+.nav-cta{display:flex;align-items:center;gap:10px}
+.menu-btn{display:none;width:40px;height:40px;border-radius:10px;border:1px solid var(--border)}
+.menu-btn span{display:block;width:18px;height:2px;background:var(--text);margin:4px auto;border-radius:2px;transition:transform .3s,opacity .3s}
+
+/* ---------- Buttons ---------- */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:42px;padding:0 18px;border-radius:12px;font-weight:600;font-size:14.5px;transition:transform .2s,box-shadow .2s,background .2s,border-color .2s;white-space:nowrap}
+.btn-lg{height:52px;padding:0 26px;font-size:16px;border-radius:14px}
+.btn-primary{background:var(--grad);color:#041022}
+.btn-primary:hover{background:#5eead4}
+.btn-ghost{border:1px solid var(--border-2);background:var(--surface)}
+.btn-ghost:hover{background:var(--surface-2);border-color:rgba(148,178,255,.35)}
+.btn .arrow{transition:transform .2s}
+.btn:hover .arrow{transform:translateX(3px)}
+
+/* ---------- Hero ---------- */
+.hero{padding:72px 0 40px;text-align:center;position:relative}
+.pill{display:inline-flex;align-items:center;gap:10px;padding:6px 14px 6px 6px;border-radius:999px;border:1px solid var(--border-2);background:var(--bg-2);font-size:13.5px;color:var(--muted)}
+.pill b{background:var(--grad);color:#041022;font-size:11.5px;padding:3px 9px;border-radius:999px;letter-spacing:.02em}
+.pill:hover{color:var(--text)}
+h1{font-size:clamp(42px,7.4vw,86px);line-height:1.02;letter-spacing:-.045em;font-weight:800;margin:26px auto 22px;max-width:14ch}
+.grad-text{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;background-size:200% 100%}
+@keyframes shimmer{50%{background-position:100% 0}}
+.lede{font-size:clamp(17px,2vw,20px);color:var(--muted);max-width:620px;margin:0 auto 34px}
+.hero-ctas{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.hero-note{margin-top:18px;font-size:13.5px;color:var(--dim);display:flex;gap:18px;justify-content:center;flex-wrap:wrap}
+.hero-note span{display:inline-flex;align-items:center;gap:6px}
+.hero-note svg{color:var(--teal)}
+
+/* ---------- Dashboard mock ---------- */
+.stage{position:relative;margin:64px auto 0;max-width:1060px;perspective:1800px}
+.stage::before{content:"";position:absolute;inset:8% 6% -4%;background:var(--grad);filter:blur(80px);opacity:.28;border-radius:40px;z-index:-1}
+.dash{
+  border-radius:22px;background:linear-gradient(180deg,rgba(14,26,56,.92),rgba(8,16,38,.95));
+  box-shadow:var(--shadow),inset 0 1px 0 rgba(255,255,255,.06);
+  text-align:left;overflow:hidden;transform:rotateX(8deg) scale(.97);transform-origin:50% 0;
+  transition:transform .9s cubic-bezier(.2,.8,.2,1);
+}
+.stage.in .dash{transform:rotateX(0) scale(1)}
+.dash-top{display:flex;align-items:center;gap:14px;padding:14px 18px;border-bottom:1px solid var(--border)}
+.dots{display:flex;gap:7px}
+.dots i{width:11px;height:11px;border-radius:50%;background:#26324f}
+.dots i:nth-child(1){background:#ff5f57}.dots i:nth-child(2){background:#febc2e}.dots i:nth-child(3){background:#28c840}
+.url{flex:1;max-width:360px;margin:0 auto;height:28px;border-radius:8px;background:rgba(255,255,255,.04);border:1px solid var(--border);font:12.5px var(--mono);color:var(--dim);display:flex;align-items:center;justify-content:center;gap:6px}
+.dash-body{display:grid;grid-template-columns:1.55fr 1fr}
+.dash-main{padding:22px;border-right:1px solid var(--border)}
+.dash-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;gap:10px;flex-wrap:wrap}
+.dash-head h3{font-size:15px;font-weight:600;display:flex;align-items:center;gap:10px}
+.all-good{font-size:12px;font-weight:600;color:var(--green);background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.25);padding:3px 10px;border-radius:999px;display:inline-flex;align-items:center;gap:6px}
+.tabs{display:flex;gap:4px;padding:3px;background:rgba(255,255,255,.04);border-radius:9px;border:1px solid var(--border);font-size:12px}
+.tabs span{padding:4px 10px;border-radius:6px;color:var(--dim)}
+.tabs span.on{background:rgba(255,255,255,.08);color:var(--text)}
+.mon{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,2fr) 64px;align-items:center;gap:16px;padding:12px 4px;border-top:1px solid rgba(148,178,255,.07)}
+.mon:first-of-type{border-top:0}
+.mon-name{display:flex;align-items:center;gap:10px;min-width:0}
+.mon-name div{min-width:0}
+.mon-name b{font-size:13.5px;font-weight:600;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mon-name small{font:11.5px var(--mono);color:var(--dim);white-space:nowrap}
+.status{width:9px;height:9px;border-radius:50%;background:var(--green);flex:none;position:relative}
+.status::after{content:"";position:absolute;inset:-4px;border-radius:50%;border:2px solid var(--green);opacity:0}
+.status.warn{background:var(--amber)}.status.warn::after{border-color:var(--amber)}
+@keyframes ping{0%{transform:scale(.6);opacity:.8}100%{transform:scale(1.8);opacity:0}}
+.bars{display:flex;gap:2px;height:26px;align-items:stretch}
+.bars i{flex:1;border-radius:2px;background:var(--green);opacity:.85;transform-origin:bottom;animation:grow .6s cubic-bezier(.2,.8,.2,1) both}
+.bars i.w{background:var(--amber)}
+.bars i.d{background:var(--coral)}
+.bars i:hover{opacity:1;filter:brightness(1.25)}
+@keyframes grow{from{transform:scaleY(0)}}
+.ms{font:600 13px var(--mono);text-align:right;color:var(--text);font-variant-numeric:tabular-nums}
+.ms small{color:var(--dim);font-weight:400}
+.dash-side{padding:22px;display:flex;flex-direction:column;gap:16px}
+.card-mini{border:1px solid var(--border);border-radius:14px;padding:14px;background:rgba(255,255,255,.02)}
+.card-mini h4{font-size:12px;color:var(--dim);font-weight:500;text-transform:uppercase;letter-spacing:.08em;display:flex;justify-content:space-between}
+.big{font-size:30px;font-weight:700;letter-spacing:-.03em;margin-top:4px;font-variant-numeric:tabular-nums}
+.big small{font-size:14px;color:var(--green);font-weight:600;margin-left:6px;letter-spacing:0}
+#spark{width:100%;height:74px;margin-top:6px}
+.regions{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:10px}
+.regions span{font:11px var(--mono);color:var(--muted);background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:7px;padding:5px 0;text-align:center;position:relative;transition:border-color .3s,color .3s,background .3s}
+.regions span.hit{border-color:rgba(34,229,200,.6);color:var(--teal);background:rgba(34,229,200,.08)}
+
+/* toast */
+.toast{position:absolute;right:-18px;bottom:-26px;width:320px;border-radius:16px;padding:14px 16px;background:rgba(16,26,52,.92);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 20px 50px -10px rgba(0,0,0,.7),0 0 0 1px var(--border-2);text-align:left;display:flex;gap:12px;transform:translateY(20px);opacity:0;transition:transform .5s cubic-bezier(.2,.9,.3,1.3),opacity .4s}
+.toast.show{transform:none;opacity:1}
+.toast .ic{width:34px;height:34px;border-radius:10px;flex:none;display:grid;place-items:center;background:rgba(52,211,153,.12);color:var(--green)}
+.toast.bad .ic{background:rgba(255,107,107,.12);color:var(--coral)}
+.toast b{font-size:13.5px;display:block}
+.toast p{font-size:12.5px;color:var(--muted);line-height:1.45}
+.toast time{font:11px var(--mono);color:var(--dim)}
+
+/* ---------- Logos ---------- */
+.logos{padding:90px 0 30px;text-align:center}
+.logos p{font-size:13px;color:var(--dim);text-transform:uppercase;letter-spacing:.14em;margin-bottom:26px}
+.marquee{overflow:hidden;mask-image:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent);-webkit-mask-image:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent)}
+.track{display:flex;gap:64px;width:max-content;animation:scroll 34s linear infinite}
+.track span{font-size:22px;font-weight:700;color:#55638a;letter-spacing:-.02em;display:flex;align-items:center;gap:8px;white-space:nowrap}
+.track span:hover{color:var(--muted)}
+@keyframes scroll{to{transform:translateX(-50%)}}
+
+/* ---------- Sections ---------- */
+section{position:relative}
+.sec{padding:110px 0}
+.eyebrow{display:inline-flex;align-items:center;gap:8px;font:600 12.5px var(--mono);color:var(--teal);text-transform:uppercase;letter-spacing:.14em}
+.eyebrow::before{content:"";width:18px;height:1px;background:currentColor}
+h2{font-size:clamp(32px,4.6vw,54px);line-height:1.08;letter-spacing:-.035em;font-weight:800;margin:14px 0 16px}
+.sec-head{max-width:680px;margin-bottom:56px}
+.sec-head.center{margin-left:auto;margin-right:auto;text-align:center}
+.sec-head p{color:var(--muted);font-size:18px}
+
+/* bento */
+.bento{display:grid;grid-template-columns:repeat(6,1fr);gap:18px}
+.tile{grid-column:span 2;position:relative;border-radius:var(--radius);padding:28px;background:var(--bg-2);border:1px solid var(--border);overflow:hidden;transition:border-color .3s}
+.tile:hover{border-color:var(--border-2)}
+.tile.wide{grid-column:span 3}
+.tile.xwide{grid-column:span 4}
+.tile h3{font-size:20px;letter-spacing:-.02em;margin:0 0 8px}
+.tile p{color:var(--muted);font-size:15px}
+.ticon{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;background:rgba(34,229,200,.08);border:1px solid rgba(34,229,200,.22);color:var(--teal)}
+.ticon.v{background:rgba(139,92,246,.1);border-color:rgba(139,92,246,.3);color:#a78bfa}
+.ticon.c{background:rgba(56,189,248,.1);border-color:rgba(56,189,248,.3);color:var(--cyan)}
+.ticon.r{background:rgba(255,107,107,.1);border-color:rgba(255,107,107,.3);color:var(--coral)}
+
+/* globe/map viz */
+.map{margin-top:24px;height:190px;position:relative;border-radius:14px;overflow:hidden}
+.map svg{width:100%;height:100%}
+.node{fill:var(--teal)}
+.node-ring{fill:none;stroke:var(--teal);stroke-width:1.5;transform-box:fill-box;transform-origin:center;opacity:0}
+@keyframes ring{from{transform:scale(.5);opacity:1}to{transform:scale(3.2);opacity:0}}
+.arc{fill:none;stroke:var(--teal);stroke-width:1.5;stroke-dasharray:4 6}
+@keyframes dash{to{stroke-dashoffset:-20}}
+
+/* alert verify viz */
+.verify{margin-top:22px;display:flex;flex-direction:column;gap:8px;font:12.5px var(--mono)}
+.vrow{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:10px;background:rgba(255,255,255,.03);border:1px solid var(--border);color:var(--muted)}
+.vrow .t{margin-left:auto;color:var(--dim)}
+.chip{font-size:11px;font-weight:700;padding:2px 8px;border-radius:6px}
+.chip.fail{color:var(--coral);background:rgba(255,107,107,.12)}
+.chip.ok{color:var(--green);background:rgba(52,211,153,.12)}
+.chip.go{color:#041022;background:var(--grad)}
+
+/* status page mini */
+.sp{margin-top:22px;border-radius:14px;border:1px solid var(--border);background:#f7f9fc;color:#0b1530;padding:16px;font-size:13px}
+.sp-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.sp-h b{font-size:14px}
+.sp-ok{background:#047857;color:#fff;border-radius:10px;padding:10px 12px;font-weight:600;display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.sp-row{display:flex;justify-content:space-between;padding:7px 2px;border-top:1px solid #e5e9f2;color:#334155}
+.sp-row span:last-child{color:#047857;font-weight:600}
+
+/* code */
+.code{margin-top:22px;border-radius:12px;background:#030817;border:1px solid var(--border);padding:16px;font:12.5px/1.7 var(--mono);color:#c7d2fe;overflow-x:auto;white-space:pre}
+.code .k{color:#f472b6}.code .s{color:var(--teal)}.code .c{color:#8c99ba}.code .n{color:var(--amber)}
+
+/* integrations */
+.ints{display:flex;flex-wrap:wrap;gap:8px;margin-top:22px}
+.ints span{font-size:13px;padding:7px 12px;border-radius:9px;border:1px solid var(--border);background:rgba(255,255,255,.03);color:var(--muted);display:inline-flex;align-items:center;gap:7px}
+.ints span i{width:8px;height:8px;border-radius:3px;display:inline-block}
+
+/* ---------- Steps ---------- */
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;counter-reset:s;position:relative}
+.step{text-align:center;padding:0 10px}
+.step-n{width:54px;height:54px;margin:0 auto 22px;border-radius:16px;display:grid;place-items:center;font:700 18px var(--mono);background:var(--bg-2);border:1px solid var(--border-2);position:relative}
+.step h3{font-size:19px;margin-bottom:8px;letter-spacing:-.02em}
+.step p{color:var(--muted);font-size:15px;max-width:300px;margin:0 auto}
+
+/* ---------- Stats ---------- */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);border:1px solid var(--border);border-radius:22px;background:var(--bg-2);overflow:hidden}
+.stat{padding:38px 28px;border-left:1px solid var(--border)}
+.stat:first-child{border-left:0}
+.stat b{display:block;font-size:clamp(32px,4vw,46px);font-weight:800;letter-spacing:-.04em;font-variant-numeric:tabular-nums}
+.stat span{color:var(--muted);font-size:14.5px}
+
+/* ---------- Testimonials ---------- */
+.quotes{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.quote{border-radius:var(--radius);padding:28px;border:1px solid var(--border);background:rgba(255,255,255,.025);display:flex;flex-direction:column;gap:22px;transition:transform .3s,border-color .3s}
+.quote:hover{transform:translateY(-4px);border-color:var(--border-2)}
+.quote.feat{background:linear-gradient(160deg,rgba(34,229,200,.12),rgba(139,92,246,.1));border-color:rgba(56,189,248,.3)}
+.quote p{font-size:16.5px;line-height:1.6}
+.who{display:flex;align-items:center;gap:12px;margin-top:auto}
+.av{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:15px;color:#041022}
+.who b{font-size:14.5px;display:block}
+.who small{color:var(--dim);font-size:13px}
+.stars{color:var(--amber);letter-spacing:2px;font-size:14px}
+
+/* ---------- Pricing ---------- */
+.toggle{display:inline-flex;align-items:center;gap:4px;padding:4px;border-radius:999px;border:1px solid var(--border-2);background:var(--surface);margin-top:10px;position:relative}
+.toggle button{position:relative;z-index:1;padding:8px 18px;border-radius:999px;font-size:14px;font-weight:600;color:var(--muted);transition:color .3s}
+.toggle button.on{color:#041022}
+.toggle .knob{position:absolute;top:4px;bottom:4px;left:4px;border-radius:999px;background:var(--grad);transition:transform .35s cubic-bezier(.3,.9,.3,1),width .35s}
+.save{font-size:11px;font-weight:700;color:var(--teal);margin-left:4px}
+.toggle button.on .save{color:#041022}
+.plans{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;align-items:stretch}
+.plan{border-radius:22px;padding:32px;border:1px solid var(--border);background:rgba(255,255,255,.025);display:flex;flex-direction:column;position:relative}
+.plan.pop{background:var(--bg-2);border-color:var(--teal)}
+.tag{position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:var(--grad);color:#041022;font-size:12px;font-weight:700;padding:4px 12px;border-radius:999px;white-space:nowrap}
+.plan h3{font-size:18px}
+.plan .desc{color:var(--muted);font-size:14.5px;margin:6px 0 22px;min-height:46px}
+.price{display:flex;align-items:baseline;gap:6px;margin-bottom:24px}
+.price b{font-size:50px;font-weight:800;letter-spacing:-.045em;line-height:1;font-variant-numeric:tabular-nums}
+.price span{color:var(--dim);font-size:14.5px}
+.plan ul{list-style:none;display:flex;flex-direction:column;gap:12px;margin:26px 0 0;font-size:14.5px;color:var(--muted)}
+.plan li{display:flex;gap:10px;align-items:flex-start}
+.plan li svg{flex:none;margin-top:4px;color:var(--teal)}
+.plan .btn{width:100%}
+
+/* ---------- FAQ ---------- */
+.faq{max-width:780px;margin:0 auto;display:flex;flex-direction:column;gap:10px}
+details{border:1px solid var(--border);border-radius:14px;background:rgba(255,255,255,.025);transition:border-color .3s,background .3s}
+details[open]{border-color:var(--border-2);background:rgba(255,255,255,.04)}
+summary{list-style:none;cursor:pointer;padding:20px 22px;font-weight:600;font-size:16.5px;display:flex;justify-content:space-between;align-items:center;gap:16px}
+summary::-webkit-details-marker{display:none}
+summary .pm{flex:none;font-size:20px;line-height:1;transition:transform .3s}
+details[open] summary .pm{transform:rotate(45deg);color:var(--teal)}
+details p{padding:0 22px 20px;color:var(--muted);font-size:15.5px}
+
+/* ---------- CTA ---------- */
+.cta{margin:40px 0 0;padding:0 0 110px}
+.cta-box{position:relative;border-radius:30px;padding:90px 30px 150px;text-align:center;overflow:hidden;background:#0b1a3d;border:1px solid var(--border-2)}
+.cta-box h2{max-width:16ch;margin:0 auto 16px}
+.cta-box p{color:var(--muted);font-size:18px;max-width:520px;margin:0 auto 32px}
+.waves{position:absolute;left:0;right:0;bottom:0;height:150px;pointer-events:none}
+.waves svg{position:absolute;bottom:0;width:200%;height:100%}
+.waves svg:nth-child(2){opacity:.6}
+.waves svg:nth-child(3){opacity:.4}
+@keyframes wave{to{transform:translateX(-50%)}}
+.signup{display:flex;gap:10px;max-width:470px;margin:0 auto;padding:6px;border-radius:16px;background:rgba(3,8,23,.6);border:1px solid var(--border-2);position:relative;z-index:1}
+.signup input{flex:1;min-width:0;background:none;border:0;outline:0;color:var(--text);font:inherit;font-size:15px;padding:0 12px}
+.signup input::placeholder{color:var(--dim)}
+.signup-msg{position:relative;z-index:1;margin-top:14px;font-size:14px;color:var(--teal);min-height:22px}
+
+/* ---------- Footer ---------- */
+footer{border-top:1px solid var(--border);padding:60px 0 40px;color:var(--muted);font-size:14.5px}
+.foot{display:grid;grid-template-columns:2fr repeat(3,1fr);gap:40px}
+.foot h5{color:var(--text);font-size:14px;margin-bottom:14px}
+.foot ul{list-style:none;display:flex;flex-direction:column;gap:10px}
+.foot a:hover{color:var(--text)}
+.foot-bottom{margin-top:50px;padding-top:24px;border-top:1px solid var(--border);display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;color:var(--dim);font-size:13.5px}
+.sys{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border-radius:999px;border:1px solid var(--border);margin-top:20px;font-size:13px}
+
+/* ---------- Reveal ---------- */
+.reveal{opacity:1}
+.reveal.in{opacity:1;transform:none}
+.d1{transition-delay:.08s}.d2{transition-delay:.16s}.d3{transition-delay:.24s}.d4{transition-delay:.32s}
+
+/* ---------- Responsive ---------- */
+@media (max-width:980px){
+  .dash-body{grid-template-columns:1fr}
+  .dash-main{border-right:0;border-bottom:1px solid var(--border)}
+  .dash-side{display:grid;grid-template-columns:1fr 1fr}
+  .bento{grid-template-columns:repeat(2,1fr)}
+  .tile,.tile.wide,.tile.xwide{grid-column:span 2}
+  .quotes,.plans{grid-template-columns:1fr}
+  .plans{max-width:480px;margin:0 auto}
+  .plan.pop{transform:none}
+  .stats{grid-template-columns:repeat(2,1fr)}
+  .stat:nth-child(3){border-left:0}
+  .stat:nth-child(n+3){border-top:1px solid var(--border)}
+  .foot{grid-template-columns:1fr 1fr}
+  .toast{right:12px;bottom:-30px}
+}
+@media (max-width:760px){
+  .nav-links,.nav-cta .btn-ghost{display:none}
+  .menu-btn{display:block}
+  .nav.open .nav-links{display:flex;position:absolute;top:68px;left:0;right:0;flex-direction:column;gap:0;background:var(--bg);border-bottom:1px solid var(--border);padding:8px 24px 20px}
+  .nav.open .nav-links a{padding:12px 0;border-bottom:1px solid var(--border);font-size:16px}
+  .nav.open .menu-btn span:nth-child(1){transform:translateY(6px) rotate(45deg)}
+  .nav.open .menu-btn span:nth-child(2){opacity:0}
+  .nav.open .menu-btn span:nth-child(3){transform:translateY(-6px) rotate(-45deg)}
+  .wrap{padding:0 16px}
+  .hero{padding-top:48px}
+  .sec{padding:80px 0}
+  .dash-side{grid-template-columns:1fr}
+  .mon{grid-template-columns:minmax(0,1fr) 58px;gap:8px 12px}
+  .mon .bars{grid-column:1/-1;grid-row:2;height:20px}
+  .tabs{display:none}
+  .steps{grid-template-columns:1fr;gap:40px}
+  .steps::before{display:none}
+  .toast{position:relative;right:auto;bottom:auto;width:auto;margin:16px 0 0}
+  .foot{grid-template-columns:1fr}
+  .tile{padding:22px}
+  .cta-box{padding:64px 20px 130px;border-radius:22px}
+  .signup{flex-direction:column;background:none;border:0;padding:0}
+  .signup input{height:50px;border-radius:14px;background:rgba(3,8,23,.6);border:1px solid var(--border-2)}
+  .url{display:none}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important;scroll-behavior:auto!important}
+  .reveal{opacity:1;transform:none}
+}
+</style>
+</head>
+<body>
+
+
+<!-- NAV -->
+<header class="nav" id="nav">
+  <div class="wrap">
+    <a href="#" class="logo" aria-label="Tideline home">
+      <span class="logo-mark">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M2 14c2.6 0 2.6-3 5.2-3s2.6 3 5.2 3 2.6-3 5.2-3S20.2 14 22 14" stroke="#22e5c8" stroke-width="2.6" stroke-linecap="round"/><path d="M2 19c2.6 0 2.6-3 5.2-3s2.6 3 5.2 3 2.6-3 5.2-3S20.2 19 22 19" stroke="#22e5c8" stroke-width="2.6" stroke-linecap="round" opacity=".45"/></svg>
+      </span>
+      Tideline
+    </a>
+    <nav class="nav-links" id="navLinks">
+      <a href="#features">Features</a>
+      <a href="#how">How it works</a>
+      <a href="#pricing">Pricing</a>
+      <a href="#faq">FAQ</a>
+    </nav>
+    <div class="nav-cta">
+      <a href="#pricing" class="btn btn-ghost">Sign in</a>
+      <a href="#start" class="btn btn-primary">Start free</a>
+      <button class="menu-btn" id="menuBtn" aria-label="Toggle menu" aria-expanded="false"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</header>
+
+<main>
+<!-- HERO -->
+<section class="hero">
+  <div class="wrap">
+    <a href="#features" class="pill reveal"><b>New</b> Status pages on your own domain &nbsp;→</a>
+    <h1 class="reveal d1">Uptime and cron-job monitoring for small engineering teams.</h1>
+    <p class="lede reveal d2">For small engineering teams who run their own services. Tideline checks your URLs from 6 regions every 30 seconds, alerts only when 2 regions agree, and watches cron jobs that stop reporting in.</p>
+    <div class="hero-ctas reveal d3">
+      <a href="#start" class="btn btn-primary btn-lg">Start monitoring free <span class="arrow">→</span></a>
+      <a href="#how" class="btn btn-ghost btn-lg">
+        See how it works
+      </a>
+    </div>
+    <div class="hero-note reveal d4">
+      <span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L20 7"/></svg>Free for 5 monitors</span>
+      <span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L20 7"/></svg>No credit card</span>
+      <span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L20 7"/></svg>First check within 60 seconds</span>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="sec" id="features">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <h2>What Tideline monitors and how it alerts</h2>
+      <p>The tools a five-person team actually needs, configured in minutes and quiet unless something is genuinely wrong.</p>
+    </div>
+
+    <div class="bento">
+      <article class="tile xwide reveal">
+        <h3>Checks from 6 regions, every 30 seconds</h3>
+        <p>Paste a URL and Tideline checks it from 6 regions. You find out about a regional outage even when it looks fine from your own laptop.</p>
+        <div class="map" aria-hidden="true">
+          <svg viewBox="0 0 600 190" preserveAspectRatio="xMidYMid meet" id="mapSvg">
+            <defs>
+              <pattern id="dotgrid" width="9" height="9" patternUnits="userSpaceOnUse"><circle cx="1.5" cy="1.5" r="1.2" fill="rgba(148,178,255,.18)"/></pattern>
+            </defs>
+            <!-- stylised continents -->
+            <g fill="url(#dotgrid)">
+              <path d="M40 40 Q90 20 150 35 L175 70 Q160 95 130 100 L115 130 Q95 120 85 95 L50 80 Z"/>
+              <path d="M150 115 Q175 110 185 130 L175 175 Q160 180 155 160 Z"/>
+              <path d="M270 35 Q310 25 340 40 L330 70 Q300 75 280 65 Z"/>
+              <path d="M285 80 Q320 75 335 95 L325 150 Q305 160 295 135 Z"/>
+              <path d="M345 30 Q430 15 510 40 L520 80 Q480 95 440 90 L410 110 Q380 95 360 70 Z"/>
+              <path d="M480 130 Q520 120 545 135 L540 160 Q505 168 485 155 Z"/>
+            </g>
+            <g id="arcs"></g>
+            <g id="nodes"></g>
+          </svg>
+        </div>
+      </article>
+
+      <article class="tile reveal d1">
+        <h3>Failures confirmed from more than one region</h3>
+        <p>Before anyone gets alerted, the failure has to be seen from 2 regions.</p>
+        <div class="verify" aria-hidden="true">
+          <div class="vrow"><span class="chip fail">FAIL</span>fra timeout</div>
+          <div class="vrow"><span class="chip ok">OK</span>iad responded</div>
+          <div class="vrow"><span class="chip ok">OK</span>sin responded</div>
+          <div class="vrow" style="border-style:dashed"><span class="chip go">HELD</span>Only one region failed: no alert</div>
+        </div>
+      </article>
+
+      <article class="tile reveal">
+        <h3>Public status pages</h3>
+        <p>One public status page per project, on your own domain.</p>
+        <div class="sp" aria-hidden="true">
+          <div class="sp-h"><b>Acme Status</b><span style="color:#475569;font-size:12px">status.acme.dev</span></div>
+          <div class="sp-ok"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L20 7"/></svg>All systems operational</div>
+          <div class="sp-row"><span>API</span><span>Operational</span></div>
+          <div class="sp-row"><span>Dashboard</span><span>Operational</span></div>
+          <div class="sp-row"><span>Webhooks</span><span>Operational</span></div>
+        </div>
+      </article>
+
+      <article class="tile reveal d1">
+        <h3>Heartbeats for cron jobs</h3>
+        <p>Each job pings a unique URL when it finishes. If a ping is missed, Tideline alerts you after a grace period you set.</p>
+        <div class="code"><span class="c"># end of backup.sh</span>
+<span class="k">curl</span> -fsS <span class="s">https://hb.tideline.dev/</span><span class="n">your-job-id</span></div>
+      </article>
+
+      <article class="tile reveal d2">
+        <h3>Alert channels</h3>
+        <p>Send alerts to Slack, email, SMS, PagerDuty or webhooks.</p>
+        <div class="ints" aria-hidden="true">
+          <span><i style="background:#e01e5a"></i>Slack</span>
+          <span><i style="background:#38bdf8"></i>Email</span>
+          <span><i style="background:#22e5c8"></i>SMS</span>
+          <span><i style="background:#34d399"></i>PagerDuty</span>
+          <span><i style="background:#fbbf24"></i>Webhooks</span>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- HOW -->
+<section class="sec" id="how" style="padding-top:40px">
+  <div class="wrap">
+    <div class="sec-head center reveal">
+      <h2>How to set up a monitor</h2>
+    </div>
+    <div class="steps">
+      <div class="step reveal"><h3>Paste a URL</h3><p>The first check runs within 60 seconds.</p></div>
+      <div class="step reveal d1"><h3>Choose who gets alerts</h3><p>Connect Slack, email, SMS, PagerDuty or a webhook.</p></div>
+      <div class="step reveal d2"><h3>Receive an alert when a check fails</h3><p>You are alerted when 2 of the 6 regions agree that the check failed.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- STATS -->
+<section class="sec" style="padding-top:30px">
+  <div class="wrap">
+    <div class="stats reveal">
+      <div class="stat"><b>30s</b><span>between checks</span></div>
+      <div class="stat"><b>6</b><span>check regions</span></div>
+      <div class="stat"><b>2</b><span>regions must agree before an alert</span></div>
+      <div class="stat"><b>60s</b><span>until your first check runs</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section class="sec" id="pricing" style="padding-top:40px">
+  <div class="wrap">
+    <div class="sec-head center reveal">
+      <h2>Plans and prices</h2>
+    </div>
+    <div class="plans" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr));max-width:820px;margin:0 auto">
+      <div class="plan reveal">
+        <h3>Free</h3>
+        <p class="desc">For trying Tideline on a few services.</p>
+        <div class="price"><b>$0</b><span>/ month</span></div>
+        <a href="#start" class="btn btn-ghost">Start free</a>
+        <ul>
+          <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L20 7"/></svg>5 monitors</li>
+        </ul>
+      </div>
+      <div class="plan pop reveal d1">
+        <h3>Team</h3>
+        <p class="desc">For small engineering teams running their own services.</p>
+        <div class="price"><b>$19</b><span>/ month</span></div>
+        <a href="#start" class="btn btn-primary">Start 14-day trial <span class="arrow">→</span></a>
+        <ul>
+          <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L20 7"/></svg>100 monitors</li>
+          <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L20 7"/></svg>14-day trial, no card required</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section class="sec" id="faq" style="padding-top:40px">
+  <div class="wrap">
+    <div class="sec-head center reveal">
+      <h2>Frequently asked questions</h2>
+    </div>
+    <div class="faq reveal">
+      <details open><summary>How does Tideline avoid false alarms?<span class="pm">+</span></summary><p>Every check runs from 6 regions. You're alerted only when 2 regions agree the service is down, so one flaky network path won't wake you.</p></details>
+      <details><summary>Do I need a card for the trial?<span class="pm">+</span></summary><p>No. The Team plan has a 14-day trial and no card is required.</p></details>
+      <details><summary>What happens when I hit my monitor limit?<span class="pm">+</span></summary><p>Your existing monitors keep running. We'll ask you to upgrade or archive a monitor before you add another. We never switch off monitoring without warning.</p></details>
+      <details><summary>Is there an API?<span class="pm">+</span></summary><p>Yes. There's a full REST API, a CLI, and a Terraform provider. Anything you can do in the dashboard, you can also script.</p></details>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta" id="start">
+  <div class="wrap">
+    <div class="cta-box reveal">
+      <h2 style="margin-top:14px">Create a Tideline account with your work email</h2>
+      <p>The Free plan covers 5 monitors. Team is $19 a month for 100 monitors.</p>
+      <form class="signup" id="signup" novalidate>
+        <label for="email" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Work email</label>
+        <input id="email" type="email" placeholder="you@company.com" autocomplete="email" required>
+        <button class="btn btn-primary" type="submit">Create account <span class="arrow">→</span></button>
+      </form>
+      <div class="signup-msg" id="signupMsg" aria-live="polite"></div>
+      <div class="waves" aria-hidden="true">
+        <svg viewBox="0 0 1200 150" preserveAspectRatio="none"><path d="M0 80 C150 40 300 120 450 80 S750 40 900 80 S1050 120 1200 80 V150 H0Z M1200 80 C1350 40 1500 120 1650 80 S1950 40 2100 80 S2250 120 2400 80 V150 H1200Z" fill="rgba(34,229,200,.14)" transform="scale(.5 1)"/></svg>
+        <svg viewBox="0 0 1200 150" preserveAspectRatio="none"><path d="M0 100 C200 70 400 130 600 100 S1000 70 1200 100 S1600 130 1800 100 S2200 70 2400 100 V150 H0Z" fill="rgba(56,189,248,.16)" transform="scale(.5 1)"/></svg>
+        <svg viewBox="0 0 1200 150" preserveAspectRatio="none"><path d="M0 115 C100 100 200 130 300 115 S500 100 600 115 S800 130 900 115 S1100 100 1200 115 S1400 130 1500 115 S1700 100 1800 115 S2000 130 2100 115 S2300 100 2400 115 V150 H0Z" fill="rgba(139,92,246,.22)" transform="scale(.5 1)"/></svg>
+      </div>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="foot">
+      <div>
+        <a href="#" class="logo"><span class="logo-mark"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M2 14c2.6 0 2.6-3 5.2-3s2.6 3 5.2 3 2.6-3 5.2-3S20.2 14 22 14" stroke="#22e5c8" stroke-width="2.6" stroke-linecap="round"/></svg></span>Tideline</a>
+        <p style="margin-top:14px;max-width:300px">Calm, reliable uptime monitoring for small engineering teams.</p>
+        <span class="sys"><span class="status" style="width:7px;height:7px"></span>All Tideline systems operational</span>
+      </div>
+      <div><h5>Product</h5><ul><li><a href="#features">Features</a></li><li><a href="#pricing">Pricing</a></li><li><a href="#">Status pages</a></li><li><a href="#">Changelog</a></li></ul></div>
+      <div><h5>Developers</h5><ul><li><a href="#">Docs</a></li><li><a href="#">API reference</a></li><li><a href="#">CLI</a></li><li><a href="#">Terraform</a></li></ul></div>
+      <div><h5>Company</h5><ul><li><a href="#">About</a></li><li><a href="#">Blog</a></li><li><a href="#">Careers</a></li><li><a href="#">Contact</a></li></ul></div>
+    </div>
+    <div class="foot-bottom"><span>© 2026 Tideline Labs, Inc.</span><span><a href="#">Privacy</a> · <a href="#">Terms</a> · <a href="#">Security</a></span></div>
+  </div>
+</footer>
+
+<script>
+(() => {
+  const $ = (s, r = document) => r.querySelector(s);
+  const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* Nav */
+  const nav = $('#nav'), menuBtn = $('#menuBtn');
+  const onScroll = () => nav.classList.toggle('scrolled', scrollY > 10);
+  addEventListener('scroll', onScroll, { passive: true }); onScroll();
+  menuBtn.addEventListener('click', () => {
+    const open = nav.classList.toggle('open');
+    menuBtn.setAttribute('aria-expanded', open);
+  });
+  $$('#navLinks a').forEach(a => a.addEventListener('click', () => { nav.classList.remove('open'); menuBtn.setAttribute('aria-expanded', false); }));
+
+  /* Map nodes: one per check region */
+  const nodes = [[95,62],[165,145],[300,50],[310,120],[455,62],[510,140]];
+  const gN = $('#nodes'), gA = $('#arcs'), NS = 'http://www.w3.org/2000/svg';
+  const hub = [300, 50];
+  nodes.forEach(([x, y], i) => {
+    if (i !== 2) {
+      const p = document.createElementNS(NS, 'path');
+      const mx = (x + hub[0]) / 2, my = Math.min(y, hub[1]) - 30 - Math.abs(x - hub[0]) * .12;
+      p.setAttribute('d', `M${hub[0]},${hub[1]} Q${mx},${my} ${x},${y}`);
+      p.setAttribute('class', 'arc'); p.style.animationDelay = (i * -.2) + 's';
+      gA.appendChild(p);
+    }
+    const ring = document.createElementNS(NS, 'circle');
+    ring.setAttribute('cx', x); ring.setAttribute('cy', y); ring.setAttribute('r', 4);
+    ring.setAttribute('class', 'node-ring'); ring.style.animationDelay = (i * .23) + 's';
+    const c = document.createElementNS(NS, 'circle');
+    c.setAttribute('cx', x); c.setAttribute('cy', y); c.setAttribute('r', 3.5); c.setAttribute('class', 'node');
+    gN.append(ring, c);
+  });
+
+  /* Reveal */
+  const io = new IntersectionObserver(entries => {
+    entries.forEach(en => {
+      if (!en.isIntersecting) return;
+      en.target.classList.add('in');
+      io.unobserve(en.target);
+    });
+  }, { threshold: .15, rootMargin: '0px 0px -40px 0px' });
+  $$('.reveal').forEach(el => io.observe(el));
+
+  /* Spotlight on tiles */
+  $$('.tile').forEach(t => t.addEventListener('pointermove', e => {
+    const r = t.getBoundingClientRect();
+    t.style.setProperty('--mx', (e.clientX - r.left) + 'px');
+    t.style.setProperty('--my', (e.clientY - r.top) + 'px');
+  }));
+
+  /* Signup */
+  $('#signup').addEventListener('submit', e => {
+    e.preventDefault();
+    const v = $('#email').value.trim(), msg = $('#signupMsg');
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) { msg.style.color = 'var(--coral)'; msg.textContent = 'Enter a valid work email to get started.'; return; }
+    msg.style.color = 'var(--teal)';
+    msg.textContent = `You're in. We sent a setup link to ${v}.`;
+    $('#email').value = '';
+  });
+})();
+</script>
+</body>
+</html>

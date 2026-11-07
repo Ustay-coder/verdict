@@ -1,0 +1,302 @@
+{
+  "id": "eval_mw60teuzrskcr78d",
+  "rubricId": "rub_mw60tcgdu854nkxu",
+  "rubric": {
+    "name": "Landing page review (strict)",
+    "version": "1",
+    "description": "Could this landing page go live for the product described in facts.json?",
+    "context": "You review a product landing page (a screenshot of its first screen and its text) against facts.json, which lists\neverything true about the product. Be strict: when in doubt, judge it as failing. Each criterion looks only at the\nkind of problem it names; ignore other kinds of problems when judging it.\n",
+    "language": "en",
+    "scale": {
+      "type": "numeric",
+      "min": 1,
+      "max": 5
+    },
+    "judges": {
+      "clef": {
+        "type": "decision",
+        "provider": "cloudflare",
+        "model": "@cf/cloudflare/clef",
+        "onLowConfidence": "accept",
+        "escalateTo": []
+      }
+    },
+    "defaultJudge": {
+      "type": "ref",
+      "ref": "clef"
+    },
+    "criteria": [
+      {
+        "id": "clarity",
+        "name": "The first screen says what it is, for whom, and what to do next",
+        "weight": 3,
+        "levels": [
+          {
+            "value": 1,
+            "label": "unclear",
+            "description": "A slogan or mood; a stranger can't tell what the product does or who it is for"
+          },
+          {
+            "value": 3,
+            "label": "partly",
+            "description": "The product is named, but the audience, the concrete job or the next step is missing or buried"
+          },
+          {
+            "value": 5,
+            "label": "clear",
+            "description": "In plain words: what it does, for whom, and one obvious next step, all on the first screen"
+          }
+        ],
+        "inputs": [
+          "page",
+          "facts"
+        ],
+        "optional": false
+      },
+      {
+        "id": "look",
+        "name": "Designed for this product, not a template",
+        "weight": 2,
+        "levels": [
+          {
+            "value": 1,
+            "label": "template",
+            "description": "Generic AI SaaS look: dark navy with glows, gradient text, glass cards, the same rounded card everywhere"
+          },
+          {
+            "value": 3,
+            "label": "tidy",
+            "description": "Clean but generic; nothing about it belongs to this product"
+          },
+          {
+            "value": 5,
+            "label": "specific",
+            "description": "Calm and deliberate, with type, colour and imagery chosen for this product and its users"
+          }
+        ],
+        "inputs": [
+          "page"
+        ],
+        "optional": false
+      },
+      {
+        "id": "focus",
+        "name": "One focal point and a clear reading order",
+        "weight": 1,
+        "levels": [
+          {
+            "value": 1,
+            "label": "noisy",
+            "description": "Many things compete for attention; no obvious place to start"
+          },
+          {
+            "value": 3,
+            "label": "uneven",
+            "description": "A focal point exists, but other elements pull against it"
+          },
+          {
+            "value": 5,
+            "label": "focused",
+            "description": "One obvious focal point, then a clear order: headline, explanation, action"
+          }
+        ],
+        "inputs": [
+          "page"
+        ],
+        "optional": false
+      },
+      {
+        "id": "honest_proof",
+        "name": "No invented social proof",
+        "weight": 0,
+        "scale": {
+          "type": "binary",
+          "labels": [
+            "invented",
+            "honest"
+          ]
+        },
+        "anchors": {
+          "invented": "The page shows testimonials, quotes, star ratings, customer logos, 'used by' counts or named customers that facts.json doesn't contain",
+          "honest": "Every testimonial, logo, rating and customer count on the page is in facts.json (facts.json has no customer quotes, so there are none). Other figures and claims are judged elsewhere"
+        },
+        "inputs": [
+          "page",
+          "facts"
+        ],
+        "optional": false
+      },
+      {
+        "id": "facts_true",
+        "name": "Every figure comes from facts.json",
+        "weight": 0,
+        "judge": {
+          "type": "benchmark",
+          "method": "http",
+          "url": "http://127.0.0.1:7788/audit/numbers_true"
+        },
+        "inputs": [
+          "page",
+          "facts"
+        ],
+        "optional": false
+      },
+      {
+        "id": "decoration",
+        "name": "No gradient washes, glows or glass (2 effects allowed)",
+        "weight": 0,
+        "judge": {
+          "type": "benchmark",
+          "method": "http",
+          "url": "http://127.0.0.1:7788/audit/decoration"
+        },
+        "inputs": [
+          "page"
+        ],
+        "optional": false
+      },
+      {
+        "id": "motion",
+        "name": "No looping ambient animation",
+        "weight": 0,
+        "judge": {
+          "type": "benchmark",
+          "method": "http",
+          "url": "http://127.0.0.1:7788/audit/motion"
+        },
+        "inputs": [
+          "page"
+        ],
+        "optional": false
+      },
+      {
+        "id": "template_chrome",
+        "name": "No template chrome (ALL-CAPS eyebrows, accented headline words, icon tiles, fake numbering)",
+        "weight": 0,
+        "judge": {
+          "type": "benchmark",
+          "method": "http",
+          "url": "http://127.0.0.1:7788/audit/template_chrome"
+        },
+        "inputs": [
+          "page"
+        ],
+        "optional": false
+      },
+      {
+        "id": "contrast",
+        "name": "All text passes WCAG AA contrast",
+        "weight": 0,
+        "judge": {
+          "type": "benchmark",
+          "method": "http",
+          "url": "http://127.0.0.1:7788/audit/contrast"
+        },
+        "inputs": [
+          "page"
+        ],
+        "optional": false
+      },
+      {
+        "id": "plain_copy",
+        "name": "Headings are descriptions, not slogans",
+        "weight": 0,
+        "scale": {
+          "type": "binary",
+          "labels": [
+            "slogans",
+            "descriptions"
+          ]
+        },
+        "anchors": {
+          "slogans": "At least one heading or button is a slogan, joke or emotional promise rather than a description of what the product does (for example 'From zero to monitored before your coffee cools', 'Teams sleep better', 'Your next outage is coming')",
+          "descriptions": "Every heading and button names what that part of the page shows or does, in plain words, with no jokes or promises"
+        },
+        "inputs": [
+          "page"
+        ],
+        "optional": false
+      }
+    ],
+    "aggregation": {
+      "method": "formula",
+      "formula": "honest_proof_n < 0.5 ? 0 : (clarity_n * 3 + look_n * 2 + focus_n) / 6 * (1 + (facts_true_n >= 1) + (decoration_n >= 1) + (motion_n >= 1) + (template_chrome_n >= 1) + (contrast_n >= 1) + plain_copy_n) / 7",
+      "rater": "mean",
+      "normalize": [
+        0,
+        100
+      ],
+      "missing": "exclude",
+      "gates": [
+        {
+          "criterion": "honest_proof",
+          "min": 1,
+          "message": "Invented testimonials, logos or user counts (FTC 16 CFR Part 465)"
+        }
+      ],
+      "grades": [
+        {
+          "label": "ship it",
+          "min": 85
+        },
+        {
+          "label": "almost",
+          "min": 60
+        },
+        {
+          "label": "rework",
+          "min": 0
+        }
+      ],
+      "passThreshold": 85,
+      "precision": 0
+    },
+    "id": "rub_mw60tcgdu854nkxu",
+    "createdAt": "2026-11-07T06:26:51.084Z",
+    "updatedAt": "2026-11-07T06:26:51.084Z"
+  },
+  "subject": {
+    "name": "Tideline round 1",
+    "inputs": [
+      {
+        "type": "url",
+        "url": "http://127.0.0.1:8772/index.html",
+        "screenshot": true,
+        "tags": [
+          "page"
+        ]
+      },
+      {
+        "type": "file",
+        "path": "/root/tideline/facts.json",
+        "tags": [
+          "facts"
+        ]
+      }
+    ]
+  },
+  "evidence": [],
+  "status": "running",
+  "criteria": [],
+  "aggregate": {
+    "method": "formula",
+    "range": [
+      0,
+      100
+    ],
+    "gates": [],
+    "partial": true,
+    "included": [],
+    "excluded": []
+  },
+  "pendingTasks": [],
+  "usage": {
+    "decisionCalls": 0,
+    "llmCalls": 0,
+    "inputTokens": 0,
+    "outputTokens": 0,
+    "durationMs": 0
+  },
+  "createdAt": "2026-11-07T06:26:54.203Z",
+  "updatedAt": "2026-11-07T06:26:54.203Z"
+}

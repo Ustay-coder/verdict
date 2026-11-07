@@ -1,0 +1,4 @@
+Before this landing page goes live, review it with Verdict. Work only in this folder.
+Read landing-review-strict.yaml and call the verdict MCP's create_rubric with its YAML, then evaluate with a url input http://127.0.0.1:8772/index.html (screenshot true, tags ["page"]) and a file input facts.json (tags ["facts"]).
+If it doesn't pass, pick one failing criterion, fix only that in index.html, and evaluate again. If the gate failed, fix the gate first. Fix one thing per round so it's clear what changed the score. Stop when it passes, or after 10 evaluations.
+Finally print a REVIEW LOG table (round, score, grade, what changed).
