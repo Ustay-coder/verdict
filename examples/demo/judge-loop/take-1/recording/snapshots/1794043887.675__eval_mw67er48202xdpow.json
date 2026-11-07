@@ -1,0 +1,184 @@
+{
+  "id": "eval_mw67er48202xdpow",
+  "rubric": {
+    "name": "Commit message review",
+    "version": "1",
+    "description": "Is this a good commit message?",
+    "context": "You review one commit message from an open-source Java project.",
+    "scale": {
+      "type": "numeric",
+      "min": 0,
+      "max": 10
+    },
+    "judges": {
+      "j": {
+        "type": "decision",
+        "provider": "typesafe",
+        "model": "jev-latest",
+        "onLowConfidence": "accept",
+        "escalateTo": []
+      }
+    },
+    "defaultJudge": {
+      "type": "ref",
+      "ref": "j"
+    },
+    "criteria": [
+      {
+        "id": "good",
+        "name": "Good commit message",
+        "weight": 1,
+        "scale": {
+          "type": "binary",
+          "labels": [
+            "no",
+            "yes"
+          ]
+        },
+        "anchors": {
+          "no": "Breaks the usual rules: subject over 50 characters, not capitalised, ends with a period, not in the imperative mood, no blank line before the body, or the body isn't wrapped at 72 characters",
+          "yes": "Follows the usual rules: a short capitalised subject in the imperative mood with no period, a blank line, then a wrapped body"
+        },
+        "inputs": [
+          "message"
+        ],
+        "optional": false
+      }
+    ],
+    "aggregation": {
+      "method": "weighted_mean",
+      "rater": "mean",
+      "normalize": [
+        0,
+        100
+      ],
+      "missing": "exclude",
+      "gates": [],
+      "passThreshold": 50,
+      "precision": 2
+    }
+  },
+  "subject": {
+    "name": "retrofit-c363342",
+    "inputs": [
+      {
+        "type": "text",
+        "text": "Re-work unresolvable type detection in parameters\n\nIn order to natively support Kotlin's 'suspend' modifier in the future, we need to allow wildcards to be used for the last parameter. As a result, we only validate the shape of a type once a Retrofit annotation is detected.",
+        "label": "message"
+      }
+    ],
+    "metadata": {
+      "human": {
+        "passed": true,
+        "criteria": {
+          "what": true,
+          "why": true
+        }
+      }
+    }
+  },
+  "evidence": [
+    {
+      "inputIndex": 0,
+      "kind": "text",
+      "label": "message",
+      "tags": [],
+      "text": "Re-work unresolvable type detection in parameters\n\nIn order to natively support Kotlin's 'suspend' modifier in the future, we need to allow wildcards to be used for the last parameter. As a result, we only validate the shape of a type once a Retrofit annotation is detected.",
+      "truncated": false,
+      "stats": {
+        "chars": 274,
+        "words": 46,
+        "lines": 3
+      }
+    }
+  ],
+  "status": "completed",
+  "criteria": [
+    {
+      "criterionId": "good",
+      "name": "Good commit message",
+      "weight": 1,
+      "status": "scored",
+      "ratings": [
+        {
+          "id": "rat_fcjg1v7rmw67er6h",
+          "criterionId": "good",
+          "raterId": "j",
+          "judgeType": "decision",
+          "createdAt": "2026-11-07T09:31:27.641Z",
+          "status": "scored",
+          "score": 1,
+          "normalized": 1,
+          "confidence": 0.1,
+          "probabilities": {
+            "no": 0.45,
+            "yes": 0.55
+          },
+          "rationale": "typesafe/jev-1.14.0 distribution: no=45% yes=55%",
+          "raw": {
+            "provider": "typesafe",
+            "model": "jev-1.14.0",
+            "question": {
+              "type": "noul",
+              "instructions": "Context: You review one commit message from an open-source Java project. Criterion \"Good commit message\". Is the input \"yes\" for this criterion?",
+              "criteria": {
+                "true": "Follows the usual rules: a short capitalised subject in the imperative mood with no period, a blank line, then a wrapped body",
+                "false": "Breaks the usual rules: subject over 50 characters, not capitalised, ends with a period, not in the imperative mood, no blank line before the body, or the body isn't wrapped at 72 characters"
+              }
+            },
+            "answer": {
+              "type": "noul",
+              "noul": 0.55
+            },
+            "levels": [
+              {
+                "value": 0,
+                "label": "no",
+                "description": "Breaks the usual rules: subject over 50 characters, not capitalised, ends with a period, not in the imperative mood, no blank line before the body, or the body isn't wrapped at 72 characters"
+              },
+              {
+                "value": 1,
+                "label": "yes",
+                "description": "Follows the usual rules: a short capitalised subject in the imperative mood with no period, a blank line, then a wrapped body"
+              }
+            ],
+            "latencyMs": 80,
+            "lowConfidence": false,
+            "stateChars": 329,
+            "stateTruncated": false
+          }
+        }
+      ],
+      "pending": 0,
+      "score": 1,
+      "normalized": 1
+    }
+  ],
+  "aggregate": {
+    "method": "weighted_mean",
+    "range": [
+      0,
+      100
+    ],
+    "gates": [],
+    "partial": false,
+    "included": [
+      "good"
+    ],
+    "excluded": [],
+    "raw": 1,
+    "score": 100,
+    "passed": true
+  },
+  "pendingTasks": [],
+  "usage": {
+    "decisionCalls": 1,
+    "llmCalls": 0,
+    "inputTokens": 467,
+    "outputTokens": 20,
+    "durationMs": 81
+  },
+  "batchId": "bat_mw67eqprfrde2ugc",
+  "createdAt": "2026-11-07T09:31:27.560Z",
+  "updatedAt": "2026-11-07T09:31:27.641Z"
+}

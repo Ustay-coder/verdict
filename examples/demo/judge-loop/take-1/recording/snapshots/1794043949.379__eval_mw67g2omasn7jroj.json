@@ -1,0 +1,264 @@
+{
+  "id": "eval_mw67g2omasn7jroj",
+  "rubric": {
+    "name": "Commit message review",
+    "version": "1",
+    "description": "Is this a good commit message?",
+    "context": "You review one commit message from an open-source Java project.",
+    "scale": {
+      "type": "numeric",
+      "min": 0,
+      "max": 10
+    },
+    "judges": {
+      "j": {
+        "type": "decision",
+        "provider": "typesafe",
+        "model": "jev-latest",
+        "onLowConfidence": "accept",
+        "escalateTo": []
+      }
+    },
+    "defaultJudge": {
+      "type": "ref",
+      "ref": "j"
+    },
+    "criteria": [
+      {
+        "id": "good",
+        "name": "Good commit message",
+        "weight": 1,
+        "scale": {
+          "type": "binary",
+          "labels": [
+            "no",
+            "yes"
+          ]
+        },
+        "anchors": {
+          "no": "The message does not both summarise what was changed and give the reason for the change. A message that only describes the problem (the why) without saying what change was made has no what. Formatting and style (length, capitalisation, mood, wrapping) do not matter.",
+          "yes": "The message summarises what was changed and also gives the reason for the change. A reference to the issue or pull request the change belongs to (for example an issue number or PR number) counts as the reason. Formatting and style (length, capitalisation, mood, wrapping) do not matter."
+        },
+        "inputs": [
+          "message"
+        ],
+        "optional": false
+      },
+      {
+        "id": "what",
+        "name": "Says what changed",
+        "weight": 1,
+        "scale": {
+          "type": "binary",
+          "labels": [
+            "no",
+            "yes"
+          ]
+        },
+        "anchors": {
+          "no": "The message describes only the problem, symptom or desired outcome and never says which change was made",
+          "yes": "The message says what was changed, even briefly: naming the object of change and the kind of change (add, remove, update, rename, polish, fix in a named file or component) is enough. A change list, a before/after contrast, what the code now does, or how the change works also count"
+        },
+        "inputs": [
+          "message"
+        ],
+        "optional": false
+      }
+    ],
+    "aggregation": {
+      "method": "min",
+      "rater": "mean",
+      "normalize": [
+        0,
+        100
+      ],
+      "missing": "exclude",
+      "gates": [],
+      "passThreshold": 50,
+      "precision": 2
+    }
+  },
+  "subject": {
+    "name": "spring-boot-b7847d9",
+    "inputs": [
+      {
+        "type": "text",
+        "text": "Auto-configure Neo4J BookmarkManager when possible\n\nAdd `Neo4jBookmarkManagementConfiguration` which provides an instance\nof `BookmarkManager` if necessary and Caffeine cache is on the\nclasspath. Depending on the kind of application, the `BookmarkManager`\nwill be request scoped or singleton, as recommended by Spring Data\nNeo4j.\n\nSee gh-14568",
+        "label": "message"
+      }
+    ],
+    "metadata": {
+      "human": {
+        "passed": true,
+        "criteria": {
+          "what": true,
+          "why": true
+        }
+      }
+    }
+  },
+  "evidence": [
+    {
+      "inputIndex": 0,
+      "kind": "text",
+      "label": "message",
+      "tags": [],
+      "text": "Auto-configure Neo4J BookmarkManager when possible\n\nAdd `Neo4jBookmarkManagementConfiguration` which provides an instance\nof `BookmarkManager` if necessary and Caffeine cache is on the\nclasspath. Depending on the kind of application, the `BookmarkManager`\nwill be request scoped or singleton, as recommended by Spring Data\nNeo4j.\n\nSee gh-14568",
+      "truncated": false,
+      "stats": {
+        "chars": 343,
+        "words": 44,
+        "lines": 9
+      }
+    }
+  ],
+  "status": "completed",
+  "criteria": [
+    {
+      "criterionId": "good",
+      "name": "Good commit message",
+      "weight": 1,
+      "status": "scored",
+      "ratings": [
+        {
+          "id": "rat_v7z8ruqlmw67g2r4",
+          "criterionId": "good",
+          "raterId": "j",
+          "judgeType": "decision",
+          "createdAt": "2026-11-07T09:32:29.296Z",
+          "status": "scored",
+          "score": 1,
+          "normalized": 1,
+          "confidence": 0.86,
+          "probabilities": {
+            "no": 0.07,
+            "yes": 0.93
+          },
+          "rationale": "typesafe/jev-1.14.0 distribution: no=7% yes=93%",
+          "raw": {
+            "provider": "typesafe",
+            "model": "jev-1.14.0",
+            "question": {
+              "type": "noul",
+              "instructions": "Context: You review one commit message from an open-source Java project. Criterion \"Good commit message\". Is the input \"yes\" for this criterion?",
+              "criteria": {
+                "true": "The message summarises what was changed and also gives the reason for the change. A reference to the issue or pull request the change belongs to (for example an issue number or PR number) counts as the reason. Formatting and style (length, capitalisation, mood, wrapping) do not matter.",
+                "false": "The message does not both summarise what was changed and give the reason for the change. A message that only describes the problem (the why) without saying what change was made has no what. Formatting and style (length, capitalisation, mood, wrapping) do not matter."
+              }
+            },
+            "answer": {
+              "type": "noul",
+              "noul": 0.93
+            },
+            "levels": [
+              {
+                "value": 0,
+                "label": "no",
+                "description": "The message does not both summarise what was changed and give the reason for the change. A message that only describes the problem (the why) without saying what change was made has no what. Formatting and style (length, capitalisation, mood, wrapping) do not matter."
+              },
+              {
+                "value": 1,
+                "label": "yes",
+                "description": "The message summarises what was changed and also gives the reason for the change. A reference to the issue or pull request the change belongs to (for example an issue number or PR number) counts as the reason. Formatting and style (length, capitalisation, mood, wrapping) do not matter."
+              }
+            ],
+            "latencyMs": 89,
+            "lowConfidence": false,
+            "stateChars": 398,
+            "stateTruncated": false
+          }
+        }
+      ],
+      "pending": 0,
+      "score": 1,
+      "normalized": 1
+    },
+    {
+      "criterionId": "what",
+      "name": "Says what changed",
+      "weight": 1,
+      "status": "scored",
+      "ratings": [
+        {
+          "id": "rat_wlbggu77mw67g2r5",
+          "criterionId": "what",
+          "raterId": "j",
+          "judgeType": "decision",
+          "createdAt": "2026-11-07T09:32:29.297Z",
+          "status": "scored",
+          "score": 1,
+          "normalized": 1,
+          "confidence": 0.94,
+          "probabilities": {
+            "no": 0.03,
+            "yes": 0.97
+          },
+          "rationale": "typesafe/jev-1.14.0 distribution: no=3% yes=97%",
+          "raw": {
+            "provider": "typesafe",
+            "model": "jev-1.14.0",
+            "question": {
+              "type": "noul",
+              "instructions": "Context: You review one commit message from an open-source Java project. Criterion \"Says what changed\". Is the input \"yes\" for this criterion?",
+              "criteria": {
+                "true": "The message says what was changed, even briefly: naming the object of change and the kind of change (add, remove, update, rename, polish, fix in a named file or component) is enough. A change list, a before/after contrast, what the code now does, or how the change works also count",
+                "false": "The message describes only the problem, symptom or desired outcome and never says which change was made"
+              }
+            },
+            "answer": {
+              "type": "noul",
+              "noul": 0.97
+            },
+            "levels": [
+              {
+                "value": 0,
+                "label": "no",
+                "description": "The message describes only the problem, symptom or desired outcome and never says which change was made"
+              },
+              {
+                "value": 1,
+                "label": "yes",
+                "description": "The message says what was changed, even briefly: naming the object of change and the kind of change (add, remove, update, rename, polish, fix in a named file or component) is enough. A change list, a before/after contrast, what the code now does, or how the change works also count"
+              }
+            ],
+            "latencyMs": 89,
+            "lowConfidence": false,
+            "stateChars": 398,
+            "stateTruncated": false
+          }
+        }
+      ],
+      "pending": 0,
+      "score": 1,
+      "normalized": 1
+    }
+  ],
+  "aggregate": {
+    "method": "min",
+    "range": [
+      0,
+      100
+    ],
+    "gates": [],
+    "partial": false,
+    "included": [
+      "good",
+      "what"
+    ],
+    "excluded": [],
+    "raw": 1,
+    "score": 100,
+    "passed": true
+  },
+  "pendingTasks": [],
+  "usage": {
+    "decisionCalls": 1,
+    "llmCalls": 0,
+    "inputTokens": 687,
+    "outputTokens": 36,
+    "durationMs": 91
+  },
+  "batchId": "bat_mw67g25d5cdgsho2",
+  "createdAt": "2026-11-07T09:32:29.206Z",
+  "updatedAt": "2026-11-07T09:32:29.297Z"
+}

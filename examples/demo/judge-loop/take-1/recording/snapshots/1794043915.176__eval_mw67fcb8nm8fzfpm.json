@@ -1,0 +1,184 @@
+{
+  "id": "eval_mw67fcb8nm8fzfpm",
+  "rubric": {
+    "name": "Commit message review",
+    "version": "1",
+    "description": "Is this a good commit message?",
+    "context": "You review one commit message from an open-source Java project.",
+    "scale": {
+      "type": "numeric",
+      "min": 0,
+      "max": 10
+    },
+    "judges": {
+      "j": {
+        "type": "decision",
+        "provider": "typesafe",
+        "model": "jev-latest",
+        "onLowConfidence": "accept",
+        "escalateTo": []
+      }
+    },
+    "defaultJudge": {
+      "type": "ref",
+      "ref": "j"
+    },
+    "criteria": [
+      {
+        "id": "good",
+        "name": "Good commit message",
+        "weight": 1,
+        "scale": {
+          "type": "binary",
+          "labels": [
+            "no",
+            "yes"
+          ]
+        },
+        "anchors": {
+          "no": "The message does not both summarise what was changed and give the reason for the change. A message that only describes the problem (the why) without saying what change was made has no what. Formatting and style (length, capitalisation, mood, wrapping) do not matter.",
+          "yes": "The message summarises what was changed and also gives the reason for the change. A reference to the issue or pull request the change belongs to (for example an issue number or PR number) counts as the reason. Formatting and style (length, capitalisation, mood, wrapping) do not matter."
+        },
+        "inputs": [
+          "message"
+        ],
+        "optional": false
+      }
+    ],
+    "aggregation": {
+      "method": "weighted_mean",
+      "rater": "mean",
+      "normalize": [
+        0,
+        100
+      ],
+      "missing": "exclude",
+      "gates": [],
+      "passThreshold": 50,
+      "precision": 2
+    }
+  },
+  "subject": {
+    "name": "spring-boot-8691417",
+    "inputs": [
+      {
+        "type": "text",
+        "text": "Use deterministic ordering of JavaBean methods\n\nUpdate `JavaBeanBinder` so that methods and fields are sorted before\nbeing processed. This ensures that setters are called in a deterministic\norder, rather than the unspecified and variable order that reflection\nprovides.\n\nFixes gh-24068",
+        "label": "message"
+      }
+    ],
+    "metadata": {
+      "human": {
+        "passed": true,
+        "criteria": {
+          "what": true,
+          "why": true
+        }
+      }
+    }
+  },
+  "evidence": [
+    {
+      "inputIndex": 0,
+      "kind": "text",
+      "label": "message",
+      "tags": [],
+      "text": "Use deterministic ordering of JavaBean methods\n\nUpdate `JavaBeanBinder` so that methods and fields are sorted before\nbeing processed. This ensures that setters are called in a deterministic\norder, rather than the unspecified and variable order that reflection\nprovides.\n\nFixes gh-24068",
+      "truncated": false,
+      "stats": {
+        "chars": 285,
+        "words": 40,
+        "lines": 8
+      }
+    }
+  ],
+  "status": "completed",
+  "criteria": [
+    {
+      "criterionId": "good",
+      "name": "Good commit message",
+      "weight": 1,
+      "status": "scored",
+      "ratings": [
+        {
+          "id": "rat_zz27pz3cmw67fcdb",
+          "criterionId": "good",
+          "raterId": "j",
+          "judgeType": "decision",
+          "createdAt": "2026-11-07T09:31:55.103Z",
+          "status": "scored",
+          "score": 1,
+          "normalized": 1,
+          "confidence": 0.92,
+          "probabilities": {
+            "no": 0.04,
+            "yes": 0.96
+          },
+          "rationale": "typesafe/jev-1.14.0 distribution: no=4% yes=96%",
+          "raw": {
+            "provider": "typesafe",
+            "model": "jev-1.14.0",
+            "question": {
+              "type": "noul",
+              "instructions": "Context: You review one commit message from an open-source Java project. Criterion \"Good commit message\". Is the input \"yes\" for this criterion?",
+              "criteria": {
+                "true": "The message summarises what was changed and also gives the reason for the change. A reference to the issue or pull request the change belongs to (for example an issue number or PR number) counts as the reason. Formatting and style (length, capitalisation, mood, wrapping) do not matter.",
+                "false": "The message does not both summarise what was changed and give the reason for the change. A message that only describes the problem (the why) without saying what change was made has no what. Formatting and style (length, capitalisation, mood, wrapping) do not matter."
+              }
+            },
+            "answer": {
+              "type": "noul",
+              "noul": 0.96
+            },
+            "levels": [
+              {
+                "value": 0,
+                "label": "no",
+                "description": "The message does not both summarise what was changed and give the reason for the change. A message that only describes the problem (the why) without saying what change was made has no what. Formatting and style (length, capitalisation, mood, wrapping) do not matter."
+              },
+              {
+                "value": 1,
+                "label": "yes",
+                "description": "The message summarises what was changed and also gives the reason for the change. A reference to the issue or pull request the change belongs to (for example an issue number or PR number) counts as the reason. Formatting and style (length, capitalisation, mood, wrapping) do not matter."
+              }
+            ],
+            "latencyMs": 74,
+            "lowConfidence": false,
+            "stateChars": 340,
+            "stateTruncated": false
+          }
+        }
+      ],
+      "pending": 0,
+      "score": 1,
+      "normalized": 1
+    }
+  ],
+  "aggregate": {
+    "method": "weighted_mean",
+    "range": [
+      0,
+      100
+    ],
+    "gates": [],
+    "partial": false,
+    "included": [
+      "good"
+    ],
+    "excluded": [],
+    "raw": 1,
+    "score": 100,
+    "passed": true
+  },
+  "pendingTasks": [],
+  "usage": {
+    "decisionCalls": 1,
+    "llmCalls": 0,
+    "inputTokens": 518,
+    "outputTokens": 20,
+    "durationMs": 75
+  },
+  "batchId": "bat_mw67fb4jkotjt8v7",
+  "createdAt": "2026-11-07T09:31:55.028Z",
+  "updatedAt": "2026-11-07T09:31:55.103Z"
+}
