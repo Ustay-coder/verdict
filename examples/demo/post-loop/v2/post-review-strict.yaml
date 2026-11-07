@@ -1,0 +1,146 @@
+# Launch post review (strict): is this X post ready to go out, and is every claim true?
+# Inputs: -i post=post.md -i brief=brief.md
+#   brief.md: the facts the post may use (what the video shows, the scores, what Verdict is)
+#
+# Where the criteria come from (researched 2026-11-07; platform rules, guidelines and summaries of them, see README.md):
+#   - FTC Act section 5 and FTC v. Colgate-Palmolive (1965): showing a demonstration as real proof when it isn't is
+#     deceptive; a claim needs a basis. Here, every claim must be in the brief, and a demo with a fictional product
+#     must say so. These are the gate and `fiction_flagged`.
+#   - Hacker News guidelines: no uppercase or exclamation points for emphasis, no saying how great it is; moderators
+#     call marketing tone a turn-off. Show HN advice: state limitations plainly. -> `no_hype`, `limits`.
+#   - X Help Center, "How to use hashtags": no more than 2 hashtags per post. -> `hashtags` (deterministic).
+#   - X Rules, platform manipulation and spam: no bulk, unsolicited mentions. -> `mentions` (deterministic).
+#   - Accessibility guides (Axbom; Stanford UIT): Unicode "bold" letters are read out as "mathematical bold capital ..."
+#     and can't be searched. -> `styled_text` (deterministic).
+#   - YC launch advice (Paul Graham, Startup School): say what it is in the first sentences, in plain words. -> `what_it_is`.
+#   - X's open-sourced ranker (2023 README): a reply weighs 13.5 likes' worth of 0.5, and a reply the author answers 75.
+#     -> `question`.
+#
+# Scoring: a claim the brief doesn't support scores 0. Past that gate the post earns 1/9 of its quality score, plus 1/9
+# for each of the eight checks it passes.
+name: Launch post review (strict)
+version: "2"
+description: Is this X post ready to go out, and is every claim in it true?
+context: |
+  You review a draft post for X that announces a demo video. The audience is developers and designers who use coding
+  agents. brief.md lists the only facts the post may use. Judge only the post text. Be strict: when in doubt, judge it
+  as failing. Each check looks only at the kind of problem it names; ignore other kinds of problems when judging it.
+language: en
+scale: { type: numeric, min: 1, max: 5 }
+judges:
+  jev: { type: decision, provider: typesafe, model: jev-latest }
+  clef: { type: decision, provider: cloudflare, model: "@cf/cloudflare/clef" }
+defaultJudge: { type: ref, ref: jev }
+
+criteria:
+  # ---------- quality: how many points the post can earn ----------
+  - id: hook
+    name: First line stops the scroll
+    weight: 3
+    inputs: [post]
+    levels:
+      - { value: 1, label: flat, description: "Opens with an announcement, a greeting or excitement (we just released, big news, excited to share)" }
+      - { value: 3, label: ok, description: "Opens with the topic, but nothing surprising" }
+      - { value: 5, label: hook, description: "The first line alone makes a developer want the next: a concrete surprise, a number or a tension" }
+  - id: specific
+    name: Says exactly what happened
+    weight: 2
+    inputs: [post, brief]
+    levels:
+      - { value: 1, label: vague, description: "Adjectives and promises; you can't tell what the video shows" }
+      - { value: 3, label: some, description: "One concrete detail, the rest general" }
+      - { value: 5, label: concrete, description: "Says what the agent did and what the scores were, with the numbers that matter" }
+  - id: clear
+    name: One idea, plain words
+    weight: 1
+    inputs: [post]
+    levels:
+      - { value: 1, label: muddled, description: "Several ideas, jargon or clutter crowd it" }
+      - { value: 3, label: mostly, description: "One idea, but wordy or with filler" }
+      - { value: 5, label: clear, description: "One idea a developer gets in one read" }
+
+  # ---------- gate: a claim the brief doesn't support scores 0 ----------
+  - id: claims_true
+    name: Every claim is in the brief
+    weight: 0
+    judge: { type: ref, ref: clef }
+    inputs: [post, brief]
+    scale: { type: binary, labels: [overclaims, "true"] }
+    anchors:
+      overclaims: "The post claims something brief.md doesn't say, or stretches it: that Verdict or the agent works on any page, fixes things by itself, guarantees a result, or a number or time that isn't in the brief"
+      "true": "Every claim about what happened, the scores and the time is in brief.md. Tone, wording and missing things are judged elsewhere"
+
+  # ---------- checks: each one passed adds 1/9 of the quality score ----------
+  - id: no_hype
+    name: No hype words or shouting
+    weight: 0
+    judge: { type: ref, ref: clef }
+    inputs: [post]
+    scale: { type: binary, labels: [hype, plain] }
+    anchors:
+      hype: "The post praises itself (insane, mind-blowing, the best, game-changing, wild), shouts in ALL CAPS or uses exclamation marks"
+      plain: "No self-praise, no ALL-CAPS words and no exclamation marks; it says what happened in plain words"
+  - id: hashtags
+    name: At most two hashtags
+    weight: 0
+    judge: { type: benchmark, method: regex, pattern: "(?:(?:^|\\s)#[A-Za-z]\\w*[\\s\\S]*?){3}", negate: true }
+    inputs: [post]
+    scale: { type: binary, labels: [too_many, ok] }
+  - id: mentions
+    name: Tags no one
+    weight: 0
+    judge: { type: benchmark, method: regex, pattern: "(?:^|[\\s(])@[A-Za-z0-9_]+", negate: true }
+    inputs: [post]
+    scale: { type: binary, labels: [tags, none] }
+  - id: styled_text
+    name: No Unicode "bold" letters
+    weight: 0
+    judge: { type: benchmark, method: regex, pattern: "[\\u{1D400}-\\u{1D7FF}]", flags: u, negate: true }
+    inputs: [post]
+    scale: { type: binary, labels: [styled, plain] }
+  - id: fiction_flagged
+    name: Says the product is fictional
+    weight: 0
+    judge: { type: ref, ref: clef }
+    inputs: [post, brief]
+    scale: { type: binary, labels: [missing, flagged] }
+    anchors:
+      missing: "The post doesn't say that Tideline is a fictional product, so a reader could take the demo for a real company's page"
+      flagged: "The post says plainly that Tideline (or the product in the demo) is fictional or made up"
+  - id: what_it_is
+    name: Says what Verdict is
+    weight: 0
+    judge: { type: ref, ref: clef }
+    inputs: [post, brief]
+    scale: { type: binary, labels: [missing, said] }
+    anchors:
+      missing: "The post names Verdict without saying what kind of tool it is, so a reader who has never heard of it can't tell"
+      said: "The post says in plain words what Verdict is or does: it scores work against a rubric (an evaluation engine)"
+  - id: limits
+    name: Says what didn't go smoothly
+    weight: 0
+    judge: { type: ref, ref: clef }
+    inputs: [post, brief]
+    scale: { type: binary, labels: [missing, said] }
+    anchors:
+      missing: "The post makes the run sound flawless; it doesn't mention that some rounds barely moved or that a fix was partial"
+      said: "The post says something that didn't go smoothly, from brief.md: two rounds barely moved because the fix was partial"
+  - id: question
+    name: Ends with a question readers can answer
+    weight: 0
+    judge: { type: ref, ref: clef }
+    inputs: [post]
+    scale: { type: binary, labels: [closed, asks] }
+    anchors:
+      closed: "The post ends without asking readers anything, or asks only for likes, follows or reposts"
+      asks: "The post ends with a specific question developers can answer from their own work"
+
+aggregation:
+  method: formula
+  formula: "claims_true_n < 0.5 ? 0 : (hook_n * 3 + specific_n * 2 + clear_n) / 6 * (1 + no_hype_n + hashtags_n + mentions_n + styled_text_n + fiction_flagged_n + what_it_is_n + limits_n + question_n) / 9"
+  normalize: [0, 100]
+  precision: 0
+  gates:
+    - { criterion: claims_true, min: 1, message: "Overclaims: the post says something the brief doesn't support" }
+  grades: [{ label: post it, min: 85 }, { label: close, min: 50 }, { label: rework, min: 0 }]
+  passThreshold: 85
