@@ -5,6 +5,9 @@ The thread:
    ([`../take-1/drafts/a.md`](../take-1/drafts/a.md), 91).
 2. **Reply:** video F, with this text: "the post you just read was scored before it went out".
 
+> **Out of date:** video B is now B v2 (the landing page, [`../../landing-ui-loop/`](../../landing-ui-loop), caption in
+> [`../b-landing/`](../b-landing)). This reply and video F still describe the Primer post and need to be redone with F.
+
 Same loop as the other posts, with the [`post-review.yaml`](../post-review.yaml) rubric and this folder's brief:
 - Three drafts; each round rewrites only the lowest draft, then all three are compared again.
 - At most 4 rounds.

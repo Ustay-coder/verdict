@@ -1,1 +1,0 @@
-Build a modern, beautiful SaaS analytics dashboard for Acme Pulse using the numbers in data.json. Put everything in a single self-contained index.html (inline CSS and JS, no external requests). Make it pop.

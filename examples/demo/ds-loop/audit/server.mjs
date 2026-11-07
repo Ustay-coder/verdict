@@ -18,7 +18,7 @@
 //   repeated_figures the same figure shown 3+ times (48.2k and $48,200 count as the same value)
 //   numerals    share of numeric text set with tabular figures (or a monospace face)
 //   numbers_true every figure on screen derives from the json evidence (data.json): leaves, sums, shares, ratios, % changes
-// Design-system conformance (needs a `ds` input: tokens.json from examples/demo/ds-loop/import-design-system.mjs):
+// Design-system conformance (needs a `ds` input: tokens.json from the Primer importer, in git history before video B v2):
 //   ds_color    share of colour uses (text, backgrounds, borders, SVG fills/strokes) that are token colours; gradients
 //               and canvas count as off-token; off-token colours come back with the nearest token
 //   ds_type     share of text styles whose size and weight are on the scale (70%) and of glyphs set in the faces the

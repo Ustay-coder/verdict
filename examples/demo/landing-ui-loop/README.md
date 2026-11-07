@@ -2,7 +2,7 @@
 
 **Status: Take 1 recorded (2026-11-07). Cuts: vertical and wide, 29 s.**
 
-The first video B (the Primer dashboard, [`../ds-loop/`](../ds-loop)) jumped 19 → 76 → 82 in two rewrites, so the
+The first video B (the Primer dashboard, now in git history; see [`../ds-loop/`](../ds-loop)) jumped 19 → 76 → 82 in two rewrites, so the
 change was hard to feel. This version:
 - **Start page:** a landing page, a real AI one-shot.
 - **Rubric:** much stricter: a gate plus six pass/fail checks.
@@ -54,7 +54,7 @@ checks  = facts_true, decoration, motion, template_chrome, contrast (measured: c
      and `template_chrome` now name up to 8 offending elements (tag, class, start of the text, and colours for
      contrast).
 - **facts.json:** the numbers check only reads numbers, so "2 to 20 engineers" now has a numeric twin.
-- The Primer rubric uses the same scorer, so its contrast numbers would shift slightly too. That take is already recorded.
+- The retired Primer rubric used the same scorer; its recorded numbers predate this fix.
 
 ## Take 1 (2026-11-07)
 
