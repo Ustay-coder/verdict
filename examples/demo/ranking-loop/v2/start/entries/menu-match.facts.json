@@ -1,0 +1,14 @@
+{
+  "_note": "Fictional hackathon entry. Everything true about the project is here; the write-up may claim nothing else.",
+  "project": "Menu Match",
+  "problem": "People on restricted diets struggle to pick dishes from unfamiliar menus",
+  "users": "People on vegetarian, vegan or gluten-free diets",
+  "what_it_does": "Paste a restaurant menu and get the dishes that fit your diet",
+  "built_during_hackathon": ["menu parser", "diet rules", "a single-page interface"],
+  "pre_existing": [],
+  "ai_tools": [{ "tool": "Claude", "used_for": "parsing menu text into dishes" }],
+  "tested": { "menus": 3 },
+  "demo_video": null,
+  "repo": "https://git.example.org/menu-match",
+  "limitations": ["diet rules are a hard-coded list", "no allergen data"]
+}

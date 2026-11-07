@@ -1,0 +1,51 @@
+{
+  "_note": "Fictional hackathon entry. Everything true about the project is here; the write-up may claim nothing else.",
+  "project": "Tidewatch",
+  "event": "a 36-hour hackathon",
+  "team_size": 3,
+  "problem": "Streets next to small creeks flood within minutes after heavy rain, and residents get no street-level warning",
+  "users": "Residents of streets next to small creeks and storm drains",
+  "what_it_does": "A water-level sensor on a storm drain texts nearby residents when the water rises past a threshold",
+  "existing_alternatives": "Regional flood warnings from the weather service cover whole districts and arrive by app; none warns a single street from its own drain",
+  "built_during_hackathon": [
+    "SMS alert service (FastAPI + Twilio)",
+    "threshold rule that needs 2 readings in a row",
+    "map dashboard of sensor readings",
+    "3D-printed sensor enclosure"
+  ],
+  "pre_existing": [
+    "ultrasonic sensor firmware from the team's earlier open-source university project",
+    "ESP32 board and sensor, bought before the event"
+  ],
+  "ai_tools": [
+    {
+      "tool": "Claude Code",
+      "used_for": "most of the map dashboard's frontend code"
+    }
+  ],
+  "stack": [
+    "ESP32",
+    "ultrasonic distance sensor",
+    "LoRa (one link, sensor to gateway)",
+    "Python FastAPI",
+    "Twilio SMS",
+    "Leaflet map"
+  ],
+  "tested": {
+    "hours_on_a_real_creek": 20,
+    "test_alerts_sent": 2,
+    "phones_alerted": 4,
+    "seconds_from_reading_to_text": 40
+  },
+  "demo_video": {
+    "url": "https://video.example.org/tidewatch-demo",
+    "length": "2:40"
+  },
+  "repo": "https://git.example.org/tidewatch",
+  "limitations": [
+    "one sensor, no mesh yet",
+    "a fixed threshold, no forecasting",
+    "the battery lasts about 2 days",
+    "no city permit to mount sensors on public drains"
+  ]
+}

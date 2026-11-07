@@ -1,0 +1,1127 @@
+{
+  "id": "eval_mw62v7yzhmkp4xj3",
+  "rubricId": "rub_mw62tt4iidu4jikc",
+  "rubric": {
+    "id": "rub_mw62tt4iidu4jikc",
+    "name": "Hackathon judging (strict)",
+    "version": "2",
+    "description": "Would this write-up hold up in front of the judges, given what is true about the project?",
+    "context": "You judge one hackathon entry from its write-up. facts.json lists everything true about the project; the write-up may\nclaim nothing beyond it. Be strict: when in doubt, judge it as failing. Each check looks only at the kind of problem\nit names; ignore other kinds of problems when judging it.\n",
+    "language": "en",
+    "scale": {
+      "type": "numeric",
+      "min": 1,
+      "max": 5
+    },
+    "judges": {
+      "jev": {
+        "type": "decision",
+        "provider": "typesafe",
+        "model": "jev-latest",
+        "onLowConfidence": "accept",
+        "escalateTo": []
+      },
+      "clef": {
+        "type": "decision",
+        "provider": "cloudflare",
+        "model": "@cf/cloudflare/clef",
+        "onLowConfidence": "accept",
+        "escalateTo": []
+      }
+    },
+    "defaultJudge": {
+      "type": "ref",
+      "ref": "jev"
+    },
+    "criteria": [
+      {
+        "id": "impact",
+        "name": "Potential impact",
+        "weight": 3,
+        "levels": [
+          {
+            "value": 1,
+            "label": "minor",
+            "description": "A small convenience; the write-up doesn't say who has the problem or why it matters"
+          },
+          {
+            "value": 3,
+            "label": "useful",
+            "description": "A real problem for a named group, but the stakes or the evidence are thin"
+          },
+          {
+            "value": 5,
+            "label": "major",
+            "description": "A serious problem for a clearly named group, with what was actually shown about it"
+          }
+        ],
+        "inputs": [
+          "entry",
+          "facts"
+        ],
+        "optional": false
+      },
+      {
+        "id": "technical",
+        "name": "Technical implementation",
+        "weight": 2,
+        "levels": [
+          {
+            "value": 1,
+            "label": "unclear",
+            "description": "Buzzwords instead of a build; you can't tell what was made or whether it works"
+          },
+          {
+            "value": 3,
+            "label": "partial",
+            "description": "A working core is described, but how it works or what was tested is vague"
+          },
+          {
+            "value": 5,
+            "label": "solid",
+            "description": "Says what was built, with what, and what was tested end to end"
+          }
+        ],
+        "inputs": [
+          "entry",
+          "facts"
+        ],
+        "optional": false
+      },
+      {
+        "id": "originality",
+        "name": "Originality",
+        "weight": 1,
+        "levels": [
+          {
+            "value": 1,
+            "label": "familiar",
+            "description": "Works like products people already use, and the write-up doesn't say what is different"
+          },
+          {
+            "value": 3,
+            "label": "fresh_angle",
+            "description": "A familiar idea; the write-up hints at what is different but doesn't compare it with what exists"
+          },
+          {
+            "value": 5,
+            "label": "new",
+            "description": "Says what existing options miss, and does something they don't for this group"
+          }
+        ],
+        "inputs": [
+          "entry",
+          "facts"
+        ],
+        "optional": false
+      },
+      {
+        "id": "honest",
+        "name": "Claims nothing beyond the facts",
+        "weight": 0,
+        "scale": {
+          "type": "binary",
+          "labels": [
+            "overclaims",
+            "honest"
+          ]
+        },
+        "anchors": {
+          "overclaims": "The write-up claims users, deployments, accuracy, predictions or results that facts.json doesn't contain (for example a percentage, a number of places or people, or AI the project doesn't have)",
+          "honest": "Every claim about users, deployments, accuracy and results is in facts.json. Missing sections are judged elsewhere"
+        },
+        "judge": {
+          "type": "ref",
+          "ref": "clef"
+        },
+        "inputs": [
+          "entry",
+          "facts"
+        ],
+        "optional": false
+      },
+      {
+        "id": "what_for_whom",
+        "name": "Opens with what it does and for whom",
+        "weight": 0,
+        "scale": {
+          "type": "binary",
+          "labels": [
+            "missing",
+            "present"
+          ]
+        },
+        "anchors": {
+          "missing": "The opening is a slogan or a vision, or doesn't name who the project is for",
+          "present": "The first paragraph says plainly what the project does and names who it is for"
+        },
+        "judge": {
+          "type": "ref",
+          "ref": "clef"
+        },
+        "inputs": [
+          "entry",
+          "facts"
+        ],
+        "optional": false
+      },
+      {
+        "id": "built_during",
+        "name": "Says what was built at the event and what existed before",
+        "weight": 0,
+        "scale": {
+          "type": "binary",
+          "labels": [
+            "missing",
+            "present"
+          ]
+        },
+        "anchors": {
+          "missing": "The write-up doesn't separate what the team built during the hackathon from what already existed (code, libraries, hardware)",
+          "present": "The write-up lists what was built during the hackathon and names what existed before"
+        },
+        "judge": {
+          "type": "ref",
+          "ref": "clef"
+        },
+        "inputs": [
+          "entry",
+          "facts"
+        ],
+        "optional": false
+      },
+      {
+        "id": "ai_credited",
+        "name": "Credits the AI tools it used",
+        "weight": 0,
+        "scale": {
+          "type": "binary",
+          "labels": [
+            "missing",
+            "credited"
+          ]
+        },
+        "anchors": {
+          "missing": "facts.json lists an AI tool the team used to build the project, and the write-up doesn't name it and what it was used for",
+          "credited": "Every AI tool listed in facts.json is named in the write-up with what it was used for"
+        },
+        "judge": {
+          "type": "ref",
+          "ref": "clef"
+        },
+        "inputs": [
+          "entry",
+          "facts"
+        ],
+        "optional": false
+      },
+      {
+        "id": "demo",
+        "name": "Links a demo",
+        "weight": 0,
+        "scale": {
+          "type": "binary",
+          "labels": [
+            "missing",
+            "linked"
+          ]
+        },
+        "anchors": {
+          "missing": "No link to a demo video or a live demo",
+          "linked": "Links the demo video or live demo from facts.json"
+        },
+        "judge": {
+          "type": "ref",
+          "ref": "clef"
+        },
+        "inputs": [
+          "entry",
+          "facts"
+        ],
+        "optional": false
+      },
+      {
+        "id": "code",
+        "name": "Links the code",
+        "weight": 0,
+        "scale": {
+          "type": "binary",
+          "labels": [
+            "missing",
+            "linked"
+          ]
+        },
+        "anchors": {
+          "missing": "No link to the source code",
+          "linked": "Links the public repository from facts.json"
+        },
+        "judge": {
+          "type": "ref",
+          "ref": "clef"
+        },
+        "inputs": [
+          "entry",
+          "facts"
+        ],
+        "optional": false
+      },
+      {
+        "id": "limits",
+        "name": "Says what doesn't work yet",
+        "weight": 0,
+        "scale": {
+          "type": "binary",
+          "labels": [
+            "missing",
+            "stated"
+          ]
+        },
+        "anchors": {
+          "missing": "The write-up doesn't say what is unfinished or doesn't work yet",
+          "stated": "The write-up names what is unfinished or doesn't work yet, as listed in facts.json"
+        },
+        "judge": {
+          "type": "ref",
+          "ref": "clef"
+        },
+        "inputs": [
+          "entry",
+          "facts"
+        ],
+        "optional": false
+      }
+    ],
+    "aggregation": {
+      "method": "formula",
+      "formula": "honest_n < 0.5 ? 0 : (impact_n * 3 + technical_n * 2 + originality_n) / 6 * (1 + what_for_whom_n + built_during_n + ai_credited_n + demo_n + code_n + limits_n) / 7",
+      "rater": "mean",
+      "normalize": [
+        0,
+        100
+      ],
+      "missing": "exclude",
+      "gates": [
+        {
+          "criterion": "honest",
+          "min": 1,
+          "message": "Claims users, results or accuracy the project doesn't have"
+        }
+      ],
+      "grades": [
+        {
+          "label": "finalist",
+          "min": 80
+        },
+        {
+          "label": "contender",
+          "min": 50
+        },
+        {
+          "label": "out",
+          "min": 0
+        }
+      ],
+      "passThreshold": 80,
+      "precision": 0
+    }
+  },
+  "subject": {
+    "name": "Tidewatch",
+    "inputs": [
+      {
+        "type": "file",
+        "path": "/root/hackathon-v2/entries/tidewatch.md",
+        "label": "entry",
+        "tags": [
+          "entry"
+        ]
+      },
+      {
+        "type": "file",
+        "path": "/root/hackathon-v2/entries/tidewatch.facts.json",
+        "label": "facts",
+        "tags": [
+          "facts"
+        ]
+      }
+    ]
+  },
+  "evidence": [
+    {
+      "inputIndex": 0,
+      "kind": "file",
+      "label": "entry",
+      "tags": [
+        "entry"
+      ],
+      "text": "# Tidewatch\n\nTidewatch texts residents of streets next to small creeks and storm drains when their street is about to flood. A water-level sensor on the storm drain sends an SMS to nearby residents when the water rises past a threshold.\n\nUsing an IoT sensor and SMS, Tidewatch delivers alerts within seconds of a reading.\n\n## Built at the hackathon vs. before\n\nBuilt by our team of 3 during the 36-hour hackathon:\n- SMS alert service (FastAPI + Twilio)\n- threshold rule that needs 2 readings in a row\n- map dashboard of sensor readings\n- 3D-printed sensor enclosure\n\nExisted before the event:\n- ultrasonic sensor firmware from our earlier open-source university project\n- ESP32 board and sensor, bought before the event\n\n## AI tools used\n\n- Claude Code: wrote most of the map dashboard's frontend code.\n\n## Demo\n\nDemo video (2:40): https://video.example.org/tidewatch-demo\n\nWe are passionate about making streets safer, and we want to keep building Tidewatch.\n",
+      "truncated": false,
+      "stats": {
+        "chars": 959,
+        "words": 157,
+        "lines": 27
+      },
+      "source": "tidewatch.md"
+    },
+    {
+      "inputIndex": 1,
+      "kind": "file",
+      "label": "facts",
+      "tags": [
+        "facts"
+      ],
+      "text": "{\n  \"_note\": \"Fictional hackathon entry. Everything true about the project is here; the write-up may claim nothing else.\",\n  \"project\": \"Tidewatch\",\n  \"event\": \"a 36-hour hackathon\",\n  \"team_size\": 3,\n  \"problem\": \"Streets next to small creeks flood within minutes after heavy rain, and residents get no street-level warning\",\n  \"users\": \"Residents of streets next to small creeks and storm drains\",\n  \"what_it_does\": \"A water-level sensor on a storm drain texts nearby residents when the water rises past a threshold\",\n  \"existing_alternatives\": \"Regional flood warnings from the weather service cover whole districts and arrive by app; none warns a single street from its own drain\",\n  \"built_during_hackathon\": [\n    \"SMS alert service (FastAPI + Twilio)\",\n    \"threshold rule that needs 2 readings in a row\",\n    \"map dashboard of sensor readings\",\n    \"3D-printed sensor enclosure\"\n  ],\n  \"pre_existing\": [\n    \"ultrasonic sensor firmware from the team's earlier open-source university project\",\n    \"ESP32 board and sensor, bought before the event\"\n  ],\n  \"ai_tools\": [\n    {\n      \"tool\": \"Claude Code\",\n      \"used_for\": \"most of the map dashboard's frontend code\"\n    }\n  ],\n  \"stack\": [\n    \"ESP32\",\n    \"ultrasonic distance sensor\",\n    \"LoRa (one link, sensor to gateway)\",\n    \"Python FastAPI\",\n    \"Twilio SMS\",\n    \"Leaflet map\"\n  ],\n  \"tested\": {\n    \"hours_on_a_real_creek\": 20,\n    \"test_alerts_sent\": 2,\n    \"phones_alerted\": 4,\n    \"seconds_from_reading_to_text\": 40\n  },\n  \"demo_video\": {\n    \"url\": \"https://video.example.org/tidewatch-demo\",\n    \"length\": \"2:40\"\n  },\n  \"repo\": \"https://git.example.org/tidewatch\",\n  \"limitations\": [\n    \"one sensor, no mesh yet\",\n    \"a fixed threshold, no forecasting\",\n    \"the battery lasts about 2 days\",\n    \"no city permit to mount sensors on public drains\"\n  ]\n}",
+      "truncated": false,
+      "stats": {
+        "chars": 1827,
+        "words": 228,
+        "lines": 51
+      },
+      "source": "tidewatch.facts.json",
+      "json": {
+        "_note": "Fictional hackathon entry. Everything true about the project is here; the write-up may claim nothing else.",
+        "project": "Tidewatch",
+        "event": "a 36-hour hackathon",
+        "team_size": 3,
+        "problem": "Streets next to small creeks flood within minutes after heavy rain, and residents get no street-level warning",
+        "users": "Residents of streets next to small creeks and storm drains",
+        "what_it_does": "A water-level sensor on a storm drain texts nearby residents when the water rises past a threshold",
+        "existing_alternatives": "Regional flood warnings from the weather service cover whole districts and arrive by app; none warns a single street from its own drain",
+        "built_during_hackathon": [
+          "SMS alert service (FastAPI + Twilio)",
+          "threshold rule that needs 2 readings in a row",
+          "map dashboard of sensor readings",
+          "3D-printed sensor enclosure"
+        ],
+        "pre_existing": [
+          "ultrasonic sensor firmware from the team's earlier open-source university project",
+          "ESP32 board and sensor, bought before the event"
+        ],
+        "ai_tools": [
+          {
+            "tool": "Claude Code",
+            "used_for": "most of the map dashboard's frontend code"
+          }
+        ],
+        "stack": [
+          "ESP32",
+          "ultrasonic distance sensor",
+          "LoRa (one link, sensor to gateway)",
+          "Python FastAPI",
+          "Twilio SMS",
+          "Leaflet map"
+        ],
+        "tested": {
+          "hours_on_a_real_creek": 20,
+          "test_alerts_sent": 2,
+          "phones_alerted": 4,
+          "seconds_from_reading_to_text": 40
+        },
+        "demo_video": {
+          "url": "https://video.example.org/tidewatch-demo",
+          "length": "2:40"
+        },
+        "repo": "https://git.example.org/tidewatch",
+        "limitations": [
+          "one sensor, no mesh yet",
+          "a fixed threshold, no forecasting",
+          "the battery lasts about 2 days",
+          "no city permit to mount sensors on public drains"
+        ]
+      }
+    }
+  ],
+  "status": "completed",
+  "criteria": [
+    {
+      "criterionId": "impact",
+      "name": "Potential impact",
+      "weight": 3,
+      "status": "scored",
+      "ratings": [
+        {
+          "id": "rat_em7c0u26mw62v87o",
+          "criterionId": "impact",
+          "raterId": "jev",
+          "judgeType": "decision",
+          "createdAt": "2026-11-07T07:24:18.132Z",
+          "status": "scored",
+          "score": 3.96,
+          "normalized": 0.74,
+          "confidence": 0.28,
+          "probabilities": {
+            "minor": 0,
+            "useful": 0.52,
+            "major": 0.48
+          },
+          "rationale": "typesafe/jev-1.14.0 distribution: minor=0% useful=52% major=48%",
+          "raw": {
+            "provider": "typesafe",
+            "model": "jev-1.14.0",
+            "question": {
+              "type": "score",
+              "instructions": "Context: You judge one hackathon entry from its write-up. facts.json lists everything true about the project; the write-up may\nclaim nothing beyond it. Be strict: when in doubt, judge it as failing. Each check looks only at the kind of problem\nit names; ignore other kinds of problems when judging it.\n Criterion \"Potential impact\". Place the input on the ordered levels below (worst to best). Judge only this criterion using the evidence in the state.",
+              "criteria": [
+                "minor: A small convenience; the write-up doesn't say who has the problem or why it matters",
+                "useful: A real problem for a named group, but the stakes or the evidence are thin",
+                "major: A serious problem for a clearly named group, with what was actually shown about it"
+              ]
+            },
+            "answer": {
+              "type": "score",
+              "score": 1.47,
+              "confidence": 0.28,
+              "legend": {
+                "0": "minor: A small convenience; the write-up doesn't say who has the problem or why it matters",
+                "1": "useful: A real problem for a named group, but the stakes or the evidence are thin",
+                "2": "major: A serious problem for a clearly named group, with what was actually shown about it"
+              },
+              "probabilities": {
+                "0": 0,
+                "1": 0.52,
+                "2": 0.48
+              }
+            },
+            "levels": [
+              {
+                "value": 1,
+                "label": "minor",
+                "description": "A small convenience; the write-up doesn't say who has the problem or why it matters"
+              },
+              {
+                "value": 3,
+                "label": "useful",
+                "description": "A real problem for a named group, but the stakes or the evidence are thin"
+              },
+              {
+                "value": 5,
+                "label": "major",
+                "description": "A serious problem for a clearly named group, with what was actually shown about it"
+              }
+            ],
+            "latencyMs": 310,
+            "lowConfidence": false,
+            "stateChars": 2947,
+            "stateTruncated": false
+          }
+        }
+      ],
+      "pending": 0,
+      "score": 3.96,
+      "normalized": 0.74
+    },
+    {
+      "criterionId": "technical",
+      "name": "Technical implementation",
+      "weight": 2,
+      "status": "scored",
+      "ratings": [
+        {
+          "id": "rat_flcb0b9imw62v87o",
+          "criterionId": "technical",
+          "raterId": "jev",
+          "judgeType": "decision",
+          "createdAt": "2026-11-07T07:24:18.132Z",
+          "status": "scored",
+          "score": 4.24,
+          "normalized": 0.81,
+          "confidence": 0.43,
+          "probabilities": {
+            "unclear": 0.01,
+            "partial": 0.36,
+            "solid": 0.63
+          },
+          "rationale": "typesafe/jev-1.14.0 distribution: unclear=1% partial=36% solid=63%",
+          "raw": {
+            "provider": "typesafe",
+            "model": "jev-1.14.0",
+            "question": {
+              "type": "score",
+              "instructions": "Context: You judge one hackathon entry from its write-up. facts.json lists everything true about the project; the write-up may\nclaim nothing beyond it. Be strict: when in doubt, judge it as failing. Each check looks only at the kind of problem\nit names; ignore other kinds of problems when judging it.\n Criterion \"Technical implementation\". Place the input on the ordered levels below (worst to best). Judge only this criterion using the evidence in the state.",
+              "criteria": [
+                "unclear: Buzzwords instead of a build; you can't tell what was made or whether it works",
+                "partial: A working core is described, but how it works or what was tested is vague",
+                "solid: Says what was built, with what, and what was tested end to end"
+              ]
+            },
+            "answer": {
+              "type": "score",
+              "score": 1.62,
+              "confidence": 0.43,
+              "legend": {
+                "0": "unclear: Buzzwords instead of a build; you can't tell what was made or whether it works",
+                "1": "partial: A working core is described, but how it works or what was tested is vague",
+                "2": "solid: Says what was built, with what, and what was tested end to end"
+              },
+              "probabilities": {
+                "0": 0.01,
+                "1": 0.36,
+                "2": 0.63
+              }
+            },
+            "levels": [
+              {
+                "value": 1,
+                "label": "unclear",
+                "description": "Buzzwords instead of a build; you can't tell what was made or whether it works"
+              },
+              {
+                "value": 3,
+                "label": "partial",
+                "description": "A working core is described, but how it works or what was tested is vague"
+              },
+              {
+                "value": 5,
+                "label": "solid",
+                "description": "Says what was built, with what, and what was tested end to end"
+              }
+            ],
+            "latencyMs": 310,
+            "lowConfidence": false,
+            "stateChars": 2947,
+            "stateTruncated": false
+          }
+        }
+      ],
+      "pending": 0,
+      "score": 4.24,
+      "normalized": 0.81
+    },
+    {
+      "criterionId": "originality",
+      "name": "Originality",
+      "weight": 1,
+      "status": "scored",
+      "ratings": [
+        {
+          "id": "rat_bttyiuq3mw62v87o",
+          "criterionId": "originality",
+          "raterId": "jev",
+          "judgeType": "decision",
+          "createdAt": "2026-11-07T07:24:18.132Z",
+          "status": "scored",
+          "score": 4.32,
+          "normalized": 0.8299999999999998,
+          "confidence": 0.49,
+          "probabilities": {
+            "familiar": 0.06,
+            "fresh_angle": 0.22,
+            "new": 0.72
+          },
+          "rationale": "typesafe/jev-1.14.0 distribution: familiar=6% fresh_angle=22% new=72%",
+          "raw": {
+            "provider": "typesafe",
+            "model": "jev-1.14.0",
+            "question": {
+              "type": "score",
+              "instructions": "Context: You judge one hackathon entry from its write-up. facts.json lists everything true about the project; the write-up may\nclaim nothing beyond it. Be strict: when in doubt, judge it as failing. Each check looks only at the kind of problem\nit names; ignore other kinds of problems when judging it.\n Criterion \"Originality\". Place the input on the ordered levels below (worst to best). Judge only this criterion using the evidence in the state.",
+              "criteria": [
+                "familiar: Works like products people already use, and the write-up doesn't say what is different",
+                "fresh_angle: A familiar idea; the write-up hints at what is different but doesn't compare it with what exists",
+                "new: Says what existing options miss, and does something they don't for this group"
+              ]
+            },
+            "answer": {
+              "type": "score",
+              "score": 1.67,
+              "confidence": 0.49,
+              "legend": {
+                "0": "familiar: Works like products people already use, and the write-up doesn't say what is different",
+                "1": "fresh_angle: A familiar idea; the write-up hints at what is different but doesn't compare it with what exists",
+                "2": "new: Says what existing options miss, and does something they don't for this group"
+              },
+              "probabilities": {
+                "0": 0.06,
+                "1": 0.22,
+                "2": 0.72
+              }
+            },
+            "levels": [
+              {
+                "value": 1,
+                "label": "familiar",
+                "description": "Works like products people already use, and the write-up doesn't say what is different"
+              },
+              {
+                "value": 3,
+                "label": "fresh_angle",
+                "description": "A familiar idea; the write-up hints at what is different but doesn't compare it with what exists"
+              },
+              {
+                "value": 5,
+                "label": "new",
+                "description": "Says what existing options miss, and does something they don't for this group"
+              }
+            ],
+            "latencyMs": 310,
+            "lowConfidence": false,
+            "stateChars": 2947,
+            "stateTruncated": false
+          }
+        }
+      ],
+      "pending": 0,
+      "score": 4.32,
+      "normalized": 0.8300000000000001
+    },
+    {
+      "criterionId": "honest",
+      "name": "Claims nothing beyond the facts",
+      "weight": 0,
+      "status": "scored",
+      "ratings": [
+        {
+          "id": "rat_8ex2o2bcmw62v8m2",
+          "criterionId": "honest",
+          "raterId": "clef",
+          "judgeType": "decision",
+          "createdAt": "2026-11-07T07:24:18.650Z",
+          "status": "scored",
+          "score": 1,
+          "normalized": 1,
+          "confidence": 0.6238,
+          "probabilities": {
+            "overclaims": 0.1881,
+            "honest": 0.8119
+          },
+          "rationale": "cloudflare/@cf/cloudflare/clef distribution: overclaims=19% honest=81%",
+          "raw": {
+            "provider": "cloudflare",
+            "model": "@cf/cloudflare/clef",
+            "question": {
+              "type": "noul",
+              "instructions": "Context: You judge one hackathon entry from its write-up. facts.json lists everything true about the project; the write-up may\nclaim nothing beyond it. Be strict: when in doubt, judge it as failing. Each check looks only at the kind of problem\nit names; ignore other kinds of problems when judging it.\n Criterion \"Claims nothing beyond the facts\". Is the input \"honest\" for this criterion?",
+              "criteria": {
+                "true": "Every claim about users, deployments, accuracy and results is in facts.json. Missing sections are judged elsewhere",
+                "false": "The write-up claims users, deployments, accuracy, predictions or results that facts.json doesn't contain (for example a percentage, a number of places or people, or AI the project doesn't have)"
+              }
+            },
+            "answer": {
+              "type": "noul",
+              "noul": 0.8119
+            },
+            "levels": [
+              {
+                "value": 0,
+                "label": "overclaims",
+                "description": "The write-up claims users, deployments, accuracy, predictions or results that facts.json doesn't contain (for example a percentage, a number of places or people, or AI the project doesn't have)"
+              },
+              {
+                "value": 1,
+                "label": "honest",
+                "description": "Every claim about users, deployments, accuracy and results is in facts.json. Missing sections are judged elsewhere"
+              }
+            ],
+            "latencyMs": 828,
+            "lowConfidence": false,
+            "stateChars": 2947,
+            "stateTruncated": false
+          }
+        }
+      ],
+      "pending": 0,
+      "score": 1,
+      "normalized": 1,
+      "gate": {
+        "passed": true
+      }
+    },
+    {
+      "criterionId": "what_for_whom",
+      "name": "Opens with what it does and for whom",
+      "weight": 0,
+      "status": "scored",
+      "ratings": [
+        {
+          "id": "rat_3xl310ikmw62v8m2",
+          "criterionId": "what_for_whom",
+          "raterId": "clef",
+          "judgeType": "decision",
+          "createdAt": "2026-11-07T07:24:18.650Z",
+          "status": "scored",
+          "score": 1,
+          "normalized": 1,
+          "confidence": 0.8246,
+          "probabilities": {
+            "missing": 0.0877,
+            "present": 0.9123
+          },
+          "rationale": "cloudflare/@cf/cloudflare/clef distribution: missing=9% present=91%",
+          "raw": {
+            "provider": "cloudflare",
+            "model": "@cf/cloudflare/clef",
+            "question": {
+              "type": "noul",
+              "instructions": "Context: You judge one hackathon entry from its write-up. facts.json lists everything true about the project; the write-up may\nclaim nothing beyond it. Be strict: when in doubt, judge it as failing. Each check looks only at the kind of problem\nit names; ignore other kinds of problems when judging it.\n Criterion \"Opens with what it does and for whom\". Is the input \"present\" for this criterion?",
+              "criteria": {
+                "true": "The first paragraph says plainly what the project does and names who it is for",
+                "false": "The opening is a slogan or a vision, or doesn't name who the project is for"
+              }
+            },
+            "answer": {
+              "type": "noul",
+              "noul": 0.9123
+            },
+            "levels": [
+              {
+                "value": 0,
+                "label": "missing",
+                "description": "The opening is a slogan or a vision, or doesn't name who the project is for"
+              },
+              {
+                "value": 1,
+                "label": "present",
+                "description": "The first paragraph says plainly what the project does and names who it is for"
+              }
+            ],
+            "latencyMs": 828,
+            "lowConfidence": false,
+            "stateChars": 2947,
+            "stateTruncated": false
+          }
+        }
+      ],
+      "pending": 0,
+      "score": 1,
+      "normalized": 1
+    },
+    {
+      "criterionId": "built_during",
+      "name": "Says what was built at the event and what existed before",
+      "weight": 0,
+      "status": "scored",
+      "ratings": [
+        {
+          "id": "rat_p7abx6z0mw62v8m2",
+          "criterionId": "built_during",
+          "raterId": "clef",
+          "judgeType": "decision",
+          "createdAt": "2026-11-07T07:24:18.650Z",
+          "status": "scored",
+          "score": 1,
+          "normalized": 1,
+          "confidence": 0.8486,
+          "probabilities": {
+            "missing": 0.0757,
+            "present": 0.9243
+          },
+          "rationale": "cloudflare/@cf/cloudflare/clef distribution: missing=8% present=92%",
+          "raw": {
+            "provider": "cloudflare",
+            "model": "@cf/cloudflare/clef",
+            "question": {
+              "type": "noul",
+              "instructions": "Context: You judge one hackathon entry from its write-up. facts.json lists everything true about the project; the write-up may\nclaim nothing beyond it. Be strict: when in doubt, judge it as failing. Each check looks only at the kind of problem\nit names; ignore other kinds of problems when judging it.\n Criterion \"Says what was built at the event and what existed before\". Is the input \"present\" for this criterion?",
+              "criteria": {
+                "true": "The write-up lists what was built during the hackathon and names what existed before",
+                "false": "The write-up doesn't separate what the team built during the hackathon from what already existed (code, libraries, hardware)"
+              }
+            },
+            "answer": {
+              "type": "noul",
+              "noul": 0.9243
+            },
+            "levels": [
+              {
+                "value": 0,
+                "label": "missing",
+                "description": "The write-up doesn't separate what the team built during the hackathon from what already existed (code, libraries, hardware)"
+              },
+              {
+                "value": 1,
+                "label": "present",
+                "description": "The write-up lists what was built during the hackathon and names what existed before"
+              }
+            ],
+            "latencyMs": 828,
+            "lowConfidence": false,
+            "stateChars": 2947,
+            "stateTruncated": false
+          }
+        }
+      ],
+      "pending": 0,
+      "score": 1,
+      "normalized": 1
+    },
+    {
+      "criterionId": "ai_credited",
+      "name": "Credits the AI tools it used",
+      "weight": 0,
+      "status": "scored",
+      "ratings": [
+        {
+          "id": "rat_f8sdbz81mw62v8m2",
+          "criterionId": "ai_credited",
+          "raterId": "clef",
+          "judgeType": "decision",
+          "createdAt": "2026-11-07T07:24:18.650Z",
+          "status": "scored",
+          "score": 1,
+          "normalized": 1,
+          "confidence": 0.91,
+          "probabilities": {
+            "missing": 0.045,
+            "credited": 0.955
+          },
+          "rationale": "cloudflare/@cf/cloudflare/clef distribution: missing=5% credited=96%",
+          "raw": {
+            "provider": "cloudflare",
+            "model": "@cf/cloudflare/clef",
+            "question": {
+              "type": "noul",
+              "instructions": "Context: You judge one hackathon entry from its write-up. facts.json lists everything true about the project; the write-up may\nclaim nothing beyond it. Be strict: when in doubt, judge it as failing. Each check looks only at the kind of problem\nit names; ignore other kinds of problems when judging it.\n Criterion \"Credits the AI tools it used\". Is the input \"credited\" for this criterion?",
+              "criteria": {
+                "true": "Every AI tool listed in facts.json is named in the write-up with what it was used for",
+                "false": "facts.json lists an AI tool the team used to build the project, and the write-up doesn't name it and what it was used for"
+              }
+            },
+            "answer": {
+              "type": "noul",
+              "noul": 0.955
+            },
+            "levels": [
+              {
+                "value": 0,
+                "label": "missing",
+                "description": "facts.json lists an AI tool the team used to build the project, and the write-up doesn't name it and what it was used for"
+              },
+              {
+                "value": 1,
+                "label": "credited",
+                "description": "Every AI tool listed in facts.json is named in the write-up with what it was used for"
+              }
+            ],
+            "latencyMs": 828,
+            "lowConfidence": false,
+            "stateChars": 2947,
+            "stateTruncated": false
+          }
+        }
+      ],
+      "pending": 0,
+      "score": 1,
+      "normalized": 1
+    },
+    {
+      "criterionId": "demo",
+      "name": "Links a demo",
+      "weight": 0,
+      "status": "scored",
+      "ratings": [
+        {
+          "id": "rat_tu978vxqmw62v8m2",
+          "criterionId": "demo",
+          "raterId": "clef",
+          "judgeType": "decision",
+          "createdAt": "2026-11-07T07:24:18.650Z",
+          "status": "scored",
+          "score": 1,
+          "normalized": 1,
+          "confidence": 0.8882,
+          "probabilities": {
+            "missing": 0.0559,
+            "linked": 0.9441
+          },
+          "rationale": "cloudflare/@cf/cloudflare/clef distribution: missing=6% linked=94%",
+          "raw": {
+            "provider": "cloudflare",
+            "model": "@cf/cloudflare/clef",
+            "question": {
+              "type": "noul",
+              "instructions": "Context: You judge one hackathon entry from its write-up. facts.json lists everything true about the project; the write-up may\nclaim nothing beyond it. Be strict: when in doubt, judge it as failing. Each check looks only at the kind of problem\nit names; ignore other kinds of problems when judging it.\n Criterion \"Links a demo\". Is the input \"linked\" for this criterion?",
+              "criteria": {
+                "true": "Links the demo video or live demo from facts.json",
+                "false": "No link to a demo video or a live demo"
+              }
+            },
+            "answer": {
+              "type": "noul",
+              "noul": 0.9441
+            },
+            "levels": [
+              {
+                "value": 0,
+                "label": "missing",
+                "description": "No link to a demo video or a live demo"
+              },
+              {
+                "value": 1,
+                "label": "linked",
+                "description": "Links the demo video or live demo from facts.json"
+              }
+            ],
+            "latencyMs": 828,
+            "lowConfidence": false,
+            "stateChars": 2947,
+            "stateTruncated": false
+          }
+        }
+      ],
+      "pending": 0,
+      "score": 1,
+      "normalized": 1
+    },
+    {
+      "criterionId": "code",
+      "name": "Links the code",
+      "weight": 0,
+      "status": "scored",
+      "ratings": [
+        {
+          "id": "rat_igtj2dt3mw62v8m2",
+          "criterionId": "code",
+          "raterId": "clef",
+          "judgeType": "decision",
+          "createdAt": "2026-11-07T07:24:18.650Z",
+          "status": "scored",
+          "score": 0,
+          "normalized": 0,
+          "confidence": 0.9452,
+          "probabilities": {
+            "missing": 0.9726,
+            "linked": 0.0274
+          },
+          "rationale": "cloudflare/@cf/cloudflare/clef distribution: missing=97% linked=3%",
+          "raw": {
+            "provider": "cloudflare",
+            "model": "@cf/cloudflare/clef",
+            "question": {
+              "type": "noul",
+              "instructions": "Context: You judge one hackathon entry from its write-up. facts.json lists everything true about the project; the write-up may\nclaim nothing beyond it. Be strict: when in doubt, judge it as failing. Each check looks only at the kind of problem\nit names; ignore other kinds of problems when judging it.\n Criterion \"Links the code\". Is the input \"linked\" for this criterion?",
+              "criteria": {
+                "true": "Links the public repository from facts.json",
+                "false": "No link to the source code"
+              }
+            },
+            "answer": {
+              "type": "noul",
+              "noul": 0.0274
+            },
+            "levels": [
+              {
+                "value": 0,
+                "label": "missing",
+                "description": "No link to the source code"
+              },
+              {
+                "value": 1,
+                "label": "linked",
+                "description": "Links the public repository from facts.json"
+              }
+            ],
+            "latencyMs": 828,
+            "lowConfidence": false,
+            "stateChars": 2947,
+            "stateTruncated": false
+          }
+        }
+      ],
+      "pending": 0,
+      "score": 0,
+      "normalized": 0
+    },
+    {
+      "criterionId": "limits",
+      "name": "Says what doesn't work yet",
+      "weight": 0,
+      "status": "scored",
+      "ratings": [
+        {
+          "id": "rat_u28xnkuxmw62v8m2",
+          "criterionId": "limits",
+          "raterId": "clef",
+          "judgeType": "decision",
+          "createdAt": "2026-11-07T07:24:18.650Z",
+          "status": "scored",
+          "score": 0,
+          "normalized": 0,
+          "confidence": 0.8928,
+          "probabilities": {
+            "missing": 0.9464,
+            "stated": 0.0536
+          },
+          "rationale": "cloudflare/@cf/cloudflare/clef distribution: missing=95% stated=5%",
+          "raw": {
+            "provider": "cloudflare",
+            "model": "@cf/cloudflare/clef",
+            "question": {
+              "type": "noul",
+              "instructions": "Context: You judge one hackathon entry from its write-up. facts.json lists everything true about the project; the write-up may\nclaim nothing beyond it. Be strict: when in doubt, judge it as failing. Each check looks only at the kind of problem\nit names; ignore other kinds of problems when judging it.\n Criterion \"Says what doesn't work yet\". Is the input \"stated\" for this criterion?",
+              "criteria": {
+                "true": "The write-up names what is unfinished or doesn't work yet, as listed in facts.json",
+                "false": "The write-up doesn't say what is unfinished or doesn't work yet"
+              }
+            },
+            "answer": {
+              "type": "noul",
+              "noul": 0.0536
+            },
+            "levels": [
+              {
+                "value": 0,
+                "label": "missing",
+                "description": "The write-up doesn't say what is unfinished or doesn't work yet"
+              },
+              {
+                "value": 1,
+                "label": "stated",
+                "description": "The write-up names what is unfinished or doesn't work yet, as listed in facts.json"
+              }
+            ],
+            "latencyMs": 828,
+            "lowConfidence": false,
+            "stateChars": 2947,
+            "stateTruncated": false
+          }
+        }
+      ],
+      "pending": 0,
+      "score": 0,
+      "normalized": 0
+    }
+  ],
+  "aggregate": {
+    "method": "formula",
+    "range": [
+      0,
+      100
+    ],
+    "gates": [
+      {
+        "criterion": "honest",
+        "passed": true
+      }
+    ],
+    "partial": false,
+    "included": [
+      "impact",
+      "technical",
+      "originality"
+    ],
+    "excluded": [
+      "honest",
+      "what_for_whom",
+      "built_during",
+      "ai_credited",
+      "demo",
+      "code",
+      "limits"
+    ],
+    "raw": 0.555952,
+    "score": 56,
+    "grade": "contender",
+    "passed": false
+  },
+  "pendingTasks": [],
+  "usage": {
+    "decisionCalls": 2,
+    "llmCalls": 0,
+    "inputTokens": 3750,
+    "outputTokens": 45,
+    "durationMs": 833
+  },
+  "batchId": "bat_mw62v7yxhxbya5ek",
+  "createdAt": "2026-11-07T07:24:17.819Z",
+  "updatedAt": "2026-11-07T07:24:18.650Z"
+}

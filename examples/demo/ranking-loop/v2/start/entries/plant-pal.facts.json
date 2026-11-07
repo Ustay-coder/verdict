@@ -1,0 +1,14 @@
+{
+  "_note": "Fictional hackathon entry. Everything true about the project is here; the write-up may claim nothing else.",
+  "project": "Plant Pal",
+  "problem": "People forget to water their houseplants",
+  "users": "Houseplant owners",
+  "what_it_does": "A chatbot that reminds you to water your plants and answers care questions",
+  "built_during_hackathon": ["chat prompt", "reminder screen"],
+  "pre_existing": ["a general chat model API"],
+  "ai_tools": [{ "tool": "a general chat model", "used_for": "the chatbot itself" }],
+  "tested": { "phones": 2 },
+  "demo_video": null,
+  "repo": null,
+  "limitations": ["reminders are set by hand"]
+}

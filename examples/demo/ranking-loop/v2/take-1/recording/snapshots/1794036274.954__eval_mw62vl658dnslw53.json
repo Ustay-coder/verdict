@@ -1,0 +1,374 @@
+{
+  "id": "eval_mw62vl658dnslw53",
+  "rubricId": "rub_mw62tt4iidu4jikc",
+  "rubric": {
+    "id": "rub_mw62tt4iidu4jikc",
+    "name": "Hackathon judging (strict)",
+    "version": "2",
+    "description": "Would this write-up hold up in front of the judges, given what is true about the project?",
+    "context": "You judge one hackathon entry from its write-up. facts.json lists everything true about the project; the write-up may\nclaim nothing beyond it. Be strict: when in doubt, judge it as failing. Each check looks only at the kind of problem\nit names; ignore other kinds of problems when judging it.\n",
+    "language": "en",
+    "scale": {
+      "type": "numeric",
+      "min": 1,
+      "max": 5
+    },
+    "judges": {
+      "jev": {
+        "type": "decision",
+        "provider": "typesafe",
+        "model": "jev-latest",
+        "onLowConfidence": "accept",
+        "escalateTo": []
+      },
+      "clef": {
+        "type": "decision",
+        "provider": "cloudflare",
+        "model": "@cf/cloudflare/clef",
+        "onLowConfidence": "accept",
+        "escalateTo": []
+      }
+    },
+    "defaultJudge": {
+      "type": "ref",
+      "ref": "jev"
+    },
+    "criteria": [
+      {
+        "id": "impact",
+        "name": "Potential impact",
+        "weight": 3,
+        "levels": [
+          {
+            "value": 1,
+            "label": "minor",
+            "description": "A small convenience; the write-up doesn't say who has the problem or why it matters"
+          },
+          {
+            "value": 3,
+            "label": "useful",
+            "description": "A real problem for a named group, but the stakes or the evidence are thin"
+          },
+          {
+            "value": 5,
+            "label": "major",
+            "description": "A serious problem for a clearly named group, with what was actually shown about it"
+          }
+        ],
+        "inputs": [
+          "entry",
+          "facts"
+        ],
+        "optional": false
+      },
+      {
+        "id": "technical",
+        "name": "Technical implementation",
+        "weight": 2,
+        "levels": [
+          {
+            "value": 1,
+            "label": "unclear",
+            "description": "Buzzwords instead of a build; you can't tell what was made or whether it works"
+          },
+          {
+            "value": 3,
+            "label": "partial",
+            "description": "A working core is described, but how it works or what was tested is vague"
+          },
+          {
+            "value": 5,
+            "label": "solid",
+            "description": "Says what was built, with what, and what was tested end to end"
+          }
+        ],
+        "inputs": [
+          "entry",
+          "facts"
+        ],
+        "optional": false
+      },
+      {
+        "id": "originality",
+        "name": "Originality",
+        "weight": 1,
+        "levels": [
+          {
+            "value": 1,
+            "label": "familiar",
+            "description": "Works like products people already use, and the write-up doesn't say what is different"
+          },
+          {
+            "value": 3,
+            "label": "fresh_angle",
+            "description": "A familiar idea; the write-up hints at what is different but doesn't compare it with what exists"
+          },
+          {
+            "value": 5,
+            "label": "new",
+            "description": "Says what existing options miss, and does something they don't for this group"
+          }
+        ],
+        "inputs": [
+          "entry",
+          "facts"
+        ],
+        "optional": false
+      },
+      {
+        "id": "honest",
+        "name": "Claims nothing beyond the facts",
+        "weight": 0,
+        "scale": {
+          "type": "binary",
+          "labels": [
+            "overclaims",
+            "honest"
+          ]
+        },
+        "anchors": {
+          "overclaims": "The write-up claims users, deployments, accuracy, predictions or results that facts.json doesn't contain (for example a percentage, a number of places or people, or AI the project doesn't have)",
+          "honest": "Every claim about users, deployments, accuracy and results is in facts.json. Missing sections are judged elsewhere"
+        },
+        "judge": {
+          "type": "ref",
+          "ref": "clef"
+        },
+        "inputs": [
+          "entry",
+          "facts"
+        ],
+        "optional": false
+      },
+      {
+        "id": "what_for_whom",
+        "name": "Opens with what it does and for whom",
+        "weight": 0,
+        "scale": {
+          "type": "binary",
+          "labels": [
+            "missing",
+            "present"
+          ]
+        },
+        "anchors": {
+          "missing": "The opening is a slogan or a vision, or doesn't name who the project is for",
+          "present": "The first paragraph says plainly what the project does and names who it is for"
+        },
+        "judge": {
+          "type": "ref",
+          "ref": "clef"
+        },
+        "inputs": [
+          "entry",
+          "facts"
+        ],
+        "optional": false
+      },
+      {
+        "id": "built_during",
+        "name": "Says what was built at the event and what existed before",
+        "weight": 0,
+        "scale": {
+          "type": "binary",
+          "labels": [
+            "missing",
+            "present"
+          ]
+        },
+        "anchors": {
+          "missing": "The write-up doesn't separate what the team built during the hackathon from what already existed (code, libraries, hardware)",
+          "present": "The write-up lists what was built during the hackathon and names what existed before"
+        },
+        "judge": {
+          "type": "ref",
+          "ref": "clef"
+        },
+        "inputs": [
+          "entry",
+          "facts"
+        ],
+        "optional": false
+      },
+      {
+        "id": "ai_credited",
+        "name": "Credits the AI tools it used",
+        "weight": 0,
+        "scale": {
+          "type": "binary",
+          "labels": [
+            "missing",
+            "credited"
+          ]
+        },
+        "anchors": {
+          "missing": "facts.json lists an AI tool the team used to build the project, and the write-up doesn't name it and what it was used for",
+          "credited": "Every AI tool listed in facts.json is named in the write-up with what it was used for"
+        },
+        "judge": {
+          "type": "ref",
+          "ref": "clef"
+        },
+        "inputs": [
+          "entry",
+          "facts"
+        ],
+        "optional": false
+      },
+      {
+        "id": "demo",
+        "name": "Links a demo",
+        "weight": 0,
+        "scale": {
+          "type": "binary",
+          "labels": [
+            "missing",
+            "linked"
+          ]
+        },
+        "anchors": {
+          "missing": "No link to a demo video or a live demo",
+          "linked": "Links the demo video or live demo from facts.json"
+        },
+        "judge": {
+          "type": "ref",
+          "ref": "clef"
+        },
+        "inputs": [
+          "entry",
+          "facts"
+        ],
+        "optional": false
+      },
+      {
+        "id": "code",
+        "name": "Links the code",
+        "weight": 0,
+        "scale": {
+          "type": "binary",
+          "labels": [
+            "missing",
+            "linked"
+          ]
+        },
+        "anchors": {
+          "missing": "No link to the source code",
+          "linked": "Links the public repository from facts.json"
+        },
+        "judge": {
+          "type": "ref",
+          "ref": "clef"
+        },
+        "inputs": [
+          "entry",
+          "facts"
+        ],
+        "optional": false
+      },
+      {
+        "id": "limits",
+        "name": "Says what doesn't work yet",
+        "weight": 0,
+        "scale": {
+          "type": "binary",
+          "labels": [
+            "missing",
+            "stated"
+          ]
+        },
+        "anchors": {
+          "missing": "The write-up doesn't say what is unfinished or doesn't work yet",
+          "stated": "The write-up names what is unfinished or doesn't work yet, as listed in facts.json"
+        },
+        "judge": {
+          "type": "ref",
+          "ref": "clef"
+        },
+        "inputs": [
+          "entry",
+          "facts"
+        ],
+        "optional": false
+      }
+    ],
+    "aggregation": {
+      "method": "formula",
+      "formula": "honest_n < 0.5 ? 0 : (impact_n * 3 + technical_n * 2 + originality_n) / 6 * (1 + what_for_whom_n + built_during_n + ai_credited_n + demo_n + code_n + limits_n) / 7",
+      "rater": "mean",
+      "normalize": [
+        0,
+        100
+      ],
+      "missing": "exclude",
+      "gates": [
+        {
+          "criterion": "honest",
+          "min": 1,
+          "message": "Claims users, results or accuracy the project doesn't have"
+        }
+      ],
+      "grades": [
+        {
+          "label": "finalist",
+          "min": 80
+        },
+        {
+          "label": "contender",
+          "min": 50
+        },
+        {
+          "label": "out",
+          "min": 0
+        }
+      ],
+      "passThreshold": 80,
+      "precision": 0
+    }
+  },
+  "subject": {
+    "name": "Plant Pal",
+    "inputs": [
+      {
+        "type": "file",
+        "path": "/root/hackathon-v2/entries/plant-pal.md",
+        "label": "entry",
+        "tags": [
+          "entry"
+        ]
+      },
+      {
+        "type": "file",
+        "path": "/root/hackathon-v2/entries/plant-pal.facts.json",
+        "label": "facts",
+        "tags": [
+          "facts"
+        ]
+      }
+    ]
+  },
+  "evidence": [],
+  "status": "running",
+  "criteria": [],
+  "aggregate": {
+    "method": "formula",
+    "range": [
+      0,
+      100
+    ],
+    "gates": [],
+    "partial": true,
+    "included": [],
+    "excluded": []
+  },
+  "pendingTasks": [],
+  "usage": {
+    "decisionCalls": 0,
+    "llmCalls": 0,
+    "inputTokens": 0,
+    "outputTokens": 0,
+    "durationMs": 0
+  },
+  "batchId": "bat_mw62vkrt22yx8aqu",
+  "createdAt": "2026-11-07T07:24:34.925Z",
+  "updatedAt": "2026-11-07T07:24:34.925Z"
+}

@@ -4,7 +4,9 @@
 //   - one evaluation: its score, grade, gates and criteria, the evaluated text with the lines that changed since the
 //     previous evaluation of the same rubric marked, and the score history;
 //   - a batch (compare / POST /v1/batches): a leaderboard of its evaluations. Re-aggregating them re-ranks the rows in
-//     place, so a rank change is visible as rows moving.
+//     place, so a rank change is visible as rows moving. When the same rubric has compared the same subjects before
+//     (an agent improving one entry and comparing again), each row also shows its score in every round and how many
+//     places it moved since the previous round.
 import { createServer, type Server } from "node:http";
 import type { Evaluation, Store } from "@verdict/core";
 
@@ -12,6 +14,10 @@ export interface WatchCriterion { id: string; name: string; weight: number; stat
 export interface WatchEntry {
   id: string; name: string; status: string; score?: number; range: [number, number] | null; grade?: string; passed?: boolean;
   gatesFailed: string[]; criteria: WatchCriterion[]; evidence: Array<{ label: string; kind: string; text: string }>; createdAt: string; updatedAt: string;
+  /** leaderboard: this subject's score in each round (batch) of the rubric so far, oldest first; the last is this one. */
+  rounds?: Array<number | undefined>;
+  /** leaderboard: its rank in the previous round, when it was in it. */
+  prevRank?: number;
 }
 export interface WatchState {
   updatedAt?: string;
@@ -24,6 +30,8 @@ export interface WatchState {
   previous?: WatchEntry;
   /** single: scores of this rubric's evaluations, oldest first. */
   history: Array<{ id: string; name: string; score?: number; grade?: string }>;
+  /** leaderboard: which round (batch) of this rubric is shown, counting from 1. */
+  round?: number;
   /** Evaluations still running (shown as a note; the page keeps the last finished result until they land). */
   running: number;
 }
@@ -64,7 +72,27 @@ export function watchState(evaluations: Evaluation[]): WatchState {
     const unfinished = new Set(evaluations.filter((e) => e.batchId && (e.status === "queued" || e.status === "running")).map((e) => e.batchId));
     const shown = [...evs].reverse().find((e) => e.batchId && !unfinished.has(e.batchId))?.batchId ?? latest.batchId;
     const batch = evs.filter((e) => e.batchId === shown);
-    return { ...base, view: "leaderboard", entries: batch.map(entry).sort(byScore), history: [] };
+    const entries = batch.map(entry).sort(byScore);
+    // Earlier rounds: finished batches of the same rubric, in the order they started.
+    const key = rubricKey(batch[0]!), started = new Map<string, string>();
+    for (const e of evs) {
+      if (!e.batchId || unfinished.has(e.batchId) || rubricKey(e) !== key) continue;
+      const first = started.get(e.batchId);
+      if (first === undefined || e.createdAt < first) started.set(e.batchId, e.createdAt);
+    }
+    const rounds = [...started.keys()].sort((a, b) => started.get(a)!.localeCompare(started.get(b)!));
+    const upTo = rounds.slice(0, rounds.indexOf(shown) + 1);
+    if (upTo.length > 1) {
+      const ranked = (id: string) => evs.filter((e) => e.batchId === id).map(entry).sort(byScore);
+      const byRound = upTo.map((id) => ranked(id));
+      const prev = byRound.at(-2)!;
+      for (const e of entries) {
+        e.rounds = byRound.map((r) => r.find((x) => x.name === e.name)?.score);
+        const i = prev.findIndex((x) => x.name === e.name);
+        if (i >= 0) e.prevRank = i + 1;
+      }
+    }
+    return { ...base, view: "leaderboard", entries, history: [], round: upTo.length || undefined };
   }
   const same = evs.filter((e) => !e.batchId && rubricKey(e) === rubricKey(latest)).sort((a, b) => a.createdAt.localeCompare(b.createdAt));
   const i = same.findIndex((e) => e.id === latest.id);
@@ -119,7 +147,8 @@ main{padding:20px 24px}.panel{background:var(--panel);border:1px solid var(--lin
 .crit.bad .bar i{background:var(--bad)}.crit.bad .n{color:var(--bad)}.why{color:var(--muted);font-size:12px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .board{position:relative}.lrow{display:grid;grid-template-columns:44px minmax(0,1fr) 220px 90px;gap:16px;align-items:center;padding:14px 16px;border-bottom:1px solid var(--line);background:var(--panel);transition:transform .7s cubic-bezier(.2,.8,.2,1)}
 .lrow:last-child{border-bottom:0}.rank{font-size:22px;font-weight:650;color:var(--muted);font-variant-numeric:tabular-nums}.lrow.first .rank{color:var(--accent)}
-.lname{font-weight:600}.prev{color:var(--muted);font-size:13px;white-space:pre-wrap;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;margin-top:2px}
+.lname{font-weight:600}.lhist{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;margin-top:2px}.lhist b{color:var(--text)}
+.delta{display:block;font-size:12px;font-weight:600;margin-top:2px}.delta.up{color:var(--good)}.delta.down{color:var(--bad)}.prev{color:var(--muted);font-size:13px;white-space:pre-wrap;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;margin-top:2px}
 .mini{display:grid;gap:3px}.mini div{display:grid;grid-template-columns:86px 1fr 30px;gap:6px;align-items:center;font-size:11px;color:var(--muted)}.mini .bar{margin:0;height:5px}
 .lscore{text-align:right;font-size:26px;font-weight:650;font-variant-numeric:tabular-nums}.lscore small{display:block;font-size:11px;color:var(--muted);font-weight:500}
 .flash{animation:flash 1.2s}@keyframes flash{0%{background:#fff4d6}100%{background:var(--panel)}}
@@ -156,8 +185,8 @@ function single(s){
 }
 function board(s){
   const agg=s.aggregation, desc=agg.method==="formula"&&agg.formula?'formula: '+agg.formula:agg.method;
-  return '<div class="title"><h1>'+esc(s.rubric.name)+'</h1><span class="chip">'+s.entries.length+' subjects</span><span class="chip">aggregation: '+esc(desc)+'</span></div><div class="panel board">'+
-  s.entries.map((e,i)=>'<div class="lrow'+(i===0?' first':'')+'" data-k="'+esc(e.name)+'"><div class="rank">'+(i+1)+'</div><div><div class="lname">'+esc(e.name)+'</div><div class="prev">'+esc((e.evidence[0]?.text??"").trim())+'</div></div><div class="mini">'+
+  return '<div class="title"><h1>'+esc(s.rubric.name)+'</h1>'+(s.round>1?'<span class="chip">round '+s.round+'</span>':'')+'<span class="chip">'+s.entries.length+' subjects</span><span class="chip">aggregation: '+esc(desc)+'</span></div><div class="panel board">'+
+  s.entries.map((e,i)=>'<div class="lrow'+(i===0?' first':'')+'" data-k="'+esc(e.name)+'"><div class="rank">'+(i+1)+(e.prevRank&&e.prevRank!==i+1?'<span class="delta '+(e.prevRank>i+1?'up">▲'+(e.prevRank-i-1):'down">▼'+(i+1-e.prevRank))+'</span>':'')+'</div><div><div class="lname">'+esc(e.name)+'</div>'+(e.rounds&&e.rounds.length>1?'<div class="lhist">'+e.rounds.map((r,j)=>j===e.rounds.length-1?'<b>'+num(r)+'</b>':num(r)).join(" → ")+'</div>':'')+'<div class="prev">'+esc((e.evidence[0]?.text??"").trim())+'</div></div><div class="mini">'+
   e.criteria.filter(c=>c.weight>0||c.gateFailed).slice(0,6).map(c=>'<div><span>'+esc(c.name)+'</span><span class="bar"><i style="width:'+Math.round((c.normalized??0)*100)+'%"></i></span><span>'+pct(c.normalized)+'</span></div>').join("")+
   '</div><div class="lscore" data-s="'+(e.score??"")+'">'+num(e.score)+'<small>'+esc(e.grade??"")+(e.gatesFailed.length?' · gate':'')+'</small></div></div>').join("")+'</div>';
 }

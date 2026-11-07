@@ -42,6 +42,21 @@ describe("watchState", () => {
     expect(s.entries.map((e) => e.name)).toEqual(["beta only", "alpha only"]);
   });
 
+  it("shows each entry's score in every round and how far it moved since the previous round", async () => {
+    const engine = new Engine();
+    const subjects = (x: string) => [{ name: "x", inputs: [{ type: "text" as const, text: x }] }, { name: "y", inputs: [{ type: "text" as const, text: "alpha" }] }];
+    await engine.evaluateBatch(rubric, subjects("gamma"));
+    await new Promise((r) => setTimeout(r, 5));
+    let s = watchState(await engine.store.listEvaluations());
+    expect(s.round).toBe(1);
+    expect(s.entries.map((e) => e.rounds)).toEqual([undefined, undefined]);
+    await engine.evaluateBatch(rubric, subjects("alpha beta")); // x improves and overtakes y
+    s = watchState(await engine.store.listEvaluations());
+    expect(s.round).toBe(2);
+    expect(s.entries.map((e) => [e.name, e.rounds, e.prevRank])).toEqual([["x", [0, 100], 2], ["y", [50, 50], 1]]);
+    expect(watchPage()).toContain("lhist");
+  });
+
   it("keeps the last finished result while a new evaluation runs", async () => {
     const engine = new Engine();
     const done = await engine.evaluate({ rubric, subject: { inputs: [{ type: "text", text: "alpha" }] } });

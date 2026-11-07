@@ -1,0 +1,14 @@
+{
+  "_note": "Fictional hackathon entry. Everything true about the project is here; the write-up may claim nothing else.",
+  "project": "Common Room",
+  "problem": "Students in shared housing fight over the laundry room, the kitchen and quiet hours in group chats",
+  "users": "Students in shared housing",
+  "what_it_does": "A shared calendar for one house: book the laundry room and kitchen, set quiet hours",
+  "built_during_hackathon": ["booking calendar", "house rules page"],
+  "pre_existing": ["a calendar UI library"],
+  "ai_tools": [{ "tool": "ChatGPT", "used_for": "drafting the house-rules templates" }],
+  "tested": { "houses": 1, "residents": 6 },
+  "demo_video": { "url": "https://video.example.org/common-room", "length": "1:50" },
+  "repo": "https://git.example.org/common-room",
+  "limitations": ["no reminders", "no sign-in"]
+}

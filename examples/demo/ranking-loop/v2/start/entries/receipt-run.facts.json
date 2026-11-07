@@ -1,0 +1,14 @@
+{
+  "_note": "Fictional hackathon entry. Everything true about the project is here; the write-up may claim nothing else.",
+  "project": "Receipt Run",
+  "problem": "Small businesses spend hours each month typing receipts into expense reports",
+  "users": "Owners and bookkeepers of small businesses",
+  "what_it_does": "Photograph a receipt; it is categorised, matched to the card charge and exported to the accounting tool",
+  "built_during_hackathon": ["mobile capture app", "matching of receipts to card charges", "exports to two accounting tools"],
+  "pre_existing": ["a commercial OCR API", "the accounting tools' official SDKs"],
+  "ai_tools": [{ "tool": "GitHub Copilot", "used_for": "autocomplete across the app" }],
+  "tested": { "pilot_users": 40, "companies": 3 },
+  "demo_video": { "url": "https://video.example.org/receipt-run", "length": "2:10" },
+  "repo": "https://git.example.org/receipt-run",
+  "limitations": ["handwritten receipts fail OCR", "expense apps are a crowded category"]
+}
