@@ -1,0 +1,125 @@
+{
+  "id": "eval_mw67gf3t0e37acmb",
+  "rubric": {
+    "name": "Commit message review",
+    "version": "1",
+    "description": "Is this a good commit message?",
+    "context": "You review one commit message from an open-source Java project.",
+    "scale": {
+      "type": "numeric",
+      "min": 0,
+      "max": 10
+    },
+    "judges": {
+      "j": {
+        "type": "decision",
+        "provider": "typesafe",
+        "model": "jev-latest",
+        "onLowConfidence": "accept",
+        "escalateTo": []
+      }
+    },
+    "defaultJudge": {
+      "type": "ref",
+      "ref": "j"
+    },
+    "criteria": [
+      {
+        "id": "why",
+        "name": "Says why",
+        "weight": 1,
+        "scale": {
+          "type": "binary",
+          "labels": [
+            "no",
+            "yes"
+          ]
+        },
+        "anchors": {
+          "no": "Nothing in the message, stated or implied, gives a reason for the change and there is no issue or pull request reference",
+          "yes": "The message gives a reason, in any one of these ways: describes the issue (error scenario, shortcoming, issue report); states the objective or goal; illustrates a requirement (something out of date, environment changed, a usage need); implies necessity (follows a convention, brings an improvement or benefit, relates to an implemented feature or prior commit); or references the issue or pull request the change belongs to"
+        },
+        "inputs": [
+          "message"
+        ],
+        "optional": false
+      },
+      {
+        "id": "what",
+        "name": "Says what changed",
+        "weight": 1,
+        "scale": {
+          "type": "binary",
+          "labels": [
+            "no",
+            "yes"
+          ]
+        },
+        "anchors": {
+          "no": "The message describes only the problem, symptom or desired outcome and never says which change was made",
+          "yes": "The message says what was changed, even briefly: naming the object of change and the kind of change (add, remove, update, rename, polish, fix in a named file or component) is enough. A change list, a before/after contrast, what the code now does, or how the change works also count"
+        },
+        "inputs": [
+          "message"
+        ],
+        "optional": false
+      }
+    ],
+    "aggregation": {
+      "method": "min",
+      "rater": "mean",
+      "normalize": [
+        0,
+        100
+      ],
+      "missing": "exclude",
+      "gates": [],
+      "passThreshold": 50,
+      "precision": 2
+    }
+  },
+  "subject": {
+    "name": "spring-boot-8691417",
+    "inputs": [
+      {
+        "type": "text",
+        "text": "Use deterministic ordering of JavaBean methods\n\nUpdate `JavaBeanBinder` so that methods and fields are sorted before\nbeing processed. This ensures that setters are called in a deterministic\norder, rather than the unspecified and variable order that reflection\nprovides.\n\nFixes gh-24068",
+        "label": "message"
+      }
+    ],
+    "metadata": {
+      "human": {
+        "passed": true,
+        "criteria": {
+          "what": true,
+          "why": true
+        }
+      }
+    }
+  },
+  "evidence": [],
+  "status": "running",
+  "criteria": [],
+  "aggregate": {
+    "method": "min",
+    "range": [
+      0,
+      100
+    ],
+    "gates": [],
+    "partial": true,
+    "included": [],
+    "excluded": []
+  },
+  "pendingTasks": [],
+  "usage": {
+    "decisionCalls": 0,
+    "llmCalls": 0,
+    "inputTokens": 0,
+    "outputTokens": 0,
+    "durationMs": 0
+  },
+  "batchId": "bat_mw67gdwoewk2mzo2",
+  "createdAt": "2026-11-07T09:32:45.305Z",
+  "updatedAt": "2026-11-07T09:32:45.305Z"
+}

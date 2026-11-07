@@ -1,0 +1,264 @@
+{
+  "id": "eval_mw67gf69slhypiwx",
+  "rubric": {
+    "name": "Commit message review",
+    "version": "1",
+    "description": "Is this a good commit message?",
+    "context": "You review one commit message from an open-source Java project.",
+    "scale": {
+      "type": "numeric",
+      "min": 0,
+      "max": 10
+    },
+    "judges": {
+      "j": {
+        "type": "decision",
+        "provider": "typesafe",
+        "model": "jev-latest",
+        "onLowConfidence": "accept",
+        "escalateTo": []
+      }
+    },
+    "defaultJudge": {
+      "type": "ref",
+      "ref": "j"
+    },
+    "criteria": [
+      {
+        "id": "why",
+        "name": "Says why",
+        "weight": 1,
+        "scale": {
+          "type": "binary",
+          "labels": [
+            "no",
+            "yes"
+          ]
+        },
+        "anchors": {
+          "no": "Nothing in the message, stated or implied, gives a reason for the change and there is no issue or pull request reference",
+          "yes": "The message gives a reason, in any one of these ways: describes the issue (error scenario, shortcoming, issue report); states the objective or goal; illustrates a requirement (something out of date, environment changed, a usage need); implies necessity (follows a convention, brings an improvement or benefit, relates to an implemented feature or prior commit); or references the issue or pull request the change belongs to"
+        },
+        "inputs": [
+          "message"
+        ],
+        "optional": false
+      },
+      {
+        "id": "what",
+        "name": "Says what changed",
+        "weight": 1,
+        "scale": {
+          "type": "binary",
+          "labels": [
+            "no",
+            "yes"
+          ]
+        },
+        "anchors": {
+          "no": "The message describes only the problem, symptom or desired outcome and never says which change was made",
+          "yes": "The message says what was changed, even briefly: naming the object of change and the kind of change (add, remove, update, rename, polish, fix in a named file or component) is enough. A change list, a before/after contrast, what the code now does, or how the change works also count"
+        },
+        "inputs": [
+          "message"
+        ],
+        "optional": false
+      }
+    ],
+    "aggregation": {
+      "method": "min",
+      "rater": "mean",
+      "normalize": [
+        0,
+        100
+      ],
+      "missing": "exclude",
+      "gates": [],
+      "passThreshold": 50,
+      "precision": 2
+    }
+  },
+  "subject": {
+    "name": "dubbo-0bd3a97",
+    "inputs": [
+      {
+        "type": "text",
+        "text": "unit test for metadata",
+        "label": "message"
+      }
+    ],
+    "metadata": {
+      "human": {
+        "passed": true,
+        "criteria": {
+          "what": true,
+          "why": true
+        }
+      }
+    }
+  },
+  "evidence": [
+    {
+      "inputIndex": 0,
+      "kind": "text",
+      "label": "message",
+      "tags": [],
+      "text": "unit test for metadata",
+      "truncated": false,
+      "stats": {
+        "chars": 22,
+        "words": 4,
+        "lines": 1
+      }
+    }
+  ],
+  "status": "completed",
+  "criteria": [
+    {
+      "criterionId": "why",
+      "name": "Says why",
+      "weight": 1,
+      "status": "scored",
+      "ratings": [
+        {
+          "id": "rat_7qb641c1mw67gf95",
+          "criterionId": "why",
+          "raterId": "j",
+          "judgeType": "decision",
+          "createdAt": "2026-11-07T09:32:45.497Z",
+          "status": "scored",
+          "score": 0,
+          "normalized": 0,
+          "confidence": 0.34,
+          "probabilities": {
+            "no": 0.67,
+            "yes": 0.33
+          },
+          "rationale": "typesafe/jev-1.14.0 distribution: no=67% yes=33%",
+          "raw": {
+            "provider": "typesafe",
+            "model": "jev-1.14.0",
+            "question": {
+              "type": "noul",
+              "instructions": "Context: You review one commit message from an open-source Java project. Criterion \"Says why\". Is the input \"yes\" for this criterion?",
+              "criteria": {
+                "true": "The message gives a reason, in any one of these ways: describes the issue (error scenario, shortcoming, issue report); states the objective or goal; illustrates a requirement (something out of date, environment changed, a usage need); implies necessity (follows a convention, brings an improvement or benefit, relates to an implemented feature or prior commit); or references the issue or pull request the change belongs to",
+                "false": "Nothing in the message, stated or implied, gives a reason for the change and there is no issue or pull request reference"
+              }
+            },
+            "answer": {
+              "type": "noul",
+              "noul": 0.33
+            },
+            "levels": [
+              {
+                "value": 0,
+                "label": "no",
+                "description": "Nothing in the message, stated or implied, gives a reason for the change and there is no issue or pull request reference"
+              },
+              {
+                "value": 1,
+                "label": "yes",
+                "description": "The message gives a reason, in any one of these ways: describes the issue (error scenario, shortcoming, issue report); states the objective or goal; illustrates a requirement (something out of date, environment changed, a usage need); implies necessity (follows a convention, brings an improvement or benefit, relates to an implemented feature or prior commit); or references the issue or pull request the change belongs to"
+              }
+            ],
+            "latencyMs": 103,
+            "lowConfidence": false,
+            "stateChars": 77,
+            "stateTruncated": false
+          }
+        }
+      ],
+      "pending": 0,
+      "score": 0,
+      "normalized": 0
+    },
+    {
+      "criterionId": "what",
+      "name": "Says what changed",
+      "weight": 1,
+      "status": "scored",
+      "ratings": [
+        {
+          "id": "rat_s8x0w9d2mw67gf95",
+          "criterionId": "what",
+          "raterId": "j",
+          "judgeType": "decision",
+          "createdAt": "2026-11-07T09:32:45.497Z",
+          "status": "scored",
+          "score": 1,
+          "normalized": 1,
+          "confidence": 0.14,
+          "probabilities": {
+            "no": 0.43,
+            "yes": 0.57
+          },
+          "rationale": "typesafe/jev-1.14.0 distribution: no=43% yes=57%",
+          "raw": {
+            "provider": "typesafe",
+            "model": "jev-1.14.0",
+            "question": {
+              "type": "noul",
+              "instructions": "Context: You review one commit message from an open-source Java project. Criterion \"Says what changed\". Is the input \"yes\" for this criterion?",
+              "criteria": {
+                "true": "The message says what was changed, even briefly: naming the object of change and the kind of change (add, remove, update, rename, polish, fix in a named file or component) is enough. A change list, a before/after contrast, what the code now does, or how the change works also count",
+                "false": "The message describes only the problem, symptom or desired outcome and never says which change was made"
+              }
+            },
+            "answer": {
+              "type": "noul",
+              "noul": 0.57
+            },
+            "levels": [
+              {
+                "value": 0,
+                "label": "no",
+                "description": "The message describes only the problem, symptom or desired outcome and never says which change was made"
+              },
+              {
+                "value": 1,
+                "label": "yes",
+                "description": "The message says what was changed, even briefly: naming the object of change and the kind of change (add, remove, update, rename, polish, fix in a named file or component) is enough. A change list, a before/after contrast, what the code now does, or how the change works also count"
+              }
+            ],
+            "latencyMs": 103,
+            "lowConfidence": false,
+            "stateChars": 77,
+            "stateTruncated": false
+          }
+        }
+      ],
+      "pending": 0,
+      "score": 1,
+      "normalized": 1
+    }
+  ],
+  "aggregate": {
+    "method": "min",
+    "range": [
+      0,
+      100
+    ],
+    "gates": [],
+    "partial": false,
+    "included": [
+      "why",
+      "what"
+    ],
+    "excluded": [],
+    "raw": 0,
+    "score": 0,
+    "passed": false
+  },
+  "pendingTasks": [],
+  "usage": {
+    "decisionCalls": 1,
+    "llmCalls": 0,
+    "inputTokens": 580,
+    "outputTokens": 36,
+    "durationMs": 104
+  },
+  "batchId": "bat_mw67gdwoewk2mzo2",
+  "createdAt": "2026-11-07T09:32:45.393Z",
+  "updatedAt": "2026-11-07T09:32:45.497Z"
+}
