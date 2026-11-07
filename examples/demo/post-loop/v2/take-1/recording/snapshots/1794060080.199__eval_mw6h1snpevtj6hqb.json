@@ -1,0 +1,1136 @@
+{
+  "id": "eval_mw6h1snpevtj6hqb",
+  "rubricId": "rub_mw6h1p77ni0nhsm1",
+  "rubric": {
+    "name": "Launch post review (strict)",
+    "version": "2",
+    "description": "Is this X post ready to go out, and is every claim in it true?",
+    "context": "You review a draft post for X that announces a demo video. The audience is developers and designers who use coding\nagents. brief.md lists the only facts the post may use. Judge only the post text. Be strict: when in doubt, judge it\nas failing. Each check looks only at the kind of problem it names; ignore other kinds of problems when judging it.\n",
+    "language": "en",
+    "scale": {
+      "type": "numeric",
+      "min": 1,
+      "max": 5
+    },
+    "judges": {
+      "jev": {
+        "type": "decision",
+        "provider": "typesafe",
+        "model": "jev-latest",
+        "onLowConfidence": "accept",
+        "escalateTo": []
+      },
+      "clef": {
+        "type": "decision",
+        "provider": "cloudflare",
+        "model": "@cf/cloudflare/clef",
+        "onLowConfidence": "accept",
+        "escalateTo": []
+      }
+    },
+    "defaultJudge": {
+      "type": "ref",
+      "ref": "jev"
+    },
+    "criteria": [
+      {
+        "id": "hook",
+        "name": "First line stops the scroll",
+        "weight": 3,
+        "levels": [
+          {
+            "value": 1,
+            "label": "flat",
+            "description": "Opens with an announcement, a greeting or excitement (we just released, big news, excited to share)"
+          },
+          {
+            "value": 3,
+            "label": "ok",
+            "description": "Opens with the topic, but nothing surprising"
+          },
+          {
+            "value": 5,
+            "label": "hook",
+            "description": "The first line alone makes a developer want the next: a concrete surprise, a number or a tension"
+          }
+        ],
+        "inputs": [
+          "post"
+        ],
+        "optional": false
+      },
+      {
+        "id": "specific",
+        "name": "Says exactly what happened",
+        "weight": 2,
+        "levels": [
+          {
+            "value": 1,
+            "label": "vague",
+            "description": "Adjectives and promises; you can't tell what the video shows"
+          },
+          {
+            "value": 3,
+            "label": "some",
+            "description": "One concrete detail, the rest general"
+          },
+          {
+            "value": 5,
+            "label": "concrete",
+            "description": "Says what the agent did and what the scores were, with the numbers that matter"
+          }
+        ],
+        "inputs": [
+          "post",
+          "brief"
+        ],
+        "optional": false
+      },
+      {
+        "id": "clear",
+        "name": "One idea, plain words",
+        "weight": 1,
+        "levels": [
+          {
+            "value": 1,
+            "label": "muddled",
+            "description": "Several ideas, jargon or clutter crowd it"
+          },
+          {
+            "value": 3,
+            "label": "mostly",
+            "description": "One idea, but wordy or with filler"
+          },
+          {
+            "value": 5,
+            "label": "clear",
+            "description": "One idea a developer gets in one read"
+          }
+        ],
+        "inputs": [
+          "post"
+        ],
+        "optional": false
+      },
+      {
+        "id": "claims_true",
+        "name": "Every claim is in the brief",
+        "weight": 0,
+        "scale": {
+          "type": "binary",
+          "labels": [
+            "overclaims",
+            "true"
+          ]
+        },
+        "anchors": {
+          "overclaims": "The post claims something brief.md doesn't say, or stretches it: that Verdict or the agent works on any page, fixes things by itself, guarantees a result, or a number or time that isn't in the brief",
+          "true": "Every claim about what happened, the scores and the time is in brief.md. Tone, wording and missing things are judged elsewhere"
+        },
+        "judge": {
+          "type": "ref",
+          "ref": "clef"
+        },
+        "inputs": [
+          "post",
+          "brief"
+        ],
+        "optional": false
+      },
+      {
+        "id": "no_hype",
+        "name": "No hype words or shouting",
+        "weight": 0,
+        "scale": {
+          "type": "binary",
+          "labels": [
+            "hype",
+            "plain"
+          ]
+        },
+        "anchors": {
+          "hype": "The post praises itself (insane, mind-blowing, the best, game-changing, wild), shouts in ALL CAPS or uses exclamation marks",
+          "plain": "No self-praise, no ALL-CAPS words and no exclamation marks; it says what happened in plain words"
+        },
+        "judge": {
+          "type": "ref",
+          "ref": "clef"
+        },
+        "inputs": [
+          "post"
+        ],
+        "optional": false
+      },
+      {
+        "id": "hashtags",
+        "name": "At most two hashtags",
+        "weight": 0,
+        "scale": {
+          "type": "binary",
+          "labels": [
+            "too_many",
+            "ok"
+          ]
+        },
+        "judge": {
+          "type": "benchmark",
+          "method": "regex",
+          "pattern": "(?:(?:^|\\s)#[A-Za-z]\\w*[\\s\\S]*?){3}",
+          "negate": true
+        },
+        "inputs": [
+          "post"
+        ],
+        "optional": false
+      },
+      {
+        "id": "mentions",
+        "name": "Tags no one",
+        "weight": 0,
+        "scale": {
+          "type": "binary",
+          "labels": [
+            "tags",
+            "none"
+          ]
+        },
+        "judge": {
+          "type": "benchmark",
+          "method": "regex",
+          "pattern": "(?:^|[\\s(])@[A-Za-z0-9_]+",
+          "negate": true
+        },
+        "inputs": [
+          "post"
+        ],
+        "optional": false
+      },
+      {
+        "id": "styled_text",
+        "name": "No Unicode \"bold\" letters",
+        "weight": 0,
+        "scale": {
+          "type": "binary",
+          "labels": [
+            "styled",
+            "plain"
+          ]
+        },
+        "judge": {
+          "type": "benchmark",
+          "method": "regex",
+          "pattern": "[\\u{1D400}-\\u{1D7FF}]",
+          "flags": "u",
+          "negate": true
+        },
+        "inputs": [
+          "post"
+        ],
+        "optional": false
+      },
+      {
+        "id": "fiction_flagged",
+        "name": "Says the product is fictional",
+        "weight": 0,
+        "scale": {
+          "type": "binary",
+          "labels": [
+            "missing",
+            "flagged"
+          ]
+        },
+        "anchors": {
+          "missing": "The post doesn't say that Tideline is a fictional product, so a reader could take the demo for a real company's page",
+          "flagged": "The post says plainly that Tideline (or the product in the demo) is fictional or made up"
+        },
+        "judge": {
+          "type": "ref",
+          "ref": "clef"
+        },
+        "inputs": [
+          "post",
+          "brief"
+        ],
+        "optional": false
+      },
+      {
+        "id": "what_it_is",
+        "name": "Says what Verdict is",
+        "weight": 0,
+        "scale": {
+          "type": "binary",
+          "labels": [
+            "missing",
+            "said"
+          ]
+        },
+        "anchors": {
+          "missing": "The post names Verdict without saying what kind of tool it is, so a reader who has never heard of it can't tell",
+          "said": "The post says in plain words what Verdict is or does: it scores work against a rubric (an evaluation engine)"
+        },
+        "judge": {
+          "type": "ref",
+          "ref": "clef"
+        },
+        "inputs": [
+          "post",
+          "brief"
+        ],
+        "optional": false
+      },
+      {
+        "id": "limits",
+        "name": "Says what didn't go smoothly",
+        "weight": 0,
+        "scale": {
+          "type": "binary",
+          "labels": [
+            "missing",
+            "said"
+          ]
+        },
+        "anchors": {
+          "missing": "The post makes the run sound flawless; it doesn't mention that some rounds barely moved or that a fix was partial",
+          "said": "The post says something that didn't go smoothly, from brief.md: two rounds barely moved because the fix was partial"
+        },
+        "judge": {
+          "type": "ref",
+          "ref": "clef"
+        },
+        "inputs": [
+          "post",
+          "brief"
+        ],
+        "optional": false
+      },
+      {
+        "id": "question",
+        "name": "Ends with a question readers can answer",
+        "weight": 0,
+        "scale": {
+          "type": "binary",
+          "labels": [
+            "closed",
+            "asks"
+          ]
+        },
+        "anchors": {
+          "closed": "The post ends without asking readers anything, or asks only for likes, follows or reposts",
+          "asks": "The post ends with a specific question developers can answer from their own work"
+        },
+        "judge": {
+          "type": "ref",
+          "ref": "clef"
+        },
+        "inputs": [
+          "post"
+        ],
+        "optional": false
+      }
+    ],
+    "aggregation": {
+      "method": "formula",
+      "formula": "claims_true_n < 0.5 ? 0 : (hook_n * 3 + specific_n * 2 + clear_n) / 6 * (1 + no_hype_n + hashtags_n + mentions_n + styled_text_n + fiction_flagged_n + what_it_is_n + limits_n + question_n) / 9",
+      "rater": "mean",
+      "normalize": [
+        0,
+        100
+      ],
+      "missing": "exclude",
+      "gates": [
+        {
+          "criterion": "claims_true",
+          "min": 1,
+          "message": "Overclaims: the post says something the brief doesn't support"
+        }
+      ],
+      "grades": [
+        {
+          "label": "post it",
+          "min": 85
+        },
+        {
+          "label": "close",
+          "min": 50
+        },
+        {
+          "label": "rework",
+          "min": 0
+        }
+      ],
+      "passThreshold": 85,
+      "precision": 0
+    },
+    "id": "rub_mw6h1p77ni0nhsm1",
+    "createdAt": "2026-11-07T14:01:14.707Z",
+    "updatedAt": "2026-11-07T14:01:14.707Z"
+  },
+  "subject": {
+    "name": "Launch post",
+    "inputs": [
+      {
+        "type": "file",
+        "path": "/root/launch-v2/post.md",
+        "tags": [
+          "post"
+        ]
+      },
+      {
+        "type": "file",
+        "path": "/root/launch-v2/brief.md",
+        "tags": [
+          "brief"
+        ]
+      }
+    ]
+  },
+  "evidence": [
+    {
+      "inputIndex": 0,
+      "kind": "file",
+      "label": "post.md",
+      "tags": [
+        "post"
+      ],
+      "text": "An AI one-shot landing page scored 0. Eight minutes later it scored 93. Honestly the most INSANE thing we've built!!!\n\nClaude Code took an AI one-shot landing page for Tideline and rebuilt it one check at a time, scored by Verdict. It now fixes any landing page in minutes, guaranteed.\n\n𝗧𝗵𝗲 𝘀𝗰𝗼𝗿𝗲𝘀: 0 → 10 → 20 → 23 → 33 → 34 → 49 → 58 → 71 → 93, in about 8 minutes, unattended.\n\ncc @AnthropicAI @github\n\n#AI #DevTools #buildinpublic #webdev #SaaS\n",
+      "truncated": false,
+      "stats": {
+        "chars": 456,
+        "words": 84,
+        "lines": 9
+      },
+      "source": "post.md"
+    },
+    {
+      "inputIndex": 1,
+      "kind": "file",
+      "label": "brief.md",
+      "tags": [
+        "brief"
+      ],
+      "text": "# What the post announces (facts the post may use)\n- A 29-second screen recording: Claude Code, the landing page it edits, and the page's score with seven checks.\n- The landing page is a real AI one-shot. Claude Code was asked: \"Build a modern, beautiful SaaS landing page for\n  Tideline, an uptime monitoring tool for small engineering teams. ... Make it pop.\" Tideline is fictional.\n- The one-shot had three made-up testimonials, a \"used by 2,400+ teams\" logo strip of made-up companies, invented\n  stats (12 regions, 99.987% uptime), glowing gradients, looping animations, ALL-CAPS section labels, a gradient\n  headline word and slogan headings (\"before your coffee cools\"). Its own summary said the testimonials and stats were\n  placeholders.\n- Verdict scored it against a rubric built from research on landing pages and AI-slop tells, plus a facts.json of what\n  is true about the product:\n  - gate: no invented social proof (the FTC's rule bans fake testimonials); failing it scores 0;\n  - six checks: every figure comes from facts.json, no glows or gradients, no looping motion, no template chrome,\n    WCAG AA contrast, headings that describe instead of sell.\n- The agent fixed one failing check per round and re-scored.\n- Scores: 0 → 10 → 20 → 23 → 33 → 34 → 49 → 58 → 71 → 93. It passed (\"ship it\", 85+) on the 10th evaluation, after\n  about 8 minutes, unattended. Two rounds barely moved because the fix was partial; measured checks count only at 100%.\n- Verdict is an evaluation engine: rubrics scored by decision models, humans and deterministic checks.\n- Audience: developers and designers on X who use coding agents.\n- The post goes out with the 29-second video attached.\n",
+      "truncated": false,
+      "stats": {
+        "chars": 1686,
+        "words": 283,
+        "lines": 19
+      },
+      "source": "brief.md"
+    }
+  ],
+  "status": "completed",
+  "criteria": [
+    {
+      "criterionId": "hook",
+      "name": "First line stops the scroll",
+      "weight": 3,
+      "status": "scored",
+      "ratings": [
+        {
+          "id": "rat_zswtnwbkmw6h1sw8",
+          "criterionId": "hook",
+          "raterId": "jev",
+          "judgeType": "decision",
+          "createdAt": "2026-11-07T14:01:19.496Z",
+          "status": "scored",
+          "score": 4.86,
+          "normalized": 0.9649999999999999,
+          "confidence": 0.9,
+          "probabilities": {
+            "flat": 0.03,
+            "ok": 0.01,
+            "hook": 0.96
+          },
+          "rationale": "typesafe/jev-1.14.0 distribution: flat=3% ok=1% hook=96%",
+          "raw": {
+            "provider": "typesafe",
+            "model": "jev-1.14.0",
+            "question": {
+              "type": "score",
+              "instructions": "Context: You review a draft post for X that announces a demo video. The audience is developers and designers who use coding\nagents. brief.md lists the only facts the post may use. Judge only the post text. Be strict: when in doubt, judge it\nas failing. Each check looks only at the kind of problem it names; ignore other kinds of problems when judging it.\n Criterion \"First line stops the scroll\". Place the input on the ordered levels below (worst to best). Judge only this criterion using the evidence in the state.",
+              "criteria": [
+                "flat: Opens with an announcement, a greeting or excitement (we just released, big news, excited to share)",
+                "ok: Opens with the topic, but nothing surprising",
+                "hook: The first line alone makes a developer want the next: a concrete surprise, a number or a tension"
+              ]
+            },
+            "answer": {
+              "type": "score",
+              "score": 1.93,
+              "confidence": 0.9,
+              "legend": {
+                "0": "flat: Opens with an announcement, a greeting or excitement (we just released, big news, excited to share)",
+                "1": "ok: Opens with the topic, but nothing surprising",
+                "2": "hook: The first line alone makes a developer want the next: a concrete surprise, a number or a tension"
+              },
+              "probabilities": {
+                "0": 0.03,
+                "1": 0.01,
+                "2": 0.96
+              }
+            },
+            "levels": [
+              {
+                "value": 1,
+                "label": "flat",
+                "description": "Opens with an announcement, a greeting or excitement (we just released, big news, excited to share)"
+              },
+              {
+                "value": 3,
+                "label": "ok",
+                "description": "Opens with the topic, but nothing surprising"
+              },
+              {
+                "value": 5,
+                "label": "hook",
+                "description": "The first line alone makes a developer want the next: a concrete surprise, a number or a tension"
+              }
+            ],
+            "latencyMs": 302,
+            "lowConfidence": false,
+            "stateChars": 529,
+            "stateTruncated": false
+          }
+        }
+      ],
+      "pending": 0,
+      "score": 4.86,
+      "normalized": 0.9650000000000001
+    },
+    {
+      "criterionId": "specific",
+      "name": "Says exactly what happened",
+      "weight": 2,
+      "status": "scored",
+      "ratings": [
+        {
+          "id": "rat_5a5xqicemw6h1sy5",
+          "criterionId": "specific",
+          "raterId": "jev",
+          "judgeType": "decision",
+          "createdAt": "2026-11-07T14:01:19.565Z",
+          "status": "scored",
+          "score": 4.66,
+          "normalized": 0.915,
+          "confidence": 0.74,
+          "probabilities": {
+            "vague": 0.03,
+            "some": 0.11,
+            "concrete": 0.86
+          },
+          "rationale": "typesafe/jev-1.14.0 distribution: vague=3% some=11% concrete=86%",
+          "raw": {
+            "provider": "typesafe",
+            "model": "jev-1.14.0",
+            "question": {
+              "type": "score",
+              "instructions": "Context: You review a draft post for X that announces a demo video. The audience is developers and designers who use coding\nagents. brief.md lists the only facts the post may use. Judge only the post text. Be strict: when in doubt, judge it\nas failing. Each check looks only at the kind of problem it names; ignore other kinds of problems when judging it.\n Criterion \"Says exactly what happened\". Place the input on the ordered levels below (worst to best). Judge only this criterion using the evidence in the state.",
+              "criteria": [
+                "vague: Adjectives and promises; you can't tell what the video shows",
+                "some: One concrete detail, the rest general",
+                "concrete: Says what the agent did and what the scores were, with the numbers that matter"
+              ]
+            },
+            "answer": {
+              "type": "score",
+              "score": 1.83,
+              "confidence": 0.74,
+              "legend": {
+                "0": "vague: Adjectives and promises; you can't tell what the video shows",
+                "1": "some: One concrete detail, the rest general",
+                "2": "concrete: Says what the agent did and what the scores were, with the numbers that matter"
+              },
+              "probabilities": {
+                "0": 0.03,
+                "1": 0.11,
+                "2": 0.86
+              }
+            },
+            "levels": [
+              {
+                "value": 1,
+                "label": "vague",
+                "description": "Adjectives and promises; you can't tell what the video shows"
+              },
+              {
+                "value": 3,
+                "label": "some",
+                "description": "One concrete detail, the rest general"
+              },
+              {
+                "value": 5,
+                "label": "concrete",
+                "description": "Says what the agent did and what the scores were, with the numbers that matter"
+              }
+            ],
+            "latencyMs": 357,
+            "lowConfidence": false,
+            "stateChars": 2292,
+            "stateTruncated": false
+          }
+        }
+      ],
+      "pending": 0,
+      "score": 4.66,
+      "normalized": 0.915
+    },
+    {
+      "criterionId": "clear",
+      "name": "One idea, plain words",
+      "weight": 1,
+      "status": "scored",
+      "ratings": [
+        {
+          "id": "rat_22cq2rg3mw6h1sw8",
+          "criterionId": "clear",
+          "raterId": "jev",
+          "judgeType": "decision",
+          "createdAt": "2026-11-07T14:01:19.496Z",
+          "status": "scored",
+          "score": 1.92,
+          "normalized": 0.23000000000000004,
+          "confidence": 0.31,
+          "probabilities": {
+            "muddled": 0.6,
+            "mostly": 0.34,
+            "clear": 0.06
+          },
+          "rationale": "typesafe/jev-1.14.0 distribution: muddled=60% mostly=34% clear=6%",
+          "raw": {
+            "provider": "typesafe",
+            "model": "jev-1.14.0",
+            "question": {
+              "type": "score",
+              "instructions": "Context: You review a draft post for X that announces a demo video. The audience is developers and designers who use coding\nagents. brief.md lists the only facts the post may use. Judge only the post text. Be strict: when in doubt, judge it\nas failing. Each check looks only at the kind of problem it names; ignore other kinds of problems when judging it.\n Criterion \"One idea, plain words\". Place the input on the ordered levels below (worst to best). Judge only this criterion using the evidence in the state.",
+              "criteria": [
+                "muddled: Several ideas, jargon or clutter crowd it",
+                "mostly: One idea, but wordy or with filler",
+                "clear: One idea a developer gets in one read"
+              ]
+            },
+            "answer": {
+              "type": "score",
+              "score": 0.47,
+              "confidence": 0.31,
+              "legend": {
+                "0": "muddled: Several ideas, jargon or clutter crowd it",
+                "1": "mostly: One idea, but wordy or with filler",
+                "2": "clear: One idea a developer gets in one read"
+              },
+              "probabilities": {
+                "0": 0.6,
+                "1": 0.34,
+                "2": 0.06
+              }
+            },
+            "levels": [
+              {
+                "value": 1,
+                "label": "muddled",
+                "description": "Several ideas, jargon or clutter crowd it"
+              },
+              {
+                "value": 3,
+                "label": "mostly",
+                "description": "One idea, but wordy or with filler"
+              },
+              {
+                "value": 5,
+                "label": "clear",
+                "description": "One idea a developer gets in one read"
+              }
+            ],
+            "latencyMs": 302,
+            "lowConfidence": false,
+            "stateChars": 529,
+            "stateTruncated": false
+          }
+        }
+      ],
+      "pending": 0,
+      "score": 1.92,
+      "normalized": 0.22999999999999998
+    },
+    {
+      "criterionId": "claims_true",
+      "name": "Every claim is in the brief",
+      "weight": 0,
+      "status": "scored",
+      "ratings": [
+        {
+          "id": "rat_8m6deu3kmw6h1tcn",
+          "criterionId": "claims_true",
+          "raterId": "clef",
+          "judgeType": "decision",
+          "createdAt": "2026-11-07T14:01:20.087Z",
+          "status": "scored",
+          "score": 0,
+          "normalized": 0,
+          "confidence": 0.0888,
+          "probabilities": {
+            "overclaims": 0.5444,
+            "true": 0.4556
+          },
+          "rationale": "cloudflare/@cf/cloudflare/clef distribution: overclaims=54% true=46%",
+          "raw": {
+            "provider": "cloudflare",
+            "model": "@cf/cloudflare/clef",
+            "question": {
+              "type": "noul",
+              "instructions": "Context: You review a draft post for X that announces a demo video. The audience is developers and designers who use coding\nagents. brief.md lists the only facts the post may use. Judge only the post text. Be strict: when in doubt, judge it\nas failing. Each check looks only at the kind of problem it names; ignore other kinds of problems when judging it.\n Criterion \"Every claim is in the brief\". Is the input \"true\" for this criterion?",
+              "criteria": {
+                "true": "Every claim about what happened, the scores and the time is in brief.md. Tone, wording and missing things are judged elsewhere",
+                "false": "The post claims something brief.md doesn't say, or stretches it: that Verdict or the agent works on any page, fixes things by itself, guarantees a result, or a number or time that isn't in the brief"
+              }
+            },
+            "answer": {
+              "type": "noul",
+              "noul": 0.4556
+            },
+            "levels": [
+              {
+                "value": 0,
+                "label": "overclaims",
+                "description": "The post claims something brief.md doesn't say, or stretches it: that Verdict or the agent works on any page, fixes things by itself, guarantees a result, or a number or time that isn't in the brief"
+              },
+              {
+                "value": 1,
+                "label": "true",
+                "description": "Every claim about what happened, the scores and the time is in brief.md. Tone, wording and missing things are judged elsewhere"
+              }
+            ],
+            "latencyMs": 876,
+            "lowConfidence": false,
+            "stateChars": 2292,
+            "stateTruncated": false
+          }
+        }
+      ],
+      "pending": 0,
+      "score": 0,
+      "normalized": 0,
+      "gate": {
+        "passed": false,
+        "message": "Overclaims: the post says something the brief doesn't support"
+      }
+    },
+    {
+      "criterionId": "no_hype",
+      "name": "No hype words or shouting",
+      "weight": 0,
+      "status": "scored",
+      "ratings": [
+        {
+          "id": "rat_8a9ftgeimw6h1tek",
+          "criterionId": "no_hype",
+          "raterId": "clef",
+          "judgeType": "decision",
+          "createdAt": "2026-11-07T14:01:20.156Z",
+          "status": "scored",
+          "score": 0,
+          "normalized": 0,
+          "confidence": 0.7388,
+          "probabilities": {
+            "hype": 0.8694,
+            "plain": 0.1306
+          },
+          "rationale": "cloudflare/@cf/cloudflare/clef distribution: hype=87% plain=13%",
+          "raw": {
+            "provider": "cloudflare",
+            "model": "@cf/cloudflare/clef",
+            "question": {
+              "type": "noul",
+              "instructions": "Context: You review a draft post for X that announces a demo video. The audience is developers and designers who use coding\nagents. brief.md lists the only facts the post may use. Judge only the post text. Be strict: when in doubt, judge it\nas failing. Each check looks only at the kind of problem it names; ignore other kinds of problems when judging it.\n Criterion \"No hype words or shouting\". Is the input \"plain\" for this criterion?",
+              "criteria": {
+                "true": "No self-praise, no ALL-CAPS words and no exclamation marks; it says what happened in plain words",
+                "false": "The post praises itself (insane, mind-blowing, the best, game-changing, wild), shouts in ALL CAPS or uses exclamation marks"
+              }
+            },
+            "answer": {
+              "type": "noul",
+              "noul": 0.1306
+            },
+            "levels": [
+              {
+                "value": 0,
+                "label": "hype",
+                "description": "The post praises itself (insane, mind-blowing, the best, game-changing, wild), shouts in ALL CAPS or uses exclamation marks"
+              },
+              {
+                "value": 1,
+                "label": "plain",
+                "description": "No self-praise, no ALL-CAPS words and no exclamation marks; it says what happened in plain words"
+              }
+            ],
+            "latencyMs": 944,
+            "lowConfidence": false,
+            "stateChars": 529,
+            "stateTruncated": false
+          }
+        }
+      ],
+      "pending": 0,
+      "score": 0,
+      "normalized": 0
+    },
+    {
+      "criterionId": "hashtags",
+      "name": "At most two hashtags",
+      "weight": 0,
+      "status": "scored",
+      "ratings": [
+        {
+          "id": "rat_2m9b5hs8mw6h1soc",
+          "criterionId": "hashtags",
+          "raterId": "benchmark:regex",
+          "judgeType": "benchmark",
+          "createdAt": "2026-11-07T14:01:19.212Z",
+          "status": "scored",
+          "normalized": 0,
+          "score": 0,
+          "confidence": 1,
+          "rationale": "regex /(?:(?:^|\\s)#[A-Za-z]\\w*[\\s\\S]*?){3}/ matched 1 time(s) (negated)",
+          "raw": {
+            "count": 1
+          }
+        }
+      ],
+      "pending": 0,
+      "score": 0,
+      "normalized": 0
+    },
+    {
+      "criterionId": "mentions",
+      "name": "Tags no one",
+      "weight": 0,
+      "status": "scored",
+      "ratings": [
+        {
+          "id": "rat_w500qu1lmw6h1sod",
+          "criterionId": "mentions",
+          "raterId": "benchmark:regex",
+          "judgeType": "benchmark",
+          "createdAt": "2026-11-07T14:01:19.213Z",
+          "status": "scored",
+          "normalized": 0,
+          "score": 0,
+          "confidence": 1,
+          "rationale": "regex /(?:^|[\\s(])@[A-Za-z0-9_]+/ matched 1 time(s) (negated)",
+          "raw": {
+            "count": 1
+          }
+        }
+      ],
+      "pending": 0,
+      "score": 0,
+      "normalized": 0
+    },
+    {
+      "criterionId": "styled_text",
+      "name": "No Unicode \"bold\" letters",
+      "weight": 0,
+      "status": "scored",
+      "ratings": [
+        {
+          "id": "rat_0tbsgjcymw6h1sod",
+          "criterionId": "styled_text",
+          "raterId": "benchmark:regex",
+          "judgeType": "benchmark",
+          "createdAt": "2026-11-07T14:01:19.213Z",
+          "status": "scored",
+          "normalized": 0,
+          "score": 0,
+          "confidence": 1,
+          "rationale": "regex /[\\u{1D400}-\\u{1D7FF}]/ matched 1 time(s) (negated)",
+          "raw": {
+            "count": 1
+          }
+        }
+      ],
+      "pending": 0,
+      "score": 0,
+      "normalized": 0
+    },
+    {
+      "criterionId": "fiction_flagged",
+      "name": "Says the product is fictional",
+      "weight": 0,
+      "status": "scored",
+      "ratings": [
+        {
+          "id": "rat_f4ujb60ymw6h1tcn",
+          "criterionId": "fiction_flagged",
+          "raterId": "clef",
+          "judgeType": "decision",
+          "createdAt": "2026-11-07T14:01:20.087Z",
+          "status": "scored",
+          "score": 0,
+          "normalized": 0,
+          "confidence": 0.8518,
+          "probabilities": {
+            "missing": 0.9259,
+            "flagged": 0.0741
+          },
+          "rationale": "cloudflare/@cf/cloudflare/clef distribution: missing=93% flagged=7%",
+          "raw": {
+            "provider": "cloudflare",
+            "model": "@cf/cloudflare/clef",
+            "question": {
+              "type": "noul",
+              "instructions": "Context: You review a draft post for X that announces a demo video. The audience is developers and designers who use coding\nagents. brief.md lists the only facts the post may use. Judge only the post text. Be strict: when in doubt, judge it\nas failing. Each check looks only at the kind of problem it names; ignore other kinds of problems when judging it.\n Criterion \"Says the product is fictional\". Is the input \"flagged\" for this criterion?",
+              "criteria": {
+                "true": "The post says plainly that Tideline (or the product in the demo) is fictional or made up",
+                "false": "The post doesn't say that Tideline is a fictional product, so a reader could take the demo for a real company's page"
+              }
+            },
+            "answer": {
+              "type": "noul",
+              "noul": 0.0741
+            },
+            "levels": [
+              {
+                "value": 0,
+                "label": "missing",
+                "description": "The post doesn't say that Tideline is a fictional product, so a reader could take the demo for a real company's page"
+              },
+              {
+                "value": 1,
+                "label": "flagged",
+                "description": "The post says plainly that Tideline (or the product in the demo) is fictional or made up"
+              }
+            ],
+            "latencyMs": 876,
+            "lowConfidence": false,
+            "stateChars": 2292,
+            "stateTruncated": false
+          }
+        }
+      ],
+      "pending": 0,
+      "score": 0,
+      "normalized": 0
+    },
+    {
+      "criterionId": "what_it_is",
+      "name": "Says what Verdict is",
+      "weight": 0,
+      "status": "scored",
+      "ratings": [
+        {
+          "id": "rat_0w08nbs3mw6h1tcn",
+          "criterionId": "what_it_is",
+          "raterId": "clef",
+          "judgeType": "decision",
+          "createdAt": "2026-11-07T14:01:20.087Z",
+          "status": "scored",
+          "score": 0,
+          "normalized": 0,
+          "confidence": 0.646,
+          "probabilities": {
+            "missing": 0.823,
+            "said": 0.177
+          },
+          "rationale": "cloudflare/@cf/cloudflare/clef distribution: missing=82% said=18%",
+          "raw": {
+            "provider": "cloudflare",
+            "model": "@cf/cloudflare/clef",
+            "question": {
+              "type": "noul",
+              "instructions": "Context: You review a draft post for X that announces a demo video. The audience is developers and designers who use coding\nagents. brief.md lists the only facts the post may use. Judge only the post text. Be strict: when in doubt, judge it\nas failing. Each check looks only at the kind of problem it names; ignore other kinds of problems when judging it.\n Criterion \"Says what Verdict is\". Is the input \"said\" for this criterion?",
+              "criteria": {
+                "true": "The post says in plain words what Verdict is or does: it scores work against a rubric (an evaluation engine)",
+                "false": "The post names Verdict without saying what kind of tool it is, so a reader who has never heard of it can't tell"
+              }
+            },
+            "answer": {
+              "type": "noul",
+              "noul": 0.177
+            },
+            "levels": [
+              {
+                "value": 0,
+                "label": "missing",
+                "description": "The post names Verdict without saying what kind of tool it is, so a reader who has never heard of it can't tell"
+              },
+              {
+                "value": 1,
+                "label": "said",
+                "description": "The post says in plain words what Verdict is or does: it scores work against a rubric (an evaluation engine)"
+              }
+            ],
+            "latencyMs": 876,
+            "lowConfidence": false,
+            "stateChars": 2292,
+            "stateTruncated": false
+          }
+        }
+      ],
+      "pending": 0,
+      "score": 0,
+      "normalized": 0
+    },
+    {
+      "criterionId": "limits",
+      "name": "Says what didn't go smoothly",
+      "weight": 0,
+      "status": "scored",
+      "ratings": [
+        {
+          "id": "rat_27gh0sysmw6h1tcn",
+          "criterionId": "limits",
+          "raterId": "clef",
+          "judgeType": "decision",
+          "createdAt": "2026-11-07T14:01:20.087Z",
+          "status": "scored",
+          "score": 0,
+          "normalized": 0,
+          "confidence": 0.86,
+          "probabilities": {
+            "missing": 0.93,
+            "said": 0.07
+          },
+          "rationale": "cloudflare/@cf/cloudflare/clef distribution: missing=93% said=7%",
+          "raw": {
+            "provider": "cloudflare",
+            "model": "@cf/cloudflare/clef",
+            "question": {
+              "type": "noul",
+              "instructions": "Context: You review a draft post for X that announces a demo video. The audience is developers and designers who use coding\nagents. brief.md lists the only facts the post may use. Judge only the post text. Be strict: when in doubt, judge it\nas failing. Each check looks only at the kind of problem it names; ignore other kinds of problems when judging it.\n Criterion \"Says what didn't go smoothly\". Is the input \"said\" for this criterion?",
+              "criteria": {
+                "true": "The post says something that didn't go smoothly, from brief.md: two rounds barely moved because the fix was partial",
+                "false": "The post makes the run sound flawless; it doesn't mention that some rounds barely moved or that a fix was partial"
+              }
+            },
+            "answer": {
+              "type": "noul",
+              "noul": 0.07
+            },
+            "levels": [
+              {
+                "value": 0,
+                "label": "missing",
+                "description": "The post makes the run sound flawless; it doesn't mention that some rounds barely moved or that a fix was partial"
+              },
+              {
+                "value": 1,
+                "label": "said",
+                "description": "The post says something that didn't go smoothly, from brief.md: two rounds barely moved because the fix was partial"
+              }
+            ],
+            "latencyMs": 876,
+            "lowConfidence": false,
+            "stateChars": 2292,
+            "stateTruncated": false
+          }
+        }
+      ],
+      "pending": 0,
+      "score": 0,
+      "normalized": 0
+    },
+    {
+      "criterionId": "question",
+      "name": "Ends with a question readers can answer",
+      "weight": 0,
+      "status": "scored",
+      "ratings": [
+        {
+          "id": "rat_l0p6ewnsmw6h1tek",
+          "criterionId": "question",
+          "raterId": "clef",
+          "judgeType": "decision",
+          "createdAt": "2026-11-07T14:01:20.156Z",
+          "status": "scored",
+          "score": 0,
+          "normalized": 0,
+          "confidence": 0.9712,
+          "probabilities": {
+            "closed": 0.9856,
+            "asks": 0.0144
+          },
+          "rationale": "cloudflare/@cf/cloudflare/clef distribution: closed=99% asks=1%",
+          "raw": {
+            "provider": "cloudflare",
+            "model": "@cf/cloudflare/clef",
+            "question": {
+              "type": "noul",
+              "instructions": "Context: You review a draft post for X that announces a demo video. The audience is developers and designers who use coding\nagents. brief.md lists the only facts the post may use. Judge only the post text. Be strict: when in doubt, judge it\nas failing. Each check looks only at the kind of problem it names; ignore other kinds of problems when judging it.\n Criterion \"Ends with a question readers can answer\". Is the input \"asks\" for this criterion?",
+              "criteria": {
+                "true": "The post ends with a specific question developers can answer from their own work",
+                "false": "The post ends without asking readers anything, or asks only for likes, follows or reposts"
+              }
+            },
+            "answer": {
+              "type": "noul",
+              "noul": 0.0144
+            },
+            "levels": [
+              {
+                "value": 0,
+                "label": "closed",
+                "description": "The post ends without asking readers anything, or asks only for likes, follows or reposts"
+              },
+              {
+                "value": 1,
+                "label": "asks",
+                "description": "The post ends with a specific question developers can answer from their own work"
+              }
+            ],
+            "latencyMs": 944,
+            "lowConfidence": false,
+            "stateChars": 529,
+            "stateTruncated": false
+          }
+        }
+      ],
+      "pending": 0,
+      "score": 0,
+      "normalized": 0
+    }
+  ],
+  "aggregate": {
+    "method": "formula",
+    "range": [
+      0,
+      100
+    ],
+    "gates": [
+      {
+        "criterion": "claims_true",
+        "passed": false,
+        "message": "Overclaims: the post says something the brief doesn't support"
+      }
+    ],
+    "partial": false,
+    "included": [
+      "hook",
+      "specific",
+      "clear"
+    ],
+    "excluded": [
+      "claims_true",
+      "no_hype",
+      "hashtags",
+      "mentions",
+      "styled_text",
+      "fiction_flagged",
+      "what_it_is",
+      "limits",
+      "question"
+    ],
+    "raw": 0,
+    "score": 0,
+    "grade": "rework",
+    "passed": false
+  },
+  "pendingTasks": [],
+  "usage": {
+    "decisionCalls": 4,
+    "llmCalls": 0,
+    "inputTokens": 4114,
+    "outputTokens": 47,
+    "durationMs": 971
+  },
+  "createdAt": "2026-11-07T14:01:19.189Z",
+  "updatedAt": "2026-11-07T14:01:20.159Z"
+}

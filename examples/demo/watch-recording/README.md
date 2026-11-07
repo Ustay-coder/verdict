@@ -13,6 +13,11 @@ Same format as the Primer video:
 
 **E v2** ([`../sponsor-loop/v2/`](../sponsor-loop/v2)) replaces the one-sentence fix: a script that breaks eight rules from FTC, ASA and FDIC guidance and the brand's brief climbs 0 → 17 → 25 → 34 → 43 → 52 → 61 → 74 → **85, approve**, one rule per review (31 s).
 
+**F v2** ([`../post-loop/v2/`](../post-loop/v2)) replaces the three-draft comparison: our own launch post, in its first
+AI-written form, climbs 0 → 10 → 20 → 30 → 40 → 51 → 61 → 70 → 80 → **88, post it**, one check per review (34 s).
+The rules come from X's help pages and spam policy, HN guidelines, FTC case law and accessibility guides; three of the
+eight checks are regex judges.
+
 ## How a take is recorded
 
 [`take.sh`](take.sh) `<work-dir> <out> <prompt> <done-marker> <port>` does three things:

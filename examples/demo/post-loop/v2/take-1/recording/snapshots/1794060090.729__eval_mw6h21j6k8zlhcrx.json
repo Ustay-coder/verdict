@@ -1,0 +1,411 @@
+{
+  "id": "eval_mw6h21j6k8zlhcrx",
+  "rubricId": "rub_mw6h1p77ni0nhsm1",
+  "rubric": {
+    "name": "Launch post review (strict)",
+    "version": "2",
+    "description": "Is this X post ready to go out, and is every claim in it true?",
+    "context": "You review a draft post for X that announces a demo video. The audience is developers and designers who use coding\nagents. brief.md lists the only facts the post may use. Judge only the post text. Be strict: when in doubt, judge it\nas failing. Each check looks only at the kind of problem it names; ignore other kinds of problems when judging it.\n",
+    "language": "en",
+    "scale": {
+      "type": "numeric",
+      "min": 1,
+      "max": 5
+    },
+    "judges": {
+      "jev": {
+        "type": "decision",
+        "provider": "typesafe",
+        "model": "jev-latest",
+        "onLowConfidence": "accept",
+        "escalateTo": []
+      },
+      "clef": {
+        "type": "decision",
+        "provider": "cloudflare",
+        "model": "@cf/cloudflare/clef",
+        "onLowConfidence": "accept",
+        "escalateTo": []
+      }
+    },
+    "defaultJudge": {
+      "type": "ref",
+      "ref": "jev"
+    },
+    "criteria": [
+      {
+        "id": "hook",
+        "name": "First line stops the scroll",
+        "weight": 3,
+        "levels": [
+          {
+            "value": 1,
+            "label": "flat",
+            "description": "Opens with an announcement, a greeting or excitement (we just released, big news, excited to share)"
+          },
+          {
+            "value": 3,
+            "label": "ok",
+            "description": "Opens with the topic, but nothing surprising"
+          },
+          {
+            "value": 5,
+            "label": "hook",
+            "description": "The first line alone makes a developer want the next: a concrete surprise, a number or a tension"
+          }
+        ],
+        "inputs": [
+          "post"
+        ],
+        "optional": false
+      },
+      {
+        "id": "specific",
+        "name": "Says exactly what happened",
+        "weight": 2,
+        "levels": [
+          {
+            "value": 1,
+            "label": "vague",
+            "description": "Adjectives and promises; you can't tell what the video shows"
+          },
+          {
+            "value": 3,
+            "label": "some",
+            "description": "One concrete detail, the rest general"
+          },
+          {
+            "value": 5,
+            "label": "concrete",
+            "description": "Says what the agent did and what the scores were, with the numbers that matter"
+          }
+        ],
+        "inputs": [
+          "post",
+          "brief"
+        ],
+        "optional": false
+      },
+      {
+        "id": "clear",
+        "name": "One idea, plain words",
+        "weight": 1,
+        "levels": [
+          {
+            "value": 1,
+            "label": "muddled",
+            "description": "Several ideas, jargon or clutter crowd it"
+          },
+          {
+            "value": 3,
+            "label": "mostly",
+            "description": "One idea, but wordy or with filler"
+          },
+          {
+            "value": 5,
+            "label": "clear",
+            "description": "One idea a developer gets in one read"
+          }
+        ],
+        "inputs": [
+          "post"
+        ],
+        "optional": false
+      },
+      {
+        "id": "claims_true",
+        "name": "Every claim is in the brief",
+        "weight": 0,
+        "scale": {
+          "type": "binary",
+          "labels": [
+            "overclaims",
+            "true"
+          ]
+        },
+        "anchors": {
+          "overclaims": "The post claims something brief.md doesn't say, or stretches it: that Verdict or the agent works on any page, fixes things by itself, guarantees a result, or a number or time that isn't in the brief",
+          "true": "Every claim about what happened, the scores and the time is in brief.md. Tone, wording and missing things are judged elsewhere"
+        },
+        "judge": {
+          "type": "ref",
+          "ref": "clef"
+        },
+        "inputs": [
+          "post",
+          "brief"
+        ],
+        "optional": false
+      },
+      {
+        "id": "no_hype",
+        "name": "No hype words or shouting",
+        "weight": 0,
+        "scale": {
+          "type": "binary",
+          "labels": [
+            "hype",
+            "plain"
+          ]
+        },
+        "anchors": {
+          "hype": "The post praises itself (insane, mind-blowing, the best, game-changing, wild), shouts in ALL CAPS or uses exclamation marks",
+          "plain": "No self-praise, no ALL-CAPS words and no exclamation marks; it says what happened in plain words"
+        },
+        "judge": {
+          "type": "ref",
+          "ref": "clef"
+        },
+        "inputs": [
+          "post"
+        ],
+        "optional": false
+      },
+      {
+        "id": "hashtags",
+        "name": "At most two hashtags",
+        "weight": 0,
+        "scale": {
+          "type": "binary",
+          "labels": [
+            "too_many",
+            "ok"
+          ]
+        },
+        "judge": {
+          "type": "benchmark",
+          "method": "regex",
+          "pattern": "(?:(?:^|\\s)#[A-Za-z]\\w*[\\s\\S]*?){3}",
+          "negate": true
+        },
+        "inputs": [
+          "post"
+        ],
+        "optional": false
+      },
+      {
+        "id": "mentions",
+        "name": "Tags no one",
+        "weight": 0,
+        "scale": {
+          "type": "binary",
+          "labels": [
+            "tags",
+            "none"
+          ]
+        },
+        "judge": {
+          "type": "benchmark",
+          "method": "regex",
+          "pattern": "(?:^|[\\s(])@[A-Za-z0-9_]+",
+          "negate": true
+        },
+        "inputs": [
+          "post"
+        ],
+        "optional": false
+      },
+      {
+        "id": "styled_text",
+        "name": "No Unicode \"bold\" letters",
+        "weight": 0,
+        "scale": {
+          "type": "binary",
+          "labels": [
+            "styled",
+            "plain"
+          ]
+        },
+        "judge": {
+          "type": "benchmark",
+          "method": "regex",
+          "pattern": "[\\u{1D400}-\\u{1D7FF}]",
+          "flags": "u",
+          "negate": true
+        },
+        "inputs": [
+          "post"
+        ],
+        "optional": false
+      },
+      {
+        "id": "fiction_flagged",
+        "name": "Says the product is fictional",
+        "weight": 0,
+        "scale": {
+          "type": "binary",
+          "labels": [
+            "missing",
+            "flagged"
+          ]
+        },
+        "anchors": {
+          "missing": "The post doesn't say that Tideline is a fictional product, so a reader could take the demo for a real company's page",
+          "flagged": "The post says plainly that Tideline (or the product in the demo) is fictional or made up"
+        },
+        "judge": {
+          "type": "ref",
+          "ref": "clef"
+        },
+        "inputs": [
+          "post",
+          "brief"
+        ],
+        "optional": false
+      },
+      {
+        "id": "what_it_is",
+        "name": "Says what Verdict is",
+        "weight": 0,
+        "scale": {
+          "type": "binary",
+          "labels": [
+            "missing",
+            "said"
+          ]
+        },
+        "anchors": {
+          "missing": "The post names Verdict without saying what kind of tool it is, so a reader who has never heard of it can't tell",
+          "said": "The post says in plain words what Verdict is or does: it scores work against a rubric (an evaluation engine)"
+        },
+        "judge": {
+          "type": "ref",
+          "ref": "clef"
+        },
+        "inputs": [
+          "post",
+          "brief"
+        ],
+        "optional": false
+      },
+      {
+        "id": "limits",
+        "name": "Says what didn't go smoothly",
+        "weight": 0,
+        "scale": {
+          "type": "binary",
+          "labels": [
+            "missing",
+            "said"
+          ]
+        },
+        "anchors": {
+          "missing": "The post makes the run sound flawless; it doesn't mention that some rounds barely moved or that a fix was partial",
+          "said": "The post says something that didn't go smoothly, from brief.md: two rounds barely moved because the fix was partial"
+        },
+        "judge": {
+          "type": "ref",
+          "ref": "clef"
+        },
+        "inputs": [
+          "post",
+          "brief"
+        ],
+        "optional": false
+      },
+      {
+        "id": "question",
+        "name": "Ends with a question readers can answer",
+        "weight": 0,
+        "scale": {
+          "type": "binary",
+          "labels": [
+            "closed",
+            "asks"
+          ]
+        },
+        "anchors": {
+          "closed": "The post ends without asking readers anything, or asks only for likes, follows or reposts",
+          "asks": "The post ends with a specific question developers can answer from their own work"
+        },
+        "judge": {
+          "type": "ref",
+          "ref": "clef"
+        },
+        "inputs": [
+          "post"
+        ],
+        "optional": false
+      }
+    ],
+    "aggregation": {
+      "method": "formula",
+      "formula": "claims_true_n < 0.5 ? 0 : (hook_n * 3 + specific_n * 2 + clear_n) / 6 * (1 + no_hype_n + hashtags_n + mentions_n + styled_text_n + fiction_flagged_n + what_it_is_n + limits_n + question_n) / 9",
+      "rater": "mean",
+      "normalize": [
+        0,
+        100
+      ],
+      "missing": "exclude",
+      "gates": [
+        {
+          "criterion": "claims_true",
+          "min": 1,
+          "message": "Overclaims: the post says something the brief doesn't support"
+        }
+      ],
+      "grades": [
+        {
+          "label": "post it",
+          "min": 85
+        },
+        {
+          "label": "close",
+          "min": 50
+        },
+        {
+          "label": "rework",
+          "min": 0
+        }
+      ],
+      "passThreshold": 85,
+      "precision": 0
+    },
+    "id": "rub_mw6h1p77ni0nhsm1",
+    "createdAt": "2026-11-07T14:01:14.707Z",
+    "updatedAt": "2026-11-07T14:01:14.707Z"
+  },
+  "subject": {
+    "name": "Launch post",
+    "inputs": [
+      {
+        "type": "file",
+        "path": "/root/launch-v2/post.md",
+        "tags": [
+          "post"
+        ]
+      },
+      {
+        "type": "file",
+        "path": "/root/launch-v2/brief.md",
+        "tags": [
+          "brief"
+        ]
+      }
+    ]
+  },
+  "evidence": [],
+  "status": "running",
+  "criteria": [],
+  "aggregate": {
+    "method": "formula",
+    "range": [
+      0,
+      100
+    ],
+    "gates": [],
+    "partial": true,
+    "included": [],
+    "excluded": []
+  },
+  "pendingTasks": [],
+  "usage": {
+    "decisionCalls": 0,
+    "llmCalls": 0,
+    "inputTokens": 0,
+    "outputTokens": 0,
+    "durationMs": 0
+  },
+  "createdAt": "2026-11-07T14:01:30.690Z",
+  "updatedAt": "2026-11-07T14:01:30.690Z"
+}
