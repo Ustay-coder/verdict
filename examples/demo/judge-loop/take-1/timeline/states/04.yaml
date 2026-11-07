@@ -1,0 +1,17 @@
+# Commit message review: the usual style rules (50-character subject, imperative mood, blank line, wrapped body).
+name: Commit message review
+version: "1"
+description: Is this a good commit message?
+context: You review one commit message from an open-source Java project.
+judges:
+  j: { type: decision, provider: typesafe, model: jev-latest }
+defaultJudge: { type: ref, ref: j }
+criteria:
+  - id: good
+    name: Good commit message
+    inputs: [message]
+    scale: { type: binary, labels: [no, yes] }
+    anchors:
+      no: "The message does not both summarise what was changed and give the reason for the change. A message that only describes the problem (the why) without saying what change was made has no what. Formatting and style (length, capitalisation, mood, wrapping) do not matter."
+      yes: "The message summarises what was changed and also gives the reason for the change. A reference to the issue or pull request the change belongs to (for example an issue number or PR number) counts as the reason. Formatting and style (length, capitalisation, mood, wrapping) do not matter."
+aggregation: { method: min, passThreshold: 50 }

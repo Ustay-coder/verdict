@@ -60,12 +60,12 @@ const J = (x) => JSON.stringify(x).replace(/</g, "\\u003c");
 const VW = VERT ? 1080 : 1920, VH = VERT ? 1920 : 1080;
 const TFS = VERT ? 15.2 : 12.2, TH = 32 + 16 + 30 * TFS * 1.2 + 8; // terminal: 100×30 cells
 const G = VERT
-  ? (() => { const ty = VH - TH - 20, sh = 560, cy = ty - 52; return {
+  ? (() => { const ty = VH - TH - 20, sh = 600, cy = ty - 52; return {
       score: { x: 20, y: 20, w: VW - 40, h: sh }, pane: { x: 20, y: 20 + sh + 16, w: VW - 40, h: cy - (20 + sh + 16) - 4 }, term: { x: 20, y: ty, w: VW - 40, h: TH }, chip: { x: 24, y: ty - 42 } }; })()
   : (() => { const lw = 960; return {
       score: { x: 20, y: 20, w: lw, h: VH - TH - 100 }, term: { x: 20, y: VH - TH - 20, w: lw, h: TH }, pane: { x: lw + 40, y: 20, w: VW - lw - 60, h: VH - 40 }, chip: { x: 24, y: VH - TH - 58 } }; })();
 const box = (b) => `left:${b.x}px;top:${b.y}px;width:${b.w}px;height:${b.h}px`;
-const PER = Math.ceil(tl.humans.filter(Boolean).length / 2), GAP = 6, CELL = Math.min(VERT ? 34 : 30, Math.floor((G.score.w - 44 - GAP * (PER - 1)) / PER));
+const PER = Math.ceil(tl.humans.filter(Boolean).length / 2), GAP = 6, CELL = Math.min(VERT ? 34 : 22, Math.floor((G.score.w - 44 - GAP * (PER - 1)) / PER));
 const html = `<!doctype html><html><head><meta charset="utf-8"><style>${css}
 html,body{margin:0;width:${VW}px;height:${VH}px;background:#1c1c1e;overflow:hidden;font-family:Inter,sans-serif;color:#e6e6e6}
 .win{position:absolute;border-radius:10px;overflow:hidden;box-shadow:0 0 0 1px #3a3a3e}
@@ -81,7 +81,7 @@ html,body{margin:0;width:${VW}px;height:${VH}px;background:#1c1c1e;overflow:hidd
 #sc{position:absolute;${box(G.score)};background:#141414;border-radius:10px;box-shadow:0 0 0 1px #3a3a3e;padding:18px 22px;box-sizing:border-box}
 #cap{font:500 ${VERT ? 20 : 20}px Inter;color:#9a9aa2}
 #top{display:flex;align-items:baseline;gap:16px;margin-top:6px}
-#num{font:600 ${VERT ? 96 : 100}px/1 Inter;font-variant-numeric:tabular-nums;color:#fff}
+#num{font:600 ${VERT ? 96 : 76}px/1 Inter;font-variant-numeric:tabular-nums;color:#fff}
 #frac{font:500 ${VERT ? 26 : 26}px Inter;color:#cfcfd4;font-variant-numeric:tabular-nums}
 #hist{font:500 ${VERT ? 21 : 22}px Inter;color:#9a9aa2;margin-top:10px;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden}
 #hist b{color:#fff}
@@ -89,16 +89,16 @@ html,body{margin:0;width:${VW}px;height:${VH}px;background:#1c1c1e;overflow:hidd
 #fill{position:absolute;left:0;top:0;bottom:0;border-radius:5px;background:#3d8f5a}
 #ref{position:absolute;top:-6px;bottom:-6px;width:2px;background:#e6e6e6}
 #reflbl{position:absolute;top:14px;transform:translateX(-50%);font:500 14px Inter;color:#cfcfd4;white-space:nowrap}
-.grp{margin-top:${VERT ? 34 : 34}px;font:500 16px Inter;color:#9a9aa2}
+.grp{margin-top:${VERT ? 34 : 26}px;font:500 16px Inter;color:#9a9aa2}
 .cells{display:flex;flex-wrap:wrap;gap:${GAP}px;margin-top:8px}
 .cell{width:${CELL}px;height:${CELL}px;border-radius:5px;background:#2a2a2d}
 .cell.agree{background:#2f8a4f}.cell.disagree{background:#9b3434}.cell.asked{background:#6b6b73}
 .cell.flip{box-shadow:0 0 0 3px #e6e6e6}
-#legend{display:flex;gap:18px;margin-top:16px;font:500 15px Inter;color:#9a9aa2}
+#legend{display:flex;gap:18px;margin-top:${VERT ? 16 : 12}px;font:500 15px Inter;color:#9a9aa2}
 #legend span:before{content:"";display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px;background:var(--c)}
-#pills{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}
+#pills{display:flex;gap:10px;margin-top:${VERT ? 14 : 10}px;flex-wrap:wrap}
 .pill{font:500 17px Inter;padding:5px 12px;border-radius:999px;background:#2a2a2d;color:#cfcfd4}
-#test{margin-top:14px;font:600 20px Inter;color:#fff}
+#test{margin-top:${VERT ? 14 : 8}px;font:600 ${VERT ? 20 : 18}px Inter;color:#fff}
 #empty{font:500 18px Inter;color:#9a9aa2;margin-top:12px}
 </style></head><body>
 <div id="chip"></div>
