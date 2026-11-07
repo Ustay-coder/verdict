@@ -11,6 +11,8 @@ Same format as the Primer video:
 | **E** | [`../sponsor-loop/`](../sponsor-loop) | *Quality 100%, fit 86%. Total: 0.* | A fictional sponsored script fails the brand-safety gate (**0, reject**). The agent deletes the one sentence the rationale names (struck through on the right), and the script scores **94, approve**. | 16 s |
 | **F** | [`../post-loop/`](../post-loop) | *This post was scored before we posted it.* | The agent writes three drafts of the launch post. It rewrites the lowest one each round, and they're compared again. Draft A goes 80 → 84 → 90 → **91**, last to first. The run stops after 4 rounds as the prompt says; B never reached 90. | 21 s |
 
+**E v2** ([`../sponsor-loop/v2/`](../sponsor-loop/v2)) replaces the one-sentence fix: a script that breaks eight rules from FTC, ASA and FDIC guidance and the brand's brief climbs 0 → 17 → 25 → 34 → 43 → 52 → 61 → 74 → **85, approve**, one rule per review (31 s).
+
 ## How a take is recorded
 
 [`take.sh`](take.sh) `<work-dir> <out> <prompt> <done-marker> <port>` does three things:

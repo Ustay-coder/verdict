@@ -1,0 +1,428 @@
+{
+  "id": "eval_mw6bjp98ywkie8tp",
+  "rubricId": "rub_mw6biysudpscjmbs",
+  "rubric": {
+    "name": "Sponsored video review (strict)",
+    "version": "2",
+    "description": "Would the brand approve this sponsored script as written, and could it legally run?",
+    "context": "You review a creator's script for a sponsored video. brief.json is the brand's brief; notes.json is the creator's\nown notes from the month they used the product. Judge only the script text. Be strict: when in doubt, judge it as\nfailing. Each check looks only at the kind of problem it names; ignore other kinds of problems when judging it.\n",
+    "language": "en",
+    "scale": {
+      "type": "numeric",
+      "min": 1,
+      "max": 5
+    },
+    "judges": {
+      "jev": {
+        "type": "decision",
+        "provider": "typesafe",
+        "model": "jev-latest",
+        "onLowConfidence": "accept",
+        "escalateTo": []
+      },
+      "clef": {
+        "type": "decision",
+        "provider": "cloudflare",
+        "model": "@cf/cloudflare/clef",
+        "onLowConfidence": "accept",
+        "escalateTo": []
+      }
+    },
+    "defaultJudge": {
+      "type": "ref",
+      "ref": "jev"
+    },
+    "criteria": [
+      {
+        "id": "audience",
+        "name": "Speaks to the brief's audience",
+        "weight": 3,
+        "levels": [
+          {
+            "value": 1,
+            "label": "off",
+            "description": "Generic; nothing in it is about renters who split rent and bills"
+          },
+          {
+            "value": 3,
+            "label": "partial",
+            "description": "Touches the audience's situation once, but mostly talks to anyone"
+          },
+          {
+            "value": 5,
+            "label": "exact",
+            "description": "Speaks to renters who split rent and bills, in situations they have (roommates, shared costs, a tight month)"
+          }
+        ],
+        "inputs": [
+          "script",
+          "brief"
+        ],
+        "optional": false
+      },
+      {
+        "id": "shown",
+        "name": "Shows the product in use",
+        "weight": 2,
+        "levels": [
+          {
+            "value": 1,
+            "label": "told",
+            "description": "Praise and adjectives; you can't tell what the app does"
+          },
+          {
+            "value": 3,
+            "label": "some",
+            "description": "Names features, but tells more than it shows"
+          },
+          {
+            "value": 5,
+            "label": "shown",
+            "description": "Walks through the features in use, each with a concrete number or moment from the month"
+          }
+        ],
+        "inputs": [
+          "script",
+          "brief"
+        ],
+        "optional": false
+      },
+      {
+        "id": "voice",
+        "name": "Sounds like the creator, not ad copy",
+        "weight": 1,
+        "levels": [
+          {
+            "value": 1,
+            "label": "ad_copy",
+            "description": "Superlatives and slogans (perfect, changed everything, so much smarter)"
+          },
+          {
+            "value": 3,
+            "label": "mixed",
+            "description": "Mostly personal, with some ad-copy lines"
+          },
+          {
+            "value": 5,
+            "label": "personal",
+            "description": "Plain first-person talk about what happened, with no slogans or superlatives"
+          }
+        ],
+        "inputs": [
+          "script"
+        ],
+        "optional": false
+      },
+      {
+        "id": "claims_safe",
+        "name": "No claim on the must-not list",
+        "weight": 0,
+        "scale": {
+          "type": "binary",
+          "labels": [
+            "unsafe",
+            "safe"
+          ]
+        },
+        "anchors": {
+          "unsafe": "The script makes a claim on the brief's must_not list: credit or loan approval, investment returns or interest, or that Tallyleaf is a bank, holds money or is FDIC-insured",
+          "safe": "No claim about credit or loan approval, investment returns, interest, banking or FDIC insurance. Other problems are judged elsewhere"
+        },
+        "judge": {
+          "type": "ref",
+          "ref": "clef"
+        },
+        "inputs": [
+          "script",
+          "brief"
+        ],
+        "optional": false
+      },
+      {
+        "id": "disclosure",
+        "name": "Paid relationship disclosed upfront",
+        "weight": 0,
+        "scale": {
+          "type": "binary",
+          "labels": [
+            "missing",
+            "disclosed"
+          ]
+        },
+        "anchors": {
+          "missing": "The script doesn't say in plain words, in its first 30 seconds and before the app is shown, that Tallyleaf paid for the video, with 'Paid ad' on screen. A thank-you, a 'friends at', a mention only at the end or only in the description doesn't count",
+          "disclosed": "In its first 30 seconds, before the app is shown, the script says plainly that Tallyleaf paid for the video and puts 'Paid ad' on screen"
+        },
+        "judge": {
+          "type": "ref",
+          "ref": "clef"
+        },
+        "inputs": [
+          "script",
+          "brief"
+        ],
+        "optional": false
+      },
+      {
+        "id": "own_experience",
+        "name": "Personal experience matches the creator's notes",
+        "weight": 0,
+        "scale": {
+          "type": "binary",
+          "labels": [
+            "mismatch",
+            "matches"
+          ]
+        },
+        "anchors": {
+          "mismatch": "The script says the creator used Tallyleaf for longer or more often than notes.json (days_used: 30), or says they did, found or spent something notes.json doesn't contain",
+          "matches": "How long the creator used Tallyleaf, and everything they say they did, found or spent, is in notes.json. Opinions, and promises to viewers, are judged elsewhere"
+        },
+        "judge": {
+          "type": "ref",
+          "ref": "clef"
+        },
+        "inputs": [
+          "script",
+          "notes"
+        ],
+        "optional": false
+      },
+      {
+        "id": "typical_results",
+        "name": "Results stay the creator's own",
+        "weight": 0,
+        "scale": {
+          "type": "binary",
+          "labels": [
+            "promised",
+            "own"
+          ]
+        },
+        "anchors": {
+          "promised": "The script tells viewers they will save or get a result (a sum, a percentage, 'you'll save'), instead of presenting it as what happened to the creator",
+          "own": "Every result is presented as the creator's own, with no promise of what viewers will save or get"
+        },
+        "judge": {
+          "type": "ref",
+          "ref": "clef"
+        },
+        "inputs": [
+          "script"
+        ],
+        "optional": false
+      },
+      {
+        "id": "trial_terms",
+        "name": "Free-trial terms stated with the offer",
+        "weight": 0,
+        "scale": {
+          "type": "binary",
+          "labels": [
+            "missing",
+            "stated"
+          ]
+        },
+        "anchors": {
+          "missing": "The script offers a free trial or free month without saying, where it makes the offer, that it then costs $4.99 a month unless you cancel",
+          "stated": "Where the script makes the free offer, it says the price after the free month ($4.99 a month) and that you can cancel"
+        },
+        "judge": {
+          "type": "ref",
+          "ref": "clef"
+        },
+        "inputs": [
+          "script",
+          "brief"
+        ],
+        "optional": false
+      },
+      {
+        "id": "no_competitor",
+        "name": "Names no competitor",
+        "weight": 0,
+        "scale": {
+          "type": "binary",
+          "labels": [
+            "named",
+            "none"
+          ]
+        },
+        "anchors": {
+          "named": "The script names another budgeting app or compares Tallyleaf with one",
+          "none": "No other budgeting app is named or compared"
+        },
+        "judge": {
+          "type": "ref",
+          "ref": "clef"
+        },
+        "inputs": [
+          "script",
+          "brief"
+        ],
+        "optional": false
+      },
+      {
+        "id": "talking_points",
+        "name": "Covers all three talking points",
+        "weight": 0,
+        "scale": {
+          "type": "binary",
+          "labels": [
+            "missing",
+            "covered"
+          ]
+        },
+        "anchors": {
+          "missing": "At least one of the brief's three talking points is missing: automatic categories, the alert the day before a subscription renews, shared budgets",
+          "covered": "The script covers all three talking points: automatic categories, the alert the day before a subscription renews, and a shared budget"
+        },
+        "judge": {
+          "type": "ref",
+          "ref": "clef"
+        },
+        "inputs": [
+          "script",
+          "brief"
+        ],
+        "optional": false
+      },
+      {
+        "id": "call_to_action",
+        "name": "Gives the code and where the link is",
+        "weight": 0,
+        "scale": {
+          "type": "binary",
+          "labels": [
+            "missing",
+            "given"
+          ]
+        },
+        "anchors": {
+          "missing": "The script doesn't say the code SMALLDESK or doesn't say the link is in the description",
+          "given": "The script says the code SMALLDESK and that the link is in the description"
+        },
+        "judge": {
+          "type": "ref",
+          "ref": "clef"
+        },
+        "inputs": [
+          "script",
+          "brief"
+        ],
+        "optional": false
+      },
+      {
+        "id": "drawback",
+        "name": "Names a real drawback",
+        "weight": 0,
+        "scale": {
+          "type": "binary",
+          "labels": [
+            "missing",
+            "named"
+          ]
+        },
+        "anchors": {
+          "missing": "The script names nothing the creator didn't like, or says the app is perfect",
+          "named": "The script names at least one real drawback from notes.json"
+        },
+        "judge": {
+          "type": "ref",
+          "ref": "clef"
+        },
+        "inputs": [
+          "script",
+          "notes"
+        ],
+        "optional": false
+      }
+    ],
+    "aggregation": {
+      "method": "formula",
+      "formula": "claims_safe_n < 0.5 ? 0 : (audience_n * 3 + shown_n * 2 + voice_n) / 6 * (1 + disclosure_n + own_experience_n + typical_results_n + trial_terms_n + no_competitor_n + talking_points_n + call_to_action_n + drawback_n) / 9",
+      "rater": "mean",
+      "normalize": [
+        0,
+        100
+      ],
+      "missing": "exclude",
+      "gates": [
+        {
+          "criterion": "claims_safe",
+          "min": 1,
+          "message": "Brand safety: the script makes a claim on the brief's must-not list"
+        }
+      ],
+      "grades": [
+        {
+          "label": "approve",
+          "min": 80
+        },
+        {
+          "label": "revise",
+          "min": 50
+        },
+        {
+          "label": "reject",
+          "min": 0
+        }
+      ],
+      "passThreshold": 80,
+      "precision": 0
+    },
+    "id": "rub_mw6biysudpscjmbs",
+    "createdAt": "2026-11-07T11:26:42.606Z",
+    "updatedAt": "2026-11-07T11:26:42.606Z"
+  },
+  "subject": {
+    "name": "Small Desk Studio script",
+    "inputs": [
+      {
+        "type": "file",
+        "path": "/root/sponsor-v3/script.md",
+        "tags": [
+          "script"
+        ]
+      },
+      {
+        "type": "file",
+        "path": "/root/sponsor-v3/brief.json",
+        "tags": [
+          "brief"
+        ]
+      },
+      {
+        "type": "file",
+        "path": "/root/sponsor-v3/notes.json",
+        "tags": [
+          "notes"
+        ]
+      }
+    ]
+  },
+  "evidence": [],
+  "status": "running",
+  "criteria": [],
+  "aggregate": {
+    "method": "formula",
+    "range": [
+      0,
+      100
+    ],
+    "gates": [],
+    "partial": true,
+    "included": [],
+    "excluded": []
+  },
+  "pendingTasks": [],
+  "usage": {
+    "decisionCalls": 0,
+    "llmCalls": 0,
+    "inputTokens": 0,
+    "outputTokens": 0,
+    "durationMs": 0
+  },
+  "createdAt": "2026-11-07T11:27:16.892Z",
+  "updatedAt": "2026-11-07T11:27:16.892Z"
+}

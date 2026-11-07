@@ -1,0 +1,4 @@
+A creator wrote this sponsored video script for Tallyleaf. Before it goes to the brand, review it with Verdict. Work only in this folder.
+Read sponsor-review-strict.yaml and call the verdict MCP's create_rubric with its YAML. Then evaluate it with subject name "Small Desk Studio script", a file input script.md (tags ["script"]), a file input brief.json (tags ["brief"]) and a file input notes.json (tags ["notes"]).
+Edit only script.md. Keep the creator's voice, and say nothing about their month that isn't in notes.json. If it isn't approved, pick one failing criterion, fix only that, and evaluate again. If its gate failed, fix the gate first. One fix per round, so it's clear what changed the score. Stop when it's approved, or after 10 evaluations.
+Finally print a REVIEW table (round, score, grade, what changed).

@@ -1,0 +1,1306 @@
+{
+  "id": "eval_mw6bj7zadgdmsa24",
+  "rubricId": "rub_mw6biysudpscjmbs",
+  "rubric": {
+    "name": "Sponsored video review (strict)",
+    "version": "2",
+    "description": "Would the brand approve this sponsored script as written, and could it legally run?",
+    "context": "You review a creator's script for a sponsored video. brief.json is the brand's brief; notes.json is the creator's\nown notes from the month they used the product. Judge only the script text. Be strict: when in doubt, judge it as\nfailing. Each check looks only at the kind of problem it names; ignore other kinds of problems when judging it.\n",
+    "language": "en",
+    "scale": {
+      "type": "numeric",
+      "min": 1,
+      "max": 5
+    },
+    "judges": {
+      "jev": {
+        "type": "decision",
+        "provider": "typesafe",
+        "model": "jev-latest",
+        "onLowConfidence": "accept",
+        "escalateTo": []
+      },
+      "clef": {
+        "type": "decision",
+        "provider": "cloudflare",
+        "model": "@cf/cloudflare/clef",
+        "onLowConfidence": "accept",
+        "escalateTo": []
+      }
+    },
+    "defaultJudge": {
+      "type": "ref",
+      "ref": "jev"
+    },
+    "criteria": [
+      {
+        "id": "audience",
+        "name": "Speaks to the brief's audience",
+        "weight": 3,
+        "levels": [
+          {
+            "value": 1,
+            "label": "off",
+            "description": "Generic; nothing in it is about renters who split rent and bills"
+          },
+          {
+            "value": 3,
+            "label": "partial",
+            "description": "Touches the audience's situation once, but mostly talks to anyone"
+          },
+          {
+            "value": 5,
+            "label": "exact",
+            "description": "Speaks to renters who split rent and bills, in situations they have (roommates, shared costs, a tight month)"
+          }
+        ],
+        "inputs": [
+          "script",
+          "brief"
+        ],
+        "optional": false
+      },
+      {
+        "id": "shown",
+        "name": "Shows the product in use",
+        "weight": 2,
+        "levels": [
+          {
+            "value": 1,
+            "label": "told",
+            "description": "Praise and adjectives; you can't tell what the app does"
+          },
+          {
+            "value": 3,
+            "label": "some",
+            "description": "Names features, but tells more than it shows"
+          },
+          {
+            "value": 5,
+            "label": "shown",
+            "description": "Walks through the features in use, each with a concrete number or moment from the month"
+          }
+        ],
+        "inputs": [
+          "script",
+          "brief"
+        ],
+        "optional": false
+      },
+      {
+        "id": "voice",
+        "name": "Sounds like the creator, not ad copy",
+        "weight": 1,
+        "levels": [
+          {
+            "value": 1,
+            "label": "ad_copy",
+            "description": "Superlatives and slogans (perfect, changed everything, so much smarter)"
+          },
+          {
+            "value": 3,
+            "label": "mixed",
+            "description": "Mostly personal, with some ad-copy lines"
+          },
+          {
+            "value": 5,
+            "label": "personal",
+            "description": "Plain first-person talk about what happened, with no slogans or superlatives"
+          }
+        ],
+        "inputs": [
+          "script"
+        ],
+        "optional": false
+      },
+      {
+        "id": "claims_safe",
+        "name": "No claim on the must-not list",
+        "weight": 0,
+        "scale": {
+          "type": "binary",
+          "labels": [
+            "unsafe",
+            "safe"
+          ]
+        },
+        "anchors": {
+          "unsafe": "The script makes a claim on the brief's must_not list: credit or loan approval, investment returns or interest, or that Tallyleaf is a bank, holds money or is FDIC-insured",
+          "safe": "No claim about credit or loan approval, investment returns, interest, banking or FDIC insurance. Other problems are judged elsewhere"
+        },
+        "judge": {
+          "type": "ref",
+          "ref": "clef"
+        },
+        "inputs": [
+          "script",
+          "brief"
+        ],
+        "optional": false
+      },
+      {
+        "id": "disclosure",
+        "name": "Paid relationship disclosed upfront",
+        "weight": 0,
+        "scale": {
+          "type": "binary",
+          "labels": [
+            "missing",
+            "disclosed"
+          ]
+        },
+        "anchors": {
+          "missing": "The script doesn't say in plain words, in its first 30 seconds and before the app is shown, that Tallyleaf paid for the video, with 'Paid ad' on screen. A thank-you, a 'friends at', a mention only at the end or only in the description doesn't count",
+          "disclosed": "In its first 30 seconds, before the app is shown, the script says plainly that Tallyleaf paid for the video and puts 'Paid ad' on screen"
+        },
+        "judge": {
+          "type": "ref",
+          "ref": "clef"
+        },
+        "inputs": [
+          "script",
+          "brief"
+        ],
+        "optional": false
+      },
+      {
+        "id": "own_experience",
+        "name": "Personal experience matches the creator's notes",
+        "weight": 0,
+        "scale": {
+          "type": "binary",
+          "labels": [
+            "mismatch",
+            "matches"
+          ]
+        },
+        "anchors": {
+          "mismatch": "The script says the creator used Tallyleaf for longer or more often than notes.json (days_used: 30), or says they did, found or spent something notes.json doesn't contain",
+          "matches": "How long the creator used Tallyleaf, and everything they say they did, found or spent, is in notes.json. Opinions, and promises to viewers, are judged elsewhere"
+        },
+        "judge": {
+          "type": "ref",
+          "ref": "clef"
+        },
+        "inputs": [
+          "script",
+          "notes"
+        ],
+        "optional": false
+      },
+      {
+        "id": "typical_results",
+        "name": "Results stay the creator's own",
+        "weight": 0,
+        "scale": {
+          "type": "binary",
+          "labels": [
+            "promised",
+            "own"
+          ]
+        },
+        "anchors": {
+          "promised": "The script tells viewers they will save or get a result (a sum, a percentage, 'you'll save'), instead of presenting it as what happened to the creator",
+          "own": "Every result is presented as the creator's own, with no promise of what viewers will save or get"
+        },
+        "judge": {
+          "type": "ref",
+          "ref": "clef"
+        },
+        "inputs": [
+          "script"
+        ],
+        "optional": false
+      },
+      {
+        "id": "trial_terms",
+        "name": "Free-trial terms stated with the offer",
+        "weight": 0,
+        "scale": {
+          "type": "binary",
+          "labels": [
+            "missing",
+            "stated"
+          ]
+        },
+        "anchors": {
+          "missing": "The script offers a free trial or free month without saying, where it makes the offer, that it then costs $4.99 a month unless you cancel",
+          "stated": "Where the script makes the free offer, it says the price after the free month ($4.99 a month) and that you can cancel"
+        },
+        "judge": {
+          "type": "ref",
+          "ref": "clef"
+        },
+        "inputs": [
+          "script",
+          "brief"
+        ],
+        "optional": false
+      },
+      {
+        "id": "no_competitor",
+        "name": "Names no competitor",
+        "weight": 0,
+        "scale": {
+          "type": "binary",
+          "labels": [
+            "named",
+            "none"
+          ]
+        },
+        "anchors": {
+          "named": "The script names another budgeting app or compares Tallyleaf with one",
+          "none": "No other budgeting app is named or compared"
+        },
+        "judge": {
+          "type": "ref",
+          "ref": "clef"
+        },
+        "inputs": [
+          "script",
+          "brief"
+        ],
+        "optional": false
+      },
+      {
+        "id": "talking_points",
+        "name": "Covers all three talking points",
+        "weight": 0,
+        "scale": {
+          "type": "binary",
+          "labels": [
+            "missing",
+            "covered"
+          ]
+        },
+        "anchors": {
+          "missing": "At least one of the brief's three talking points is missing: automatic categories, the alert the day before a subscription renews, shared budgets",
+          "covered": "The script covers all three talking points: automatic categories, the alert the day before a subscription renews, and a shared budget"
+        },
+        "judge": {
+          "type": "ref",
+          "ref": "clef"
+        },
+        "inputs": [
+          "script",
+          "brief"
+        ],
+        "optional": false
+      },
+      {
+        "id": "call_to_action",
+        "name": "Gives the code and where the link is",
+        "weight": 0,
+        "scale": {
+          "type": "binary",
+          "labels": [
+            "missing",
+            "given"
+          ]
+        },
+        "anchors": {
+          "missing": "The script doesn't say the code SMALLDESK or doesn't say the link is in the description",
+          "given": "The script says the code SMALLDESK and that the link is in the description"
+        },
+        "judge": {
+          "type": "ref",
+          "ref": "clef"
+        },
+        "inputs": [
+          "script",
+          "brief"
+        ],
+        "optional": false
+      },
+      {
+        "id": "drawback",
+        "name": "Names a real drawback",
+        "weight": 0,
+        "scale": {
+          "type": "binary",
+          "labels": [
+            "missing",
+            "named"
+          ]
+        },
+        "anchors": {
+          "missing": "The script names nothing the creator didn't like, or says the app is perfect",
+          "named": "The script names at least one real drawback from notes.json"
+        },
+        "judge": {
+          "type": "ref",
+          "ref": "clef"
+        },
+        "inputs": [
+          "script",
+          "notes"
+        ],
+        "optional": false
+      }
+    ],
+    "aggregation": {
+      "method": "formula",
+      "formula": "claims_safe_n < 0.5 ? 0 : (audience_n * 3 + shown_n * 2 + voice_n) / 6 * (1 + disclosure_n + own_experience_n + typical_results_n + trial_terms_n + no_competitor_n + talking_points_n + call_to_action_n + drawback_n) / 9",
+      "rater": "mean",
+      "normalize": [
+        0,
+        100
+      ],
+      "missing": "exclude",
+      "gates": [
+        {
+          "criterion": "claims_safe",
+          "min": 1,
+          "message": "Brand safety: the script makes a claim on the brief's must-not list"
+        }
+      ],
+      "grades": [
+        {
+          "label": "approve",
+          "min": 80
+        },
+        {
+          "label": "revise",
+          "min": 50
+        },
+        {
+          "label": "reject",
+          "min": 0
+        }
+      ],
+      "passThreshold": 80,
+      "precision": 0
+    },
+    "id": "rub_mw6biysudpscjmbs",
+    "createdAt": "2026-11-07T11:26:42.606Z",
+    "updatedAt": "2026-11-07T11:26:42.606Z"
+  },
+  "subject": {
+    "name": "Small Desk Studio script",
+    "inputs": [
+      {
+        "type": "file",
+        "path": "/root/sponsor-v3/script.md",
+        "tags": [
+          "script"
+        ]
+      },
+      {
+        "type": "file",
+        "path": "/root/sponsor-v3/brief.json",
+        "tags": [
+          "brief"
+        ]
+      },
+      {
+        "type": "file",
+        "path": "/root/sponsor-v3/notes.json",
+        "tags": [
+          "notes"
+        ]
+      }
+    ]
+  },
+  "evidence": [
+    {
+      "inputIndex": 0,
+      "kind": "file",
+      "label": "script.md",
+      "tags": [
+        "script"
+      ],
+      "text": "# Small Desk Studio: \"How I finally stopped overspending\"\n\n[0:00] My rent went up $150 this year, and in September I still spent $214 on things I don't remember buying. I've used Tallyleaf every day for two years now, and it changed everything.\n\n[0:10] Day one: I connected my cards and Tallyleaf sorted my spending into categories in about a minute.\n\n[0:20] The first surprise was subscriptions: four of them, $47 a month, and I'd forgotten two.\n\n[0:28] My roommate Jess and I set a $400 grocery budget. We both see the same number, and it updates when either of us pays.\n\n[0:38] Honestly, it's so much smarter than BudgetBee.\n\n[0:50] By day 30 I'd spent $386 less than the month before. Use it for a month and you'll spend at least $300 less.\n\n[1:00] Honestly, it's the best app on my phone.\n\n[1:06] Try it free with code SMALLDESK. The link is in the description.\n\n[1:12] Huge thanks to my friends at Tallyleaf for making this video possible!\n\n[1:18] Next week: the $40 desk upgrade that fixed my back.\n",
+      "truncated": false,
+      "stats": {
+        "chars": 1005,
+        "words": 180,
+        "lines": 21
+      },
+      "source": "script.md"
+    },
+    {
+      "inputIndex": 1,
+      "kind": "file",
+      "label": "brief.json",
+      "tags": [
+        "brief"
+      ],
+      "text": "{\n  \"_note\": \"Fictional brand, creator and figures for a demo. This is the brand's brief for the sponsored video.\",\n  \"brand\": \"Tallyleaf\",\n  \"product\": \"A budgeting app for iOS and Android. It reads your card transactions; it is not a bank and never holds or moves money\",\n  \"audience\": \"Renters aged 22 to 35 who split rent and bills with roommates or a partner and want to stop overspending\",\n  \"talking_points\": [\n    \"Connect your cards and Tallyleaf sorts your spending into categories automatically\",\n    \"It flags each subscription the day before it renews\",\n    \"Shared budgets: roommates or partners see the same budget, updated when either one pays\"\n  ],\n  \"disclosure\": \"Say plainly, in the first 30 seconds and before showing the app, that Tallyleaf paid for this video, and show the words 'Paid ad' on screen while you say it\",\n  \"offer\": {\n    \"code\": \"SMALLDESK\",\n    \"link\": \"in the video description\",\n    \"terms\": \"First month free, then $4.99 a month unless you cancel. Cancel anytime in the app\"\n  },\n  \"must_not\": [\n    \"credit or loan approval claims\",\n    \"investment returns or interest\",\n    \"saying Tallyleaf is a bank, holds money or is FDIC-insured\"\n  ],\n  \"competitors\": \"Don't name or compare against any other budgeting app\"\n}",
+      "truncated": false,
+      "stats": {
+        "chars": 1258,
+        "words": 193,
+        "lines": 23
+      },
+      "source": "brief.json",
+      "json": {
+        "_note": "Fictional brand, creator and figures for a demo. This is the brand's brief for the sponsored video.",
+        "brand": "Tallyleaf",
+        "product": "A budgeting app for iOS and Android. It reads your card transactions; it is not a bank and never holds or moves money",
+        "audience": "Renters aged 22 to 35 who split rent and bills with roommates or a partner and want to stop overspending",
+        "talking_points": [
+          "Connect your cards and Tallyleaf sorts your spending into categories automatically",
+          "It flags each subscription the day before it renews",
+          "Shared budgets: roommates or partners see the same budget, updated when either one pays"
+        ],
+        "disclosure": "Say plainly, in the first 30 seconds and before showing the app, that Tallyleaf paid for this video, and show the words 'Paid ad' on screen while you say it",
+        "offer": {
+          "code": "SMALLDESK",
+          "link": "in the video description",
+          "terms": "First month free, then $4.99 a month unless you cancel. Cancel anytime in the app"
+        },
+        "must_not": [
+          "credit or loan approval claims",
+          "investment returns or interest",
+          "saying Tallyleaf is a bank, holds money or is FDIC-insured"
+        ],
+        "competitors": "Don't name or compare against any other budgeting app"
+      }
+    },
+    {
+      "inputIndex": 2,
+      "kind": "file",
+      "label": "notes.json",
+      "tags": [
+        "notes"
+      ],
+      "text": "{\n  \"_note\": \"The creator's own notes from the month with Tallyleaf. Every personal experience in the script must match them.\",\n  \"creator\": \"Small Desk Studio\",\n  \"days_used\": 30,\n  \"dates\": \"October 1 to October 30\",\n  \"before\": \"Rent went up $150 this year. In September they spent $214 on things they didn't remember buying\",\n  \"connected\": \"2 cards (debit and credit); Tallyleaf sorted 3 months of past spending into categories in about a minute\",\n  \"subscriptions\": \"Found 4 subscriptions, $47 a month in total; had forgotten 2 and cancelled them ($19 a month) after the renewal alerts\",\n  \"shared_budget\": \"Set a $400 grocery budget with roommate Jess; both see the same number, and it updates when either one pays\",\n  \"result\": \"Spent $386 less in October than in September\",\n  \"drawbacks\": [\n    \"the charts are small on a phone\",\n    \"the web app is still in beta\",\n    \"it once sorted a rent transfer to Jess as 'shopping'\"\n  ],\n  \"paid\": \"Tallyleaf paid $3,500 for this video\"\n}",
+      "truncated": false,
+      "stats": {
+        "chars": 990,
+        "words": 156,
+        "lines": 17
+      },
+      "source": "notes.json",
+      "json": {
+        "_note": "The creator's own notes from the month with Tallyleaf. Every personal experience in the script must match them.",
+        "creator": "Small Desk Studio",
+        "days_used": 30,
+        "dates": "October 1 to October 30",
+        "before": "Rent went up $150 this year. In September they spent $214 on things they didn't remember buying",
+        "connected": "2 cards (debit and credit); Tallyleaf sorted 3 months of past spending into categories in about a minute",
+        "subscriptions": "Found 4 subscriptions, $47 a month in total; had forgotten 2 and cancelled them ($19 a month) after the renewal alerts",
+        "shared_budget": "Set a $400 grocery budget with roommate Jess; both see the same number, and it updates when either one pays",
+        "result": "Spent $386 less in October than in September",
+        "drawbacks": [
+          "the charts are small on a phone",
+          "the web app is still in beta",
+          "it once sorted a rent transfer to Jess as 'shopping'"
+        ],
+        "paid": "Tallyleaf paid $3,500 for this video"
+      }
+    }
+  ],
+  "status": "completed",
+  "criteria": [
+    {
+      "criterionId": "audience",
+      "name": "Speaks to the brief's audience",
+      "weight": 3,
+      "status": "scored",
+      "ratings": [
+        {
+          "id": "rat_2bfcgizgmw6bj88c",
+          "criterionId": "audience",
+          "raterId": "jev",
+          "judgeType": "decision",
+          "createdAt": "2026-11-07T11:26:54.828Z",
+          "status": "scored",
+          "score": 4.8,
+          "normalized": 0.95,
+          "confidence": 0.85,
+          "probabilities": {
+            "off": 0,
+            "partial": 0.1,
+            "exact": 0.9
+          },
+          "rationale": "typesafe/jev-1.14.0 distribution: off=0% partial=10% exact=90%",
+          "raw": {
+            "provider": "typesafe",
+            "model": "jev-1.14.0",
+            "question": {
+              "type": "score",
+              "instructions": "Context: You review a creator's script for a sponsored video. brief.json is the brand's brief; notes.json is the creator's\nown notes from the month they used the product. Judge only the script text. Be strict: when in doubt, judge it as\nfailing. Each check looks only at the kind of problem it names; ignore other kinds of problems when judging it.\n Criterion \"Speaks to the brief's audience\". Place the input on the ordered levels below (worst to best). Judge only this criterion using the evidence in the state.",
+              "criteria": [
+                "off: Generic; nothing in it is about renters who split rent and bills",
+                "partial: Touches the audience's situation once, but mostly talks to anyone",
+                "exact: Speaks to renters who split rent and bills, in situations they have (roommates, shared costs, a tight month)"
+              ]
+            },
+            "answer": {
+              "type": "score",
+              "score": 1.9,
+              "confidence": 0.85,
+              "legend": {
+                "0": "off: Generic; nothing in it is about renters who split rent and bills",
+                "1": "partial: Touches the audience's situation once, but mostly talks to anyone",
+                "2": "exact: Speaks to renters who split rent and bills, in situations they have (roommates, shared costs, a tight month)"
+              },
+              "probabilities": {
+                "0": 0,
+                "1": 0.1,
+                "2": 0.9
+              }
+            },
+            "levels": [
+              {
+                "value": 1,
+                "label": "off",
+                "description": "Generic; nothing in it is about renters who split rent and bills"
+              },
+              {
+                "value": 3,
+                "label": "partial",
+                "description": "Touches the audience's situation once, but mostly talks to anyone"
+              },
+              {
+                "value": 5,
+                "label": "exact",
+                "description": "Speaks to renters who split rent and bills, in situations they have (roommates, shared costs, a tight month)"
+              }
+            ],
+            "latencyMs": 323,
+            "lowConfidence": false,
+            "stateChars": 2420,
+            "stateTruncated": false
+          }
+        }
+      ],
+      "pending": 0,
+      "score": 4.8,
+      "normalized": 0.95
+    },
+    {
+      "criterionId": "shown",
+      "name": "Shows the product in use",
+      "weight": 2,
+      "status": "scored",
+      "ratings": [
+        {
+          "id": "rat_wl0u2m4kmw6bj88c",
+          "criterionId": "shown",
+          "raterId": "jev",
+          "judgeType": "decision",
+          "createdAt": "2026-11-07T11:26:54.828Z",
+          "status": "scored",
+          "score": 4.44,
+          "normalized": 0.8599999999999999,
+          "confidence": 0.58,
+          "probabilities": {
+            "told": 0,
+            "some": 0.28,
+            "shown": 0.72
+          },
+          "rationale": "typesafe/jev-1.14.0 distribution: told=0% some=28% shown=72%",
+          "raw": {
+            "provider": "typesafe",
+            "model": "jev-1.14.0",
+            "question": {
+              "type": "score",
+              "instructions": "Context: You review a creator's script for a sponsored video. brief.json is the brand's brief; notes.json is the creator's\nown notes from the month they used the product. Judge only the script text. Be strict: when in doubt, judge it as\nfailing. Each check looks only at the kind of problem it names; ignore other kinds of problems when judging it.\n Criterion \"Shows the product in use\". Place the input on the ordered levels below (worst to best). Judge only this criterion using the evidence in the state.",
+              "criteria": [
+                "told: Praise and adjectives; you can't tell what the app does",
+                "some: Names features, but tells more than it shows",
+                "shown: Walks through the features in use, each with a concrete number or moment from the month"
+              ]
+            },
+            "answer": {
+              "type": "score",
+              "score": 1.71,
+              "confidence": 0.58,
+              "legend": {
+                "0": "told: Praise and adjectives; you can't tell what the app does",
+                "1": "some: Names features, but tells more than it shows",
+                "2": "shown: Walks through the features in use, each with a concrete number or moment from the month"
+              },
+              "probabilities": {
+                "0": 0,
+                "1": 0.28,
+                "2": 0.72
+              }
+            },
+            "levels": [
+              {
+                "value": 1,
+                "label": "told",
+                "description": "Praise and adjectives; you can't tell what the app does"
+              },
+              {
+                "value": 3,
+                "label": "some",
+                "description": "Names features, but tells more than it shows"
+              },
+              {
+                "value": 5,
+                "label": "shown",
+                "description": "Walks through the features in use, each with a concrete number or moment from the month"
+              }
+            ],
+            "latencyMs": 323,
+            "lowConfidence": false,
+            "stateChars": 2420,
+            "stateTruncated": false
+          }
+        }
+      ],
+      "pending": 0,
+      "score": 4.44,
+      "normalized": 0.8600000000000001
+    },
+    {
+      "criterionId": "voice",
+      "name": "Sounds like the creator, not ad copy",
+      "weight": 1,
+      "status": "scored",
+      "ratings": [
+        {
+          "id": "rat_vhci2qjzmw6bj87p",
+          "criterionId": "voice",
+          "raterId": "jev",
+          "judgeType": "decision",
+          "createdAt": "2026-11-07T11:26:54.805Z",
+          "status": "scored",
+          "score": 1.18,
+          "normalized": 0.04500000000000004,
+          "confidence": 0.86,
+          "probabilities": {
+            "ad_copy": 0.91,
+            "mixed": 0.09,
+            "personal": 0
+          },
+          "rationale": "typesafe/jev-1.14.0 distribution: ad_copy=91% mixed=9% personal=0%",
+          "raw": {
+            "provider": "typesafe",
+            "model": "jev-1.14.0",
+            "question": {
+              "type": "score",
+              "instructions": "Context: You review a creator's script for a sponsored video. brief.json is the brand's brief; notes.json is the creator's\nown notes from the month they used the product. Judge only the script text. Be strict: when in doubt, judge it as\nfailing. Each check looks only at the kind of problem it names; ignore other kinds of problems when judging it.\n Criterion \"Sounds like the creator, not ad copy\". Place the input on the ordered levels below (worst to best). Judge only this criterion using the evidence in the state.",
+              "criteria": [
+                "ad_copy: Superlatives and slogans (perfect, changed everything, so much smarter)",
+                "mixed: Mostly personal, with some ad-copy lines",
+                "personal: Plain first-person talk about what happened, with no slogans or superlatives"
+              ]
+            },
+            "answer": {
+              "type": "score",
+              "score": 0.1,
+              "confidence": 0.86,
+              "legend": {
+                "0": "ad_copy: Superlatives and slogans (perfect, changed everything, so much smarter)",
+                "1": "mixed: Mostly personal, with some ad-copy lines",
+                "2": "personal: Plain first-person talk about what happened, with no slogans or superlatives"
+              },
+              "probabilities": {
+                "0": 0.91,
+                "1": 0.09,
+                "2": 0
+              }
+            },
+            "levels": [
+              {
+                "value": 1,
+                "label": "ad_copy",
+                "description": "Superlatives and slogans (perfect, changed everything, so much smarter)"
+              },
+              {
+                "value": 3,
+                "label": "mixed",
+                "description": "Mostly personal, with some ad-copy lines"
+              },
+              {
+                "value": 5,
+                "label": "personal",
+                "description": "Plain first-person talk about what happened, with no slogans or superlatives"
+              }
+            ],
+            "latencyMs": 300,
+            "lowConfidence": false,
+            "stateChars": 1082,
+            "stateTruncated": false
+          }
+        }
+      ],
+      "pending": 0,
+      "score": 1.18,
+      "normalized": 0.044999999999999984
+    },
+    {
+      "criterionId": "claims_safe",
+      "name": "No claim on the must-not list",
+      "weight": 0,
+      "status": "scored",
+      "ratings": [
+        {
+          "id": "rat_3siz3xvgmw6bj8in",
+          "criterionId": "claims_safe",
+          "raterId": "clef",
+          "judgeType": "decision",
+          "createdAt": "2026-11-07T11:26:55.199Z",
+          "status": "scored",
+          "score": 1,
+          "normalized": 1,
+          "confidence": 0.7406,
+          "probabilities": {
+            "unsafe": 0.1297,
+            "safe": 0.8703
+          },
+          "rationale": "cloudflare/@cf/cloudflare/clef distribution: unsafe=13% safe=87%",
+          "raw": {
+            "provider": "cloudflare",
+            "model": "@cf/cloudflare/clef",
+            "question": {
+              "type": "noul",
+              "instructions": "Context: You review a creator's script for a sponsored video. brief.json is the brand's brief; notes.json is the creator's\nown notes from the month they used the product. Judge only the script text. Be strict: when in doubt, judge it as\nfailing. Each check looks only at the kind of problem it names; ignore other kinds of problems when judging it.\n Criterion \"No claim on the must-not list\". Is the input \"safe\" for this criterion?",
+              "criteria": {
+                "true": "No claim about credit or loan approval, investment returns, interest, banking or FDIC insurance. Other problems are judged elsewhere",
+                "false": "The script makes a claim on the brief's must_not list: credit or loan approval, investment returns or interest, or that Tallyleaf is a bank, holds money or is FDIC-insured"
+              }
+            },
+            "answer": {
+              "type": "noul",
+              "noul": 0.8703
+            },
+            "levels": [
+              {
+                "value": 0,
+                "label": "unsafe",
+                "description": "The script makes a claim on the brief's must_not list: credit or loan approval, investment returns or interest, or that Tallyleaf is a bank, holds money or is FDIC-insured"
+              },
+              {
+                "value": 1,
+                "label": "safe",
+                "description": "No claim about credit or loan approval, investment returns, interest, banking or FDIC insurance. Other problems are judged elsewhere"
+              }
+            ],
+            "latencyMs": 693,
+            "lowConfidence": false,
+            "stateChars": 2420,
+            "stateTruncated": false
+          }
+        }
+      ],
+      "pending": 0,
+      "score": 1,
+      "normalized": 1,
+      "gate": {
+        "passed": true
+      }
+    },
+    {
+      "criterionId": "disclosure",
+      "name": "Paid relationship disclosed upfront",
+      "weight": 0,
+      "status": "scored",
+      "ratings": [
+        {
+          "id": "rat_uh52mljmmw6bj8io",
+          "criterionId": "disclosure",
+          "raterId": "clef",
+          "judgeType": "decision",
+          "createdAt": "2026-11-07T11:26:55.200Z",
+          "status": "scored",
+          "score": 0,
+          "normalized": 0,
+          "confidence": 0.8874,
+          "probabilities": {
+            "missing": 0.9437,
+            "disclosed": 0.0563
+          },
+          "rationale": "cloudflare/@cf/cloudflare/clef distribution: missing=94% disclosed=6%",
+          "raw": {
+            "provider": "cloudflare",
+            "model": "@cf/cloudflare/clef",
+            "question": {
+              "type": "noul",
+              "instructions": "Context: You review a creator's script for a sponsored video. brief.json is the brand's brief; notes.json is the creator's\nown notes from the month they used the product. Judge only the script text. Be strict: when in doubt, judge it as\nfailing. Each check looks only at the kind of problem it names; ignore other kinds of problems when judging it.\n Criterion \"Paid relationship disclosed upfront\". Is the input \"disclosed\" for this criterion?",
+              "criteria": {
+                "true": "In its first 30 seconds, before the app is shown, the script says plainly that Tallyleaf paid for the video and puts 'Paid ad' on screen",
+                "false": "The script doesn't say in plain words, in its first 30 seconds and before the app is shown, that Tallyleaf paid for the video, with 'Paid ad' on screen. A thank-you, a 'friends at', a mention only at the end or only in the description doesn't count"
+              }
+            },
+            "answer": {
+              "type": "noul",
+              "noul": 0.0563
+            },
+            "levels": [
+              {
+                "value": 0,
+                "label": "missing",
+                "description": "The script doesn't say in plain words, in its first 30 seconds and before the app is shown, that Tallyleaf paid for the video, with 'Paid ad' on screen. A thank-you, a 'friends at', a mention only at the end or only in the description doesn't count"
+              },
+              {
+                "value": 1,
+                "label": "disclosed",
+                "description": "In its first 30 seconds, before the app is shown, the script says plainly that Tallyleaf paid for the video and puts 'Paid ad' on screen"
+              }
+            ],
+            "latencyMs": 693,
+            "lowConfidence": false,
+            "stateChars": 2420,
+            "stateTruncated": false
+          }
+        }
+      ],
+      "pending": 0,
+      "score": 0,
+      "normalized": 0
+    },
+    {
+      "criterionId": "own_experience",
+      "name": "Personal experience matches the creator's notes",
+      "weight": 0,
+      "status": "scored",
+      "ratings": [
+        {
+          "id": "rat_w0eicsndmw6bj8j0",
+          "criterionId": "own_experience",
+          "raterId": "clef",
+          "judgeType": "decision",
+          "createdAt": "2026-11-07T11:26:55.212Z",
+          "status": "scored",
+          "score": 0,
+          "normalized": 0,
+          "confidence": 0.2912,
+          "probabilities": {
+            "mismatch": 0.6456,
+            "matches": 0.3544
+          },
+          "rationale": "cloudflare/@cf/cloudflare/clef distribution: mismatch=65% matches=35%",
+          "raw": {
+            "provider": "cloudflare",
+            "model": "@cf/cloudflare/clef",
+            "question": {
+              "type": "noul",
+              "instructions": "Context: You review a creator's script for a sponsored video. brief.json is the brand's brief; notes.json is the creator's\nown notes from the month they used the product. Judge only the script text. Be strict: when in doubt, judge it as\nfailing. Each check looks only at the kind of problem it names; ignore other kinds of problems when judging it.\n Criterion \"Personal experience matches the creator's notes\". Is the input \"matches\" for this criterion?",
+              "criteria": {
+                "true": "How long the creator used Tallyleaf, and everything they say they did, found or spent, is in notes.json. Opinions, and promises to viewers, are judged elsewhere",
+                "false": "The script says the creator used Tallyleaf for longer or more often than notes.json (days_used: 30), or says they did, found or spent something notes.json doesn't contain"
+              }
+            },
+            "answer": {
+              "type": "noul",
+              "noul": 0.3544
+            },
+            "levels": [
+              {
+                "value": 0,
+                "label": "mismatch",
+                "description": "The script says the creator used Tallyleaf for longer or more often than notes.json (days_used: 30), or says they did, found or spent something notes.json doesn't contain"
+              },
+              {
+                "value": 1,
+                "label": "matches",
+                "description": "How long the creator used Tallyleaf, and everything they say they did, found or spent, is in notes.json. Opinions, and promises to viewers, are judged elsewhere"
+              }
+            ],
+            "latencyMs": 706,
+            "lowConfidence": false,
+            "stateChars": 2152,
+            "stateTruncated": false
+          }
+        }
+      ],
+      "pending": 0,
+      "score": 0,
+      "normalized": 0
+    },
+    {
+      "criterionId": "typical_results",
+      "name": "Results stay the creator's own",
+      "weight": 0,
+      "status": "scored",
+      "ratings": [
+        {
+          "id": "rat_9pdc82zumw6bj8d2",
+          "criterionId": "typical_results",
+          "raterId": "clef",
+          "judgeType": "decision",
+          "createdAt": "2026-11-07T11:26:54.998Z",
+          "status": "scored",
+          "score": 0,
+          "normalized": 0,
+          "confidence": 0.75,
+          "probabilities": {
+            "promised": 0.875,
+            "own": 0.125
+          },
+          "rationale": "cloudflare/@cf/cloudflare/clef distribution: promised=88% own=13%",
+          "raw": {
+            "provider": "cloudflare",
+            "model": "@cf/cloudflare/clef",
+            "question": {
+              "type": "noul",
+              "instructions": "Context: You review a creator's script for a sponsored video. brief.json is the brand's brief; notes.json is the creator's\nown notes from the month they used the product. Judge only the script text. Be strict: when in doubt, judge it as\nfailing. Each check looks only at the kind of problem it names; ignore other kinds of problems when judging it.\n Criterion \"Results stay the creator's own\". Is the input \"own\" for this criterion?",
+              "criteria": {
+                "true": "Every result is presented as the creator's own, with no promise of what viewers will save or get",
+                "false": "The script tells viewers they will save or get a result (a sum, a percentage, 'you'll save'), instead of presenting it as what happened to the creator"
+              }
+            },
+            "answer": {
+              "type": "noul",
+              "noul": 0.125
+            },
+            "levels": [
+              {
+                "value": 0,
+                "label": "promised",
+                "description": "The script tells viewers they will save or get a result (a sum, a percentage, 'you'll save'), instead of presenting it as what happened to the creator"
+              },
+              {
+                "value": 1,
+                "label": "own",
+                "description": "Every result is presented as the creator's own, with no promise of what viewers will save or get"
+              }
+            ],
+            "latencyMs": 491,
+            "lowConfidence": false,
+            "stateChars": 1082,
+            "stateTruncated": false
+          }
+        }
+      ],
+      "pending": 0,
+      "score": 0,
+      "normalized": 0
+    },
+    {
+      "criterionId": "trial_terms",
+      "name": "Free-trial terms stated with the offer",
+      "weight": 0,
+      "status": "scored",
+      "ratings": [
+        {
+          "id": "rat_ohu6hqt6mw6bj8io",
+          "criterionId": "trial_terms",
+          "raterId": "clef",
+          "judgeType": "decision",
+          "createdAt": "2026-11-07T11:26:55.200Z",
+          "status": "scored",
+          "score": 0,
+          "normalized": 0,
+          "confidence": 0.8242,
+          "probabilities": {
+            "missing": 0.9121,
+            "stated": 0.0879
+          },
+          "rationale": "cloudflare/@cf/cloudflare/clef distribution: missing=91% stated=9%",
+          "raw": {
+            "provider": "cloudflare",
+            "model": "@cf/cloudflare/clef",
+            "question": {
+              "type": "noul",
+              "instructions": "Context: You review a creator's script for a sponsored video. brief.json is the brand's brief; notes.json is the creator's\nown notes from the month they used the product. Judge only the script text. Be strict: when in doubt, judge it as\nfailing. Each check looks only at the kind of problem it names; ignore other kinds of problems when judging it.\n Criterion \"Free-trial terms stated with the offer\". Is the input \"stated\" for this criterion?",
+              "criteria": {
+                "true": "Where the script makes the free offer, it says the price after the free month ($4.99 a month) and that you can cancel",
+                "false": "The script offers a free trial or free month without saying, where it makes the offer, that it then costs $4.99 a month unless you cancel"
+              }
+            },
+            "answer": {
+              "type": "noul",
+              "noul": 0.0879
+            },
+            "levels": [
+              {
+                "value": 0,
+                "label": "missing",
+                "description": "The script offers a free trial or free month without saying, where it makes the offer, that it then costs $4.99 a month unless you cancel"
+              },
+              {
+                "value": 1,
+                "label": "stated",
+                "description": "Where the script makes the free offer, it says the price after the free month ($4.99 a month) and that you can cancel"
+              }
+            ],
+            "latencyMs": 693,
+            "lowConfidence": false,
+            "stateChars": 2420,
+            "stateTruncated": false
+          }
+        }
+      ],
+      "pending": 0,
+      "score": 0,
+      "normalized": 0
+    },
+    {
+      "criterionId": "no_competitor",
+      "name": "Names no competitor",
+      "weight": 0,
+      "status": "scored",
+      "ratings": [
+        {
+          "id": "rat_uvdqvg4wmw6bj8io",
+          "criterionId": "no_competitor",
+          "raterId": "clef",
+          "judgeType": "decision",
+          "createdAt": "2026-11-07T11:26:55.200Z",
+          "status": "scored",
+          "score": 0,
+          "normalized": 0,
+          "confidence": 0.8554,
+          "probabilities": {
+            "named": 0.9277,
+            "none": 0.0723
+          },
+          "rationale": "cloudflare/@cf/cloudflare/clef distribution: named=93% none=7%",
+          "raw": {
+            "provider": "cloudflare",
+            "model": "@cf/cloudflare/clef",
+            "question": {
+              "type": "noul",
+              "instructions": "Context: You review a creator's script for a sponsored video. brief.json is the brand's brief; notes.json is the creator's\nown notes from the month they used the product. Judge only the script text. Be strict: when in doubt, judge it as\nfailing. Each check looks only at the kind of problem it names; ignore other kinds of problems when judging it.\n Criterion \"Names no competitor\". Is the input \"none\" for this criterion?",
+              "criteria": {
+                "true": "No other budgeting app is named or compared",
+                "false": "The script names another budgeting app or compares Tallyleaf with one"
+              }
+            },
+            "answer": {
+              "type": "noul",
+              "noul": 0.0723
+            },
+            "levels": [
+              {
+                "value": 0,
+                "label": "named",
+                "description": "The script names another budgeting app or compares Tallyleaf with one"
+              },
+              {
+                "value": 1,
+                "label": "none",
+                "description": "No other budgeting app is named or compared"
+              }
+            ],
+            "latencyMs": 693,
+            "lowConfidence": false,
+            "stateChars": 2420,
+            "stateTruncated": false
+          }
+        }
+      ],
+      "pending": 0,
+      "score": 0,
+      "normalized": 0
+    },
+    {
+      "criterionId": "talking_points",
+      "name": "Covers all three talking points",
+      "weight": 0,
+      "status": "scored",
+      "ratings": [
+        {
+          "id": "rat_38em8c4imw6bj8io",
+          "criterionId": "talking_points",
+          "raterId": "clef",
+          "judgeType": "decision",
+          "createdAt": "2026-11-07T11:26:55.200Z",
+          "status": "scored",
+          "score": 0,
+          "normalized": 0,
+          "confidence": 0.2932,
+          "probabilities": {
+            "missing": 0.6466,
+            "covered": 0.3534
+          },
+          "rationale": "cloudflare/@cf/cloudflare/clef distribution: missing=65% covered=35%",
+          "raw": {
+            "provider": "cloudflare",
+            "model": "@cf/cloudflare/clef",
+            "question": {
+              "type": "noul",
+              "instructions": "Context: You review a creator's script for a sponsored video. brief.json is the brand's brief; notes.json is the creator's\nown notes from the month they used the product. Judge only the script text. Be strict: when in doubt, judge it as\nfailing. Each check looks only at the kind of problem it names; ignore other kinds of problems when judging it.\n Criterion \"Covers all three talking points\". Is the input \"covered\" for this criterion?",
+              "criteria": {
+                "true": "The script covers all three talking points: automatic categories, the alert the day before a subscription renews, and a shared budget",
+                "false": "At least one of the brief's three talking points is missing: automatic categories, the alert the day before a subscription renews, shared budgets"
+              }
+            },
+            "answer": {
+              "type": "noul",
+              "noul": 0.3534
+            },
+            "levels": [
+              {
+                "value": 0,
+                "label": "missing",
+                "description": "At least one of the brief's three talking points is missing: automatic categories, the alert the day before a subscription renews, shared budgets"
+              },
+              {
+                "value": 1,
+                "label": "covered",
+                "description": "The script covers all three talking points: automatic categories, the alert the day before a subscription renews, and a shared budget"
+              }
+            ],
+            "latencyMs": 693,
+            "lowConfidence": false,
+            "stateChars": 2420,
+            "stateTruncated": false
+          }
+        }
+      ],
+      "pending": 0,
+      "score": 0,
+      "normalized": 0
+    },
+    {
+      "criterionId": "call_to_action",
+      "name": "Gives the code and where the link is",
+      "weight": 0,
+      "status": "scored",
+      "ratings": [
+        {
+          "id": "rat_pa1r55e2mw6bj8io",
+          "criterionId": "call_to_action",
+          "raterId": "clef",
+          "judgeType": "decision",
+          "createdAt": "2026-11-07T11:26:55.200Z",
+          "status": "scored",
+          "score": 1,
+          "normalized": 1,
+          "confidence": 0.8938,
+          "probabilities": {
+            "missing": 0.0531,
+            "given": 0.9469
+          },
+          "rationale": "cloudflare/@cf/cloudflare/clef distribution: missing=5% given=95%",
+          "raw": {
+            "provider": "cloudflare",
+            "model": "@cf/cloudflare/clef",
+            "question": {
+              "type": "noul",
+              "instructions": "Context: You review a creator's script for a sponsored video. brief.json is the brand's brief; notes.json is the creator's\nown notes from the month they used the product. Judge only the script text. Be strict: when in doubt, judge it as\nfailing. Each check looks only at the kind of problem it names; ignore other kinds of problems when judging it.\n Criterion \"Gives the code and where the link is\". Is the input \"given\" for this criterion?",
+              "criteria": {
+                "true": "The script says the code SMALLDESK and that the link is in the description",
+                "false": "The script doesn't say the code SMALLDESK or doesn't say the link is in the description"
+              }
+            },
+            "answer": {
+              "type": "noul",
+              "noul": 0.9469
+            },
+            "levels": [
+              {
+                "value": 0,
+                "label": "missing",
+                "description": "The script doesn't say the code SMALLDESK or doesn't say the link is in the description"
+              },
+              {
+                "value": 1,
+                "label": "given",
+                "description": "The script says the code SMALLDESK and that the link is in the description"
+              }
+            ],
+            "latencyMs": 693,
+            "lowConfidence": false,
+            "stateChars": 2420,
+            "stateTruncated": false
+          }
+        }
+      ],
+      "pending": 0,
+      "score": 1,
+      "normalized": 1
+    },
+    {
+      "criterionId": "drawback",
+      "name": "Names a real drawback",
+      "weight": 0,
+      "status": "scored",
+      "ratings": [
+        {
+          "id": "rat_4rra5h0amw6bj8j0",
+          "criterionId": "drawback",
+          "raterId": "clef",
+          "judgeType": "decision",
+          "createdAt": "2026-11-07T11:26:55.212Z",
+          "status": "scored",
+          "score": 0,
+          "normalized": 0,
+          "confidence": 0.943,
+          "probabilities": {
+            "missing": 0.9715,
+            "named": 0.0285
+          },
+          "rationale": "cloudflare/@cf/cloudflare/clef distribution: missing=97% named=3%",
+          "raw": {
+            "provider": "cloudflare",
+            "model": "@cf/cloudflare/clef",
+            "question": {
+              "type": "noul",
+              "instructions": "Context: You review a creator's script for a sponsored video. brief.json is the brand's brief; notes.json is the creator's\nown notes from the month they used the product. Judge only the script text. Be strict: when in doubt, judge it as\nfailing. Each check looks only at the kind of problem it names; ignore other kinds of problems when judging it.\n Criterion \"Names a real drawback\". Is the input \"named\" for this criterion?",
+              "criteria": {
+                "true": "The script names at least one real drawback from notes.json",
+                "false": "The script names nothing the creator didn't like, or says the app is perfect"
+              }
+            },
+            "answer": {
+              "type": "noul",
+              "noul": 0.0285
+            },
+            "levels": [
+              {
+                "value": 0,
+                "label": "missing",
+                "description": "The script names nothing the creator didn't like, or says the app is perfect"
+              },
+              {
+                "value": 1,
+                "label": "named",
+                "description": "The script names at least one real drawback from notes.json"
+              }
+            ],
+            "latencyMs": 706,
+            "lowConfidence": false,
+            "stateChars": 2152,
+            "stateTruncated": false
+          }
+        }
+      ],
+      "pending": 0,
+      "score": 0,
+      "normalized": 0
+    }
+  ],
+  "aggregate": {
+    "method": "formula",
+    "range": [
+      0,
+      100
+    ],
+    "gates": [
+      {
+        "criterion": "claims_safe",
+        "passed": true
+      }
+    ],
+    "partial": false,
+    "included": [
+      "audience",
+      "shown",
+      "voice"
+    ],
+    "excluded": [
+      "claims_safe",
+      "disclosure",
+      "own_experience",
+      "typical_results",
+      "trial_terms",
+      "no_competitor",
+      "talking_points",
+      "call_to_action",
+      "drawback"
+    ],
+    "raw": 0.170926,
+    "score": 17,
+    "grade": "reject",
+    "passed": false
+  },
+  "pendingTasks": [],
+  "usage": {
+    "decisionCalls": 5,
+    "llmCalls": 0,
+    "inputTokens": 5877,
+    "outputTokens": 49,
+    "durationMs": 711
+  },
+  "createdAt": "2026-11-07T11:26:54.502Z",
+  "updatedAt": "2026-11-07T11:26:55.213Z"
+}

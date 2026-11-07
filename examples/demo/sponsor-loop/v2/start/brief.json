@@ -1,0 +1,23 @@
+{
+  "_note": "Fictional brand, creator and figures for a demo. This is the brand's brief for the sponsored video.",
+  "brand": "Tallyleaf",
+  "product": "A budgeting app for iOS and Android. It reads your card transactions; it is not a bank and never holds or moves money",
+  "audience": "Renters aged 22 to 35 who split rent and bills with roommates or a partner and want to stop overspending",
+  "talking_points": [
+    "Connect your cards and Tallyleaf sorts your spending into categories automatically",
+    "It flags each subscription the day before it renews",
+    "Shared budgets: roommates or partners see the same budget, updated when either one pays"
+  ],
+  "disclosure": "Say plainly, in the first 30 seconds and before showing the app, that Tallyleaf paid for this video, and show the words 'Paid ad' on screen while you say it",
+  "offer": {
+    "code": "SMALLDESK",
+    "link": "in the video description",
+    "terms": "First month free, then $4.99 a month unless you cancel. Cancel anytime in the app"
+  },
+  "must_not": [
+    "credit or loan approval claims",
+    "investment returns or interest",
+    "saying Tallyleaf is a bank, holds money or is FDIC-insured"
+  ],
+  "competitors": "Don't name or compare against any other budgeting app"
+}
