@@ -1,6 +1,6 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import { calibrate, Engine, FileStore, MemoryStore, lazyPlaywrightScreenshot, loadRubricText, parseRubric, rankEvaluations, type Evaluation } from "@verdict/core";
+import { calibrate, checkAgainstHumans, parseGoldSet, Engine, FileStore, MemoryStore, lazyPlaywrightScreenshot, loadRubricText, parseRubric, rankEvaluations, type Evaluation } from "@verdict/core";
 import { Verdict } from "@verdict/sdk";
 
 /**
@@ -138,6 +138,36 @@ export function createMcpServer(opts: McpOptions = {}) {
     if (ids.length === 1 && !evaluationIds) return text(summarize(await one(ids[0]!)));
     const evaluations = await Promise.all(ids.map(one));
     return text({ judgesCalled: 0, ranking: rankEvaluations(evaluations), evaluations: evaluations.map(summarize) });
+  });
+
+  server.registerTool("check_against_humans", {
+    title: "Check a rubric against human labels",
+    description: "Run a rubric over a gold set (subjects people already judged) and report how often Verdict reached the same verdict: overall pass/fail agreement, per-criterion agreement, how many subjects were handed to a human (low-confidence escalation), and every disagreement with a preview. `rubricPath` is a local YAML/JSON rubric file (re-read on every call, so edit it and call again); `gold` is a local JSON array or JSON-lines file of {name, inputs, human: {passed?, criteria?}}. Local mode only.",
+    inputSchema: {
+      rubricPath: z.string().optional().describe("Local rubric file (YAML or JSON)"),
+      rubric: z.union([z.string(), z.record(z.string(), z.unknown())]).optional().describe("Stored rubric id or inline rubric, instead of rubricPath"),
+      gold: z.string().describe("Local gold-set file: JSON array or JSON lines"),
+    },
+  }, async ({ rubricPath, rubric, gold }) => {
+    if (!engine) return text({ error: "check_against_humans needs the local engine (unset VERDICT_API_URL)" });
+    const { readFile } = await import("node:fs/promises");
+    const { dirname, resolve } = await import("node:path");
+    try {
+      const r = rubricPath ? loadRubricText(await readFile(resolve(rubricPath), "utf8")) : typeof rubric === "string" ? rubric : rubric ? parseRubric(rubric) : undefined;
+      if (!r) return text({ error: "pass rubricPath or rubric" });
+      const items = parseGoldSet(await readFile(resolve(gold), "utf8"), dirname(resolve(gold)));
+      const report = await checkAgainstHumans(engine, r, items);
+      const pct = (x: number | null) => (x === null ? null : `${Math.round(x * 100)}%`);
+      return text({
+        rubric: report.rubric, items: report.items,
+        agreement: `${report.agreed}/${report.decided} decided by Verdict agree with the humans (${pct(report.agreement)})`,
+        decided: report.decided, agreed: report.agreed, askedHuman: report.askedHuman, failed: report.failed,
+        criteria: Object.fromEntries(Object.entries(report.criteria).map(([id, c]) => [id, { agreed: c.agreed, n: c.n, agreement: pct(c.agreement), askedHuman: c.askedHuman }])),
+        disagreements: report.results.filter((x) => x.agrees === false || Object.values(x.criteria).some((c) => c.agrees === false)).map((x) => ({
+          name: x.name, human: x.human, verdict: { passed: x.passed, criteria: Object.fromEntries(Object.entries(x.criteria).map(([id, c]) => [id, { value: c.verdict, confidence: c.confidence === null ? null : Math.round(c.confidence * 100) / 100 }])) }, preview: x.preview })),
+        askedHumanFor: report.results.filter((x) => x.askedHuman).map((x) => x.name),
+      });
+    } catch (e) { return text({ error: (e as Error).message }); }
   });
 
   server.registerTool("list_human_tasks", { title: "List human tasks", description: "Criteria waiting on human raters.", inputSchema: { rater: z.string().optional() } }, async ({ rater }) => {

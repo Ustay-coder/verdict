@@ -2,7 +2,7 @@ import { readFile, writeFile } from "node:fs/promises";
 import { basename, resolve } from "node:path";
 import { Command } from "commander";
 import YAML from "yaml";
-import { calibrate, MemoryQueue, Engine, FileStore, MemoryStore, lazyPlaywrightScreenshot, loadRubricText, parseRubric, youtubeId, type Evaluation, type Input, type Rubric } from "@verdict/core";
+import { calibrate, checkAgainstHumans, parseGoldSet, MemoryQueue, Engine, FileStore, MemoryStore, lazyPlaywrightScreenshot, loadRubricText, parseRubric, youtubeId, type Evaluation, type Input, type Rubric } from "@verdict/core";
 import { Verdict } from "@verdict/sdk";
 
 const dataDir = () => process.env.VERDICT_DATA_DIR ?? resolve(process.cwd(), ".verdict");
@@ -206,6 +206,18 @@ export function buildCli() {
       if (o.json) { console.log(JSON.stringify(report, null, 2)); return; }
       console.table([...report.criteria.map((c) => ({ criterion: c.criterionId, n: c.n, agreement: c.agreement, MAE: c.meanAbsError, ECE: c.ece, suggestedMinConfidence: c.suggestedMinConfidence })),
         { criterion: "overall", n: report.overall.n, agreement: report.overall.agreement, MAE: report.overall.meanAbsError, ECE: report.overall.ece, suggestedMinConfidence: report.overall.suggestedMinConfidence }]);
+    });
+
+  program.command("check").description("run a rubric over a human-labelled gold set and report agreement with the humans")
+    .requiredOption("-r, --rubric <fileOrId>").requiredOption("-g, --gold <file>", "JSON array or JSON lines of {name, inputs, human: {passed?, criteria?}}").option("--json")
+    .action(async (o) => {
+      const items = parseGoldSet(await readFile(resolve(o.gold), "utf8"), resolve(o.gold, ".."));
+      const report = await checkAgainstHumans(localEngine(), await loadRubric(o.rubric), items);
+      if (o.json) { console.log(JSON.stringify(report, null, 2)); return; }
+      const pct = (x: number | null) => (x === null ? "—" : `${Math.round(x * 100)}%`);
+      console.log(`${report.rubric}: ${report.agreed}/${report.decided} agree with the humans (${pct(report.agreement)}); asked a human: ${report.askedHuman}; failed: ${report.failed}`);
+      for (const [id, c] of Object.entries(report.criteria)) console.log(`  ${id.padEnd(20)} ${c.agreed}/${c.n} (${pct(c.agreement)})${c.askedHuman ? `, asked a human: ${c.askedHuman}` : ""}`);
+      for (const r of report.results.filter((x) => x.agrees === false)) console.log(`  ✗ ${r.name}: human ${r.human.passed ? "pass" : "fail"}, Verdict ${r.passed ? "pass" : "fail"}${r.preview ? ` — ${r.preview.replace(/\s+/g, " ").slice(0, 90)}` : ""}`);
     });
 
   program.command("get <id>").description("show a stored evaluation").option("--json").action(async (id, o) => {

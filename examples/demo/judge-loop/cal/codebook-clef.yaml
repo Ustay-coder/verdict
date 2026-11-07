@@ -1,0 +1,50 @@
+name: Commit message review
+version: '1'
+context: You review one commit message from an open-source Java project. A good commit
+  message says what was changed and why.
+judges:
+  j:
+    type: decision
+    provider: cloudflare
+    model: '@cf/cloudflare/clef'
+defaultJudge:
+  type: ref
+  ref: j
+criteria:
+- id: what
+  name: Says what was changed
+  inputs:
+  - message
+  scale:
+    type: binary
+    labels:
+    - 'no'
+    - 'yes'
+  anchors:
+    'no': Only describes the problem, the goal or a topic, not the change made to
+      the code
+    'yes': Summarises the code change (what object changed, a change list, before
+      vs after) or what the changed code now does, or how the change works
+- id: why
+  name: Says why
+  inputs:
+  - message
+  scale:
+    type: binary
+    labels:
+    - 'no'
+    - 'yes'
+  anchors:
+    'no': 'No reason: only states the change. Refactorings, text file changes, typo
+      fixes, annotation changes, version bumps and test changes usually have none'
+    'yes': 'Gives any reason: describes the issue (error scenario, shortcoming, issue
+      report), the objective, a requirement (out of date, environment change, usage
+      need), implies necessity (a convention or standard, a benefit, a related feature
+      or prior commit), or links the issue or pull request'
+aggregation:
+  method: formula
+  formula: what_n * why_n
+  normalize:
+  - 0
+  - 100
+  passThreshold: 50

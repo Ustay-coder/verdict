@@ -9,6 +9,7 @@ export * from "./store/index.js";
 export * from "./engine.js";
 export { loadRubricText, rubricToYaml } from "./yaml.js";
 export * from "./calibration.js";
+export * from "./agreement.js";
 
 export * from "./idempotency.js";
 

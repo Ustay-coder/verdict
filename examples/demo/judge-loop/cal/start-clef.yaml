@@ -1,0 +1,16 @@
+name: Commit message review
+version: "1"
+description: Is this a good commit message?
+context: You review one commit message from an open-source Java project.
+judges:
+  j: { type: decision, provider: cloudflare, model: "@cf/cloudflare/clef" }
+defaultJudge: { type: ref, ref: j }
+criteria:
+  - id: good
+    name: Good commit message
+    inputs: [message]
+    scale: { type: binary, labels: [no, yes] }
+    anchors:
+      no: "Breaks the usual rules: subject over 50 characters, not capitalised, ends with a period, not in the imperative mood, no blank line before the body, or the body isn't wrapped at 72 characters"
+      yes: "Follows the usual rules: a short capitalised subject in the imperative mood with no period, a blank line, then a wrapped body"
+aggregation: { method: weighted_mean, passThreshold: 50 }
