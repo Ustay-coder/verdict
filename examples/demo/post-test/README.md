@@ -48,7 +48,7 @@ The topic is the only thing meant to vary. Everything else is held constant, or 
 | --- | --- |
 | **Post text** | All posts are written to the same rubric (`../post-loop/captions/`, pass 90) and share one shape: "X scored 0 → result", what Verdict is, one limit, a question. Round 2 uses a second caption per topic, so one strong line can't carry a topic |
 | **Video** | Same length (30.0 s) and same format. Every cut opens on the finished result |
-| **Time** | One post per weekday, at the same local time |
+| **Time** | One post per weekday at **23:00 KST** (09:00 US Eastern, 15:00 Central Europe, 06:00 US Pacific). US daylight saving ended on 1 November, so the offset doesn't change during the test |
 | **Order** | Round 1 was drawn at random (seed 20261108): **F, C, B, E, D**. Round 2 runs in reverse: **D, E, B, C, F**. Each topic gets one early and one late slot, so a steady drift over the two weeks (follower growth, the account warming up) affects every topic about equally |
 
 **Why two rounds:** one organic post per topic can't separate the topic from the day it went out. A topic counts as the
@@ -116,7 +116,7 @@ may be the reason, so check the replies and both rounds before crediting the top
 
 ## Running it
 
-- **Weeks 1–2:** one post per weekday at the same time:
+- **Weeks 1–2:** one post per weekday at 23:00 KST, starting Monday 9 November:
 
   | | Mon | Tue | Wed | Thu | Fri |
   | --- | --- | --- | --- | --- | --- |
@@ -126,8 +126,9 @@ may be the reason, so check the replies and both rounds before crediting the top
 - **Record:** 48 hours after each post, enter its numbers in `results/posts.csv`, including the time it was posted.
 - **Don't post anything else** on the account during the two weeks, apart from replies, and don't pin any of the five
   posts.
-- **Replies:** answer them all the same way, briefly and within a day. A long thread under one post would lift that
-  post alone.
+- **Replies:** answer every reply that comes in during the first hour (until midnight KST) briefly, and the rest
+  together the next day, the same way for all ten posts. Early author replies help distribution, so they have to be
+  the same for every post. A long thread under one post would lift that post alone.
 - **Code each reply** by what it asks about (the use case, how the judge works, price or access, doubt) and keep the
   count per topic.
 - **Then:**
