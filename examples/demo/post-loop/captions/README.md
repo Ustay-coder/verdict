@@ -125,6 +125,64 @@ final rubric.
 - **My own slips:** five times I sent a draft over 280 characters to scoring without counting first. `fits` failed
   each one, and the next round shortened it.
 
+## Round 2 captions (for the topic test)
+
+The topic test ([`../../post-test/`](../../post-test)) posts every video twice. The second post needs a different caption,
+so that one strong line can't carry a topic. These are in `round2/<video>/`, with the same rubric, briefs and loop, plus
+one rule: **the first sentence must differ from the round 1 caption**.
+
+| Video | Pick | Runs of the pick | Average | Rounds | X length |
+| --- | --- | --- | --- | --- | --- |
+| B | [`round2/b/drafts/b.md`](round2/b/drafts/b.md) | 93, 92 | **92.5** | 5 | 268 |
+| C | [`round2/c/drafts/b.md`](round2/c/drafts/b.md) | 90, 90 | **90.0** | 10 | 276 |
+| D | [`round2/d/drafts/b.md`](round2/d/drafts/b.md) | 92, 91 | **91.5** | 2 | 272 |
+| E | [`round2/e/drafts/c.md`](round2/e/drafts/c.md) | 88, 89, 89, 91, 89, 88, 90, 89, 89, 89, 88, 89 | **89.0, not passed** | 12 | 264 |
+| F | [`round2/f/drafts/c.md`](round2/f/drafts/c.md) | 91, 90 | **90.5** | 4 | 277 |
+
+**B:**
+> Our AI-built landing page for Tideline, a fictional product, quoted three customers who don't exist. Score: 0. Eight minutes later: 93.
+>
+> Claude Code fixed one check per round, scored by Verdict, an evaluation engine. Two rounds barely moved.
+>
+> What check would you add?
+
+**C:**
+> A hackathon write-up went from last place to first in two minutes: 0 to 91.
+>
+> The first fix cut a 99% accuracy claim. Claude Code fixed one check per round; Verdict, an evaluation engine, scored each. The entry is fictional; honesty passed narrowly.
+>
+> What does yours leave out?
+
+**D:**
+> Would you trust an AI reviewer that agrees with people 76% of the time?
+>
+> We measured ours, built on Verdict, an evaluation engine, on real commit messages labelled in a published study. Claude Code tuned it from 57% to 78%, then it stalled short of 80%.
+>
+> Where's your bar?
+
+**E** (best draft, 89.0):
+> A creator's sponsored script, rejected: 0. Approved nine reviews later: 85.
+>
+> Claude Code fixed one rule per review, and Verdict, an evaluation engine, scored each. It passed just over the bar. The creator and app are fictional.
+>
+> Which rule would your script break?
+
+**F:**
+> What does an AI-written launch post score? Ours: 0. Ten reviews later: 88, barely a pass.
+>
+> Claude Code fixed one rule per review: the "guaranteed" claim, the hype, three hashtags, two @-tags. Verdict, an evaluation engine, scored each. Tideline is fictional.
+>
+> Would yours pass?
+
+**What the rounds showed:**
+- **E** stalled over twelve rounds and six different openings. A list of fixes raised `specific` but dropped `clear`
+  to 46–52. Short sentences kept `clear` near 78 but left `specific` near 80. Its best draft never changed after round 1
+  and scored 88–91.
+- **D**'s question opener ("Would you trust…?") scored 92 in round 1 and passed straight away.
+- **Repeat drafts:** C's and E's leaders were scored many times unchanged, and moved by up to 3 points between runs.
+- **No judge errors** in any round 2 run. I ran `score.sh` from the wrong folder three times. Nothing was scored those
+  times, and no draft over 280 characters reached the judges.
+
 ## Files
 
 | | |

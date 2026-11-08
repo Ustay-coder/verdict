@@ -1,23 +1,24 @@
 # Topic test: which demo gets the best response on X?
 
-**Status: design (2026-11-08). Nothing posted yet.**
+**Status: ready to post (2026-11-08). Nothing posted yet.**
 
 Five videos show five use cases for Verdict. The question is which one developers on X respond to most, because that
 is the use case to lead with on the site, in the next videos and in the launch post.
 
 **Decided (2026-11-08):**
 - **Organic posts only**, no paid ads.
-- **Primary metric:** attention.
-- **Format:** whichever X shows larger in the phone timeline (checked in prep, below).
+- **Primary metric:** attention, measured as views watched to the end per impression. The account can see completion rate, so
+  `PRIMARY = "completed"` is fixed.
+- **Format:** vertical (1080×1920); in the phone preview it shows larger than the wide cut.
 - **Length:** every video re-rendered to **30.0 s**.
 
-| Arm | Topic (use case) | Take | Post, round 1 | Post score |
+| Arm | Topic (use case) | Take | Post, round 1 (score) | Post, round 2 (score) |
 | --- | --- | --- | --- | --- |
-| **B** | An AI one-shot landing page with fake testimonials, 0 → 93 | [`../landing-ui-loop/`](../landing-ui-loop) | [`b/drafts/a.md`](../post-loop/captions/b/drafts/a.md) | 93 |
-| **C** | A hackathon write-up, 5th → 1st | [`../ranking-loop/v2/`](../ranking-loop/v2) | [`c/drafts/b.md`](../post-loop/captions/c/drafts/b.md) | 91.5 |
-| **D** | Does the AI judge agree with people? 57% → 76% | [`../judge-loop/`](../judge-loop) | [`d/drafts/c.md`](../post-loop/captions/d/drafts/c.md) | 92.5 |
-| **E** | A sponsored script, reject → approve | [`../sponsor-loop/v2/`](../sponsor-loop/v2) | [`e/drafts/b.md`](../post-loop/captions/e/drafts/b.md) | 90.5 |
-| **F** | Our own launch post, 0 → 88 | [`../post-loop/v2/`](../post-loop/v2) | [`f/drafts/c.md`](../post-loop/captions/f/drafts/c.md) | 89.7 |
+| **B** | An AI one-shot landing page with fake testimonials, 0 → 93 | [`../landing-ui-loop/`](../landing-ui-loop) | [`b/drafts/a.md`](../post-loop/captions/b/drafts/a.md) (93) | [`round2/b/drafts/b.md`](../post-loop/captions/round2/b/drafts/b.md) (92.5) |
+| **C** | A hackathon write-up, 5th → 1st | [`../ranking-loop/v2/`](../ranking-loop/v2) | [`c/drafts/b.md`](../post-loop/captions/c/drafts/b.md) (91.5) | [`round2/c/drafts/b.md`](../post-loop/captions/round2/c/drafts/b.md) (90.0) |
+| **D** | Does the AI judge agree with people? 57% → 76% | [`../judge-loop/`](../judge-loop) | [`d/drafts/c.md`](../post-loop/captions/d/drafts/c.md) (92.5) | [`round2/d/drafts/b.md`](../post-loop/captions/round2/d/drafts/b.md) (91.5) |
+| **E** | A sponsored script, reject → approve | [`../sponsor-loop/v2/`](../sponsor-loop/v2) | [`e/drafts/b.md`](../post-loop/captions/e/drafts/b.md) (90.5) | [`round2/e/drafts/c.md`](../post-loop/captions/round2/e/drafts/c.md) (89.0) |
+| **F** | Our own launch post, 0 → 88 | [`../post-loop/v2/`](../post-loop/v2) | [`f/drafts/c.md`](../post-loop/captions/f/drafts/c.md) (89.7) | [`round2/f/drafts/c.md`](../post-loop/captions/round2/f/drafts/c.md) (90.5) |
 
 **Left out:** video G (Korean detail page). It speaks to Korean sellers, not developers on X; it can be a separate
 test later.
@@ -99,18 +100,19 @@ difference ends as "no winner", and the replies then carry the decision.
 
 ## Prep
 
-1. **Format:**
-   - Render both 30-second cuts of one topic (vertical 1080×1920 and wide 1920×1080).
-   - Attach each to a new post in the X app on a phone and look at the preview, without posting.
-   - Use the one shown larger, for every topic.
-   - If the vertical cut is cropped in the timeline, check that the score and the terminal stay in frame.
-   - Guides disagree on how X crops 9:16 video in the feed, so this check is the deciding test.
-2. **Metric:** check whether the account can see completion rate (Media Studio, on an older video). Set `PRIMARY`.
-3. **Round 2 captions:** write a second caption per topic to the same rubric, average ≥ 90. The current runner-ups score
-   88 (B), 91 (C), 84 (D), 88 (E) and 89 (F). They are a starting point, but D's needs work.
-4. **Predictions:** write them in [`predictions.md`](predictions.md) before the first post.
-5. **Record sheet:** copy [`results/template.csv`](results/template.csv) to `results/posts.csv`. It has one row per post,
-   already in posting order.
+| | Status |
+| --- | --- |
+| Format | **Done:** vertical, chosen from the phone preview |
+| Metric | **Done:** completion rate is visible, so `PRIMARY = "completed"` |
+| 30-second cuts | **Done:** `take-1/warp-30s.json` in each take, rendered vertical |
+| Round 2 captions | **Done:** `../post-loop/captions/round2/`. Each opens with a different first sentence from round 1 |
+| Predictions | **Done:** [`predictions.md`](predictions.md) |
+| Record sheet | Copy [`results/template.csv`](results/template.csv) to `results/posts.csv`; it lists every post in order, with its caption file |
+
+**Caption scores:** eight of the ten captions average ≥ 90 over repeated runs. F's round 1 caption (89.7) and E's
+round 2 caption (89.0) don't. The pair averages run from 89.75 (E) to 92.75 (B), with C 90.75, D 92.0 and F 90.1, so
+the caption scores themselves rank the topics B, D, C, F, E. If the results come out in that order, the captions
+may be the reason, so check the replies and both rounds before crediting the topic.
 
 ## Running it
 

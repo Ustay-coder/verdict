@@ -1,0 +1,3 @@
+round 1 Draft A: 87 close FAIL x=274 | hook=96 specific=89 clear=57 claims_true=100 no_hype=100 hashtags=100 mentions=100 styled_text=100 fits=100 real_or_made_up=100 what_it_is=100 limits=100 question=100
+round 1 Draft B: 82 close FAIL x=277 | hook=91 specific=89 clear=40 claims_true=100 no_hype=100 hashtags=100 mentions=100 styled_text=100 fits=100 real_or_made_up=100 what_it_is=100 limits=100 question=100
+round 1 Draft C: 88 close FAIL x=264 | hook=98 specific=78 clear=76 claims_true=100 no_hype=100 hashtags=100 mentions=100 styled_text=100 fits=100 real_or_made_up=100 what_it_is=100 limits=100 question=100
