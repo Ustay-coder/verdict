@@ -1,6 +1,11 @@
-arm,topic,impressions,video_50,follows,profile_visits,bookmarks,replies,quotes,reposts,likes,spend
-B,AI landing page 0 to 93,,,,,,,,,,
-C,hackathon write-up 5th to 1st,,,,,,,,,,
-D,AI judge vs people 57 to 76%,,,,,,,,,,
-E,sponsored script 0 to 85,,,,,,,,,,
-F,our launch post 0 to 88,,,,,,,,,,
+arm,topic,round,posted_at,caption,impressions,video_views,completion_rate,avg_watch_seconds,follows,profile_visits,bookmarks,replies,quotes,reposts,likes
+F,our launch post 0 to 88,1,,captions/f/drafts/c.md,,,,,,,,,,,
+C,hackathon write-up 5th to 1st,1,,captions/c/drafts/b.md,,,,,,,,,,,
+B,AI landing page 0 to 93,1,,captions/b/drafts/a.md,,,,,,,,,,,
+E,sponsored script 0 to 85,1,,captions/e/drafts/b.md,,,,,,,,,,,
+D,AI judge vs people 57 to 76%,1,,captions/d/drafts/c.md,,,,,,,,,,,
+D,AI judge vs people 57 to 76%,2,,set 2,,,,,,,,,,,
+E,sponsored script 0 to 85,2,,set 2,,,,,,,,,,,
+B,AI landing page 0 to 93,2,,set 2,,,,,,,,,,,
+C,hackathon write-up 5th to 1st,2,,set 2,,,,,,,,,,,
+F,our launch post 0 to 88,2,,set 2,,,,,,,,,,,

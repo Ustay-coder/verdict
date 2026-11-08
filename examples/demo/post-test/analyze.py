@@ -1,24 +1,28 @@
 #!/usr/bin/env python3
-"""Topic test for the five demo videos: plan the sample size, then read the results.
+"""Topic test for the five demo videos (organic posts, two rounds). Standard library only.
 
-  python3 analyze.py plan --base 0.10 --lift 0.25            impressions per arm to see a 25% relative lift
-  python3 analyze.py results results/phase1.csv              rates, 95% intervals, chance each arm is best
+  python3 analyze.py detectable --impressions 800 --base 0.05   smallest lift one round can show
+  python3 analyze.py results results/posts.csv                   per-topic rates, chance of being best, decision
 
-Standard library only. The primary metric is fixed in PRIMARY below before launch (see README.md).
+results/posts.csv has one row per post (arm, round, ...). The primary metric is fixed in PRIMARY before the first post.
 """
 import csv, math, random, sys
+from collections import defaultdict
 
-PRIMARY = ("video_50", "impressions")          # 50%-watched views per impression
-SECONDARY = {                                   # reported, not used to pick the winner
+# Primary (attention): views watched to the end per impression = video_views x completion_rate / impressions.
+# If the account can't see completion rate (Media Studio), set PRIMARY = "views" BEFORE the first post.
+PRIMARY = "completed"
+SECONDARY = {  # reported, not used to pick
+    "views per impression": (("video_views",), 1),
     "intent per 1k": (("follows", "profile_visits", "bookmarks"), 1000),
     "conversation per 1k": (("replies", "quotes"), 1000),
     "reposts per 1k": (("reposts",), 1000),
 }
-ARMS = 5
-WIN_CHANCE = 0.90                               # declare a winner only above this
+WIN_CHANCE = 0.90
 DRAWS = 40000
+ARMS = 5
 
-def z(p):  # inverse normal CDF (Acklam), enough for planning
+def z(p):  # inverse normal CDF (Acklam)
     a = [-39.6968302866538, 220.946098424521, -275.928510446969, 138.357751867269, -30.6647980661472, 2.50662827745924]
     b = [-54.4760987982241, 161.585836858041, -155.698979859887, 66.8013118877197, -13.2806815528857]
     c = [-0.00778489400243029, -0.322396458041136, -2.40075827716184, -2.54973253934373, 4.37466414146497, 2.93816398269878]
@@ -29,53 +33,87 @@ def z(p):  # inverse normal CDF (Acklam), enough for planning
     q = p - 0.5; r = q * q
     return (((((a[0]*r+a[1])*r+a[2])*r+a[3])*r+a[4])*r+a[5])*q / (((((b[0]*r+b[1])*r+b[2])*r+b[3])*r+b[4])*r+1)
 
-def plan(base, lift, alpha=0.05, power=0.8):
-    """Impressions per arm so the best arm beats each other arm (Bonferroni over ARMS-1 comparisons)."""
+def needed(base, lift, alpha=0.05, power=0.8):
+    """Impressions per arm for the best arm to beat each of the others (Bonferroni over ARMS-1 comparisons)."""
     p1, p2 = base, base * (1 + lift)
-    za, zb = z(1 - alpha / (ARMS - 1) / 2), z(power)
-    n = (za + zb) ** 2 * (p1 * (1 - p1) + p2 * (1 - p2)) / (p2 - p1) ** 2
-    return math.ceil(n)
+    return (z(1 - alpha / (ARMS - 1) / 2) + z(power)) ** 2 * (p1 * (1 - p1) + p2 * (1 - p2)) / (p2 - p1) ** 2
+
+def detectable(n, base):
+    lift = 0.01
+    while needed(base, lift) > n and lift < 20: lift += 0.01
+    return lift
 
 def wilson(x, n, conf=0.95):
-    if n == 0: return (0.0, 0.0)
+    if n <= 0: return (0.0, 0.0)
     k = z(1 - (1 - conf) / 2); p = x / n
     mid = (p + k * k / (2 * n)) / (1 + k * k / n)
     half = k * math.sqrt(p * (1 - p) / n + k * k / (4 * n * n)) / (1 + k * k / n)
     return (mid - half, mid + half)
 
-def p_best(rows, num, den, seed=7):
-    rnd = random.Random(seed); wins = [0] * len(rows)
+def p_best(pairs, seed=7):
+    rnd = random.Random(seed); wins = [0] * len(pairs)
     for _ in range(DRAWS):
-        s = [rnd.betavariate(1 + r[num], 1 + max(r[den] - r[num], 0)) for r in rows]
+        s = [rnd.betavariate(1 + x, 1 + max(n - x, 0)) for x, n in pairs]
         wins[s.index(max(s))] += 1
     return [w / DRAWS for w in wins]
 
+def num(r, k):
+    try: return float(r.get(k) or 0)
+    except ValueError: return 0.0
+
+def primary_count(r):
+    if PRIMARY == "completed":
+        rate = num(r, "completion_rate"); rate = rate / 100 if rate > 1 else rate
+        return num(r, "video_views") * rate
+    return num(r, "video_views")
+
 def results(path):
-    rows = []
-    for r in csv.DictReader(open(path)):
-        rows.append({k: (v if k in ("arm", "topic") else float(v or 0)) for k, v in r.items()})
-    num, den = PRIMARY
-    pb = p_best(rows, num, den)
-    print(f"Primary: {num} / {den}")
-    print(f"{'arm':<4} {'topic':<28} {'impr':>8} {'rate':>7} {'95% interval':>17} {'P(best)':>8} {'cost/50%':>9}")
-    for r, b in sorted(zip(rows, pb), key=lambda t: -t[1]):
-        lo, hi = wilson(r[num], r[den]); rate = r[num] / r[den] if r[den] else 0
-        cost = f"{r['spend'] / r[num]:.3f}" if r.get("spend") and r[num] else "-"
-        print(f"{r['arm']:<4} {r['topic']:<28} {int(r[den]):>8} {rate:>7.2%} {lo:>8.2%}–{hi:<7.2%} {b:>8.0%} {cost:>9}")
-    best = max(range(len(rows)), key=lambda i: pb[i])
-    verdict = f"winner: {rows[best]['arm']} ({rows[best]['topic']})" if pb[best] >= WIN_CHANCE else f"no winner (best is {pb[best]:.0%} < {WIN_CHANCE:.0%})"
-    print(f"\nDecision rule P(best) >= {WIN_CHANCE:.0%}: {verdict}")
-    print("\nSecondary (directional only):")
+    rows = [r for r in csv.DictReader(open(path)) if num(r, "impressions") > 0]
+    rounds = sorted({r["round"] for r in rows})
+    arms = sorted({r["arm"] for r in rows})
+    topic = {r["arm"]: r["topic"] for r in rows}
+    label = "completed views / impression" if PRIMARY == "completed" else "video views / impression"
+    print(f"Primary: {label}\n")
+    firsts = {}
+    for rd in rounds:
+        rr = [r for r in rows if r["round"] == rd]
+        rates = sorted(((primary_count(r) / num(r, "impressions"), r["arm"]) for r in rr), reverse=True)
+        firsts[rd] = rates[0][1] if rates else None
+        print(f"Round {rd}: " + "  ".join(f"{a} {v:.2%}" for v, a in rates) + f"   (impressions: " + ", ".join(f"{r['arm']} {int(num(r, 'impressions'))}" for r in rr) + ")")
+    tot = defaultdict(lambda: [0.0, 0.0])
+    for r in rows:
+        tot[r["arm"]][0] += primary_count(r); tot[r["arm"]][1] += num(r, "impressions")
+    pb = dict(zip(arms, p_best([tuple(map(round, tot[a])) for a in arms])))
+    print(f"\nBoth rounds pooled:\n{'arm':<4} {'topic':<32} {'impr':>7} {'rate':>7} {'95% interval':>17} {'P(best)':>8}")
+    for a in sorted(arms, key=lambda a: -pb[a]):
+        x, n = tot[a]; lo, hi = wilson(x, n)
+        print(f"{a:<4} {topic[a]:<32} {int(n):>7} {x / n:>7.2%} {lo:>8.2%}–{hi:<7.2%} {pb[a]:>8.0%}")
+    lead = max(arms, key=lambda a: pb[a])
+    first_both = len(rounds) >= 2 and all(firsts[rd] == lead for rd in rounds)
+    if pb[lead] >= WIN_CHANCE and first_both:
+        verdict = f"winner: {lead} ({topic[lead]})"
+    elif pb[lead] >= WIN_CHANCE:
+        verdict = f"lead only: {lead} pooled {pb[lead]:.0%}, but first in rounds {[rd for rd in rounds if firsts[rd] == lead] or 'none'} of {rounds}"
+    else:
+        verdict = f"no winner: best is {lead} at {pb[lead]:.0%} (< {WIN_CHANCE:.0%})"
+    print(f"\nDecision (P(best) >= {WIN_CHANCE:.0%} pooled AND first in every round): {verdict}")
+    print("Pooled P(best) treats every impression as independent; posts on different days vary more than that, which is why the topic must also win each round.")
+    print("\nSecondary (direction only), pooled:")
     for name, (cols, per) in SECONDARY.items():
-        print(f"  {name:<20} " + "  ".join(f"{r['arm']}={sum(r.get(c, 0) for c in cols) / r['impressions'] * per:.2f}" if r["impressions"] else f"{r['arm']}=-" for r in rows))
+        vals = {a: sum(num(r, c) for r in rows if r["arm"] == a for c in cols) / tot[a][1] * per for a in arms}
+        fmt = (lambda v: f"{v:.1%}") if per == 1 else (lambda v: f"{v:.2f}")
+        print(f"  {name:<22} " + "  ".join(f"{a}={fmt(vals[a])}" for a in arms))
+    print("  reach (impressions)    " + "  ".join(f"{a}={int(tot[a][1])}" for a in arms))
 
 if __name__ == "__main__":
-    if len(sys.argv) > 1 and sys.argv[1] == "plan":
+    cmd = sys.argv[1] if len(sys.argv) > 1 else ""
+    if cmd == "detectable":
         args = dict(zip(sys.argv[2::2], sys.argv[3::2]))
-        base, lift = float(args.get("--base", 0.1)), float(args.get("--lift", 0.25))
-        print(f"base {base:.1%}, lift +{lift:.0%} relative ({base:.1%} vs {base*(1+lift):.1%}), {ARMS} arms:"
-              f" {plan(base, lift):,} impressions per arm, {plan(base, lift) * ARMS:,} in total")
-    elif len(sys.argv) > 2 and sys.argv[1] == "results":
+        n, base = float(args.get("--impressions", 800)), float(args.get("--base", 0.05))
+        l1, l2 = detectable(n, base), detectable(2 * n, base)
+        print(f"base {base:.1%}: with {int(n)} impressions per post, one round shows a +{l1:.0%} relative lift"
+              f" ({base:.1%} vs {base * (1 + l1):.1%}); two rounds pooled ({int(2 * n)} per topic): +{l2:.0%}")
+    elif cmd == "results" and len(sys.argv) > 2:
         results(sys.argv[2])
     else:
         print(__doc__)
