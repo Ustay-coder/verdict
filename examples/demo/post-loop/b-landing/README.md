@@ -1,5 +1,8 @@
 # Caption for video B v2 (strict landing-page review)
 
+> **Superseded:** the posts for videos B–F were written again with a stricter rubric that passes at 90; see
+> [`../captions/`](../captions).
+
 Same loop as the other posts, with [`post-review.yaml`](../post-review.yaml) and this folder's [`brief.md`](brief.md):
 - Three drafts: an announcement (A), a story (B) and a question (C).
 - Each round rewrites only the lowest draft, using its weakest criterion, then all three are compared again.

@@ -1,5 +1,8 @@
 # Caption for video E v2 (a sponsored script, reject to approve)
 
+> **Superseded:** the posts for videos B–F were written again with a stricter rubric that passes at 90; see
+> [`../captions/`](../captions).
+
 Same loop as the other posts, with [`post-review.yaml`](../post-review.yaml) and this folder's [`brief.md`](brief.md):
 - Three drafts: a report (A), a story starting from the 0 (B) and one rule as the hook (C).
 - Each round rewrites only the lowest draft, then all three are compared again.

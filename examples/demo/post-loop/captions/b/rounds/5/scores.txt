@@ -1,0 +1,3 @@
+round 5 Draft A: 93 post it PASS x=270 | hook=99 specific=88 clear=86 claims_true=100 no_hype=100 hashtags=100 mentions=100 styled_text=100 fits=100 real_or_made_up=100 what_it_is=100 limits=100 question=100
+round 5 Draft B: 88 close FAIL x=276 | hook=94 specific=90 clear=65 claims_true=100 no_hype=100 hashtags=100 mentions=100 styled_text=100 fits=100 real_or_made_up=100 what_it_is=100 limits=100 question=100
+round 5 Draft C: 88 close FAIL x=274 | hook=91 specific=86 clear=85 claims_true=100 no_hype=100 hashtags=100 mentions=100 styled_text=100 fits=100 real_or_made_up=100 what_it_is=100 limits=100 question=100

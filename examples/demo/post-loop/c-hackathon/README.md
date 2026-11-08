@@ -1,5 +1,8 @@
 # Caption for video C v2 (hackathon write-up, 5th to 1st)
 
+> **Superseded:** the posts for videos B–F were written again with a stricter rubric that passes at 90; see
+> [`../captions/`](../captions).
+
 Same loop as the other posts, with [`post-review.yaml`](../post-review.yaml) and this folder's [`brief.md`](brief.md):
 - Three drafts: an announcement (A), a story (B) and a question (C).
 - Each round rewrites only the lowest draft (a failed gate first), then all three are compared again.

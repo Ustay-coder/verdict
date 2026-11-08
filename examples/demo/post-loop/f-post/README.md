@@ -1,5 +1,8 @@
 # Caption for video F v2 (our launch post, 0 to "post it")
 
+> **Superseded:** the posts for videos B–F were written again with a stricter rubric that passes at 90; see
+> [`../captions/`](../captions).
+
 Same loop as the other posts, with [`post-review.yaml`](../post-review.yaml) and this folder's [`brief.md`](brief.md):
 - Three drafts: the false claim as the hook (A), "we scored our own post" (B) and the score climb (C).
 - Each round rewrites only the lowest draft, then all three are compared again.
