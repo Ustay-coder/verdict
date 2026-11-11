@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.3.0
 
 - One rubric, several decision models: `verdict run -r <rubric> -d <cases> --models jev,clef,clef-flash` runs the rubric once per model without editing it and shows the models side by side — agreement with your labels, failures, tokens, calls and time per model, then every case the models answered differently, with the expected label where there is one. A model is an alias (`jev`, `jev-preview`, `clef`, `clef-flash`) or `provider:model`. Only decision judges are re-pointed; each run is of a version that differs only in its binding and is kept for `verdict diff`. A model that could not answer keeps its row with the reason and is left out of the disagreements. `--json` prints the comparison. Core: `compareModels`, `answerLabel`, `criterionAnswer`. Checked live with Jev, Clef and Clef-flash (2026-11-11); `examples/models` is the rubric and cases of that run.
 - Use a rubric your team's server keeps from any machine, by name instead of by file. `verdict run`, `diff`, `eval`, `check` and `compare` take `-r <name> --env <environment>` (the version that environment runs), `-r <name>@latest` (the newest uploaded) and `-r <name>@rv_…`. The document is frozen locally and used only when it freezes to the id the server named, then kept in the local data directory, so a version already there needs neither sign-in nor network. Judging stays on the machine, with its own model keys. A bare name without `--env` or `@…` means what it always did.
