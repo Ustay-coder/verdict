@@ -69,7 +69,7 @@ server: https://verdict.example.com
 verdict login                                   # GitHub sign-in; or: verdict login --with-key < key.txt (self-hosted)
 verdict project create support-bot
 verdict env create staging && verdict env create prod
-verdict version freeze rubrics/intent.yaml      # what you tested is what the lock names
+verdict push rubrics/intent.yaml                # freezes the file, records it in verdict.lock, uploads the version
 verdict promote rubrics/intent.yaml --env staging
 verdict promote --from staging --env prod --note "fewer wrong hand-offs"
 verdict env show prod                           # intent  rv_…  2026-…
@@ -77,7 +77,7 @@ verdict rollback intent --env prod              # undo the latest change
 verdict env history --env prod                  # who, when, from → to, why
 ```
 
-`promote` uploads the version if the server lacks it, shows the change (`intent: rv_old → rv_new`) and asks; pass `--yes` in scripts. It sends the version it showed you, so if someone else changed the environment in between, nothing is applied and you are told where the pointer is now. A rubric file is promoted only when it freezes to the version `verdict.lock` records — run `verdict version freeze` (and your tests) first. Promoting a version nobody reported a run of is allowed, with a warning. The name services ask for a rubric by is `--name`, else the rubric's `id`, else its file name, and is recorded in `verdict.lock` on first upload, so moving the file does not rename it. `verdict env unset intent --env prod` stops an environment running a rubric; a version can be deleted only when no environment points at it.
+`promote` uploads the version if the server lacks it, shows the change (`intent: rv_old → rv_new`) and asks; pass `--yes` in scripts. It sends the version it showed you, so if someone else changed the environment in between, nothing is applied and you are told where the pointer is now. A rubric file is promoted only when it freezes to the version `verdict.lock` records — `verdict push` or `verdict version freeze` records it, so run one of them (and your tests) after an edit. Promoting a version nobody reported a run of is allowed, with a warning. The name services ask for a rubric by is `--name`, else the rubric's `id`, else its file name, and is recorded in `verdict.lock` on first upload, so moving the file does not rename it. `verdict env unset intent --env prod` stops an environment running a rubric; a version can be deleted only when no environment points at it.
 
 In the service, read the environment with the SDK and evaluate locally — the texts you judge never go to the Verdict server:
 
@@ -87,6 +87,31 @@ const { rubric, versionId, source } = await prod.rubric('intent');
 ```
 
 It asks the server again at most once a minute, so a promotion or a rollback reaches the service without a deploy, and it keeps answering with the version it holds when the server cannot be reached ([SDK reference](../reference/sdk#reading-what-an-environment-runs)). The repository's `examples/control-plane` runs the whole loop — server, CI report, promotion, service, rollback — on one machine with no model key.
+
+## Using a rubric from any machine
+
+The server keeps the whole document of every version, so a machine needs no rubric file to judge with one. Sign in once, then name the rubric instead of a file:
+
+```bash
+verdict login --hub https://verdict.example.com
+verdict run  -r intent --env prod -d cases.jsonl          # the version prod runs
+verdict eval -r intent --env prod -i reply.txt            # the same, for one input
+verdict run  -r intent@latest -d cases.jsonl              # the newest version uploaded, promoted or not
+verdict run  -r intent@rv_8c1f2e…  -d cases.jsonl         # one version
+verdict diff --base intent --env prod --head rubrics/intent.yaml -d cases.jsonl   # my edit against what prod runs
+```
+
+`run`, `diff`, `eval`, `check` and `compare` take these. The command says on stderr which version it used. What it fetched is frozen on your machine and used only if it freezes to the id the server named, then kept in the local data directory: a version already there (`intent@rv_…`) runs without the server. Judging still happens on your machine with your own model keys — the server stores no keys and receives no cases.
+
+To share a rubric you are still working on, upload it — a version is cheap and never changes: `verdict push rubrics/intent.yaml` on one machine, `-r intent@latest` on the other. To edit a version somewhere it has no file, pull it:
+
+```bash
+verdict pull intent --env prod        # writes intent.yaml (the same version id) and records it in verdict.lock
+# edit intent.yaml
+verdict push intent.yaml              # the next version, under the same name
+```
+
+A name is read as a rubric on the server only with `--env` or an `@…` part; a bare name keeps meaning a stored rubric id, and `--env` never changes what a file or an `rv_…` id means. Committing rubric files and `verdict.lock` remains a good habit for teams that review rubric changes in pull requests, but it is no longer what makes a rubric available to another machine.
 
 ## Reporting runs to your team's server
 

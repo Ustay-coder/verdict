@@ -3,13 +3,19 @@ import { Command } from "commander";
 import { join, resolve } from "node:path";
 import { Engine, MemoryStore } from "@verdict-ai/core";
 import { createApp } from "@verdict-ai/api";
+import { registerCheck } from "../src/commands/check.js";
+import { registerDiff } from "../src/commands/diff.js";
+import { registerEvaluate } from "../src/commands/evaluate.js";
 import { registerHub } from "../src/commands/hub.js";
 import { registerEnv, registerProject } from "../src/commands/project.js";
 import { registerPromote } from "../src/commands/promote.js";
+import { registerPull } from "../src/commands/pull.js";
 import { registerRun } from "../src/commands/run.js";
 import { registerVersion } from "../src/commands/version.js";
 import type { HubCredentials } from "../src/hub/credentials.js";
 import type { HubDependencies } from "../src/hub/deps.js";
+import { parseInput } from "../src/inputs.js";
+import { loadCommandRubric } from "../src/remote.js";
 
 const SERVER = "https://verdict.example";
 const SCOPE = { tenantId: "acme", project: "bot" };
@@ -40,31 +46,40 @@ function setup(o: Options = {}) {
     const own = await o.routes?.(url.pathname, init);
     return own ?? server.request(url.pathname + url.search, init);
   }) as typeof fetch;
-  const files = new Map<string, string>([[resolve("intent.yaml"), rubric("agent")], [resolve("cases.jsonl"), cases]]);
-  const saved = new Map<string, HubCredentials>();
-  let latest: string | undefined;
-  const local = new Engine();
-  const out = vi.fn(), warn = vi.fn();
-  const deps: HubDependencies = {
-    engine: () => local, remote: () => (o.remote ? {} as never : undefined), out, fail: vi.fn(), warn, exitCode: vi.fn(),
-    readText: async (p) => { const t = files.get(resolve(p)); if (t === undefined) throw new Error(`missing ${p}`); return t; },
-    readBytes: async (p) => new TextEncoder().encode(files.get(resolve(p)) ?? ""),
-    lockIo: { read: async (p) => files.get(resolve(p)), write: async (p, t) => { files.set(resolve(p), t); } },
-    writeNew: async (p, t) => { files.set(resolve(p), t); },
-    credentials: {
-      read: async (hub) => saved.get(hub ?? latest ?? ""),
-      write: async (c) => { saved.set(c.hub, c); latest = c.hub; },
-      remove: async (hub) => { saved.delete(hub ?? latest ?? ""); },
-    },
-    env: { VERDICT_HUB_URL: SERVER, VERDICT_HUB_KEY: "sk_team", VERDICT_PROJECT: "bot", ...o.env }, fetch: net, sleep: async () => undefined,
-    confirm: async () => (o.confirm ? o.confirm() : true), interactive: () => o.interactive ?? false,
-    readSecret: async () => o.secret ?? "", cwd: () => o.cwd ?? resolve("."),
+  /** One computer: its own files, data directory and saved sign-ins. Every machine talks to the same server. */
+  const machine = (own: Array<[string, string]> = [["intent.yaml", rubric("agent")], ["cases.jsonl", cases]]) => {
+    const files = new Map<string, string>(own.map(([path, text]) => [resolve(path), text]));
+    const saved = new Map<string, HubCredentials>();
+    let latest: string | undefined;
+    const local = new Engine();
+    const out = vi.fn(), warn = vi.fn();
+    const readText = async (p: string) => { const t = files.get(resolve(p)); if (t === undefined) throw new Error(`missing ${p}`); return t; };
+    const deps: HubDependencies = {
+      engine: () => local, remote: () => (o.remote ? {} as never : undefined), out, fail: vi.fn(), warn, exitCode: vi.fn(),
+      readText,
+      readBytes: async (p) => new TextEncoder().encode(files.get(resolve(p)) ?? ""),
+      lockIo: { read: async (p) => files.get(resolve(p)), write: async (p, t) => { files.set(resolve(p), t); } },
+      writeNew: async (p, t, overwrite) => { if (!overwrite && files.has(resolve(p))) throw new Error(`${p} exists; pass --force to replace it`); files.set(resolve(p), t); },
+      credentials: {
+        read: async (hub) => saved.get(hub ?? latest ?? ""),
+        write: async (c) => { saved.set(c.hub, c); latest = c.hub; },
+        remove: async (hub) => { saved.delete(hub ?? latest ?? ""); },
+      },
+      env: { VERDICT_HUB_URL: SERVER, VERDICT_HUB_KEY: "sk_team", VERDICT_PROJECT: "bot", ...o.env }, fetch: net, sleep: async () => undefined,
+      confirm: async () => (o.confirm ? o.confirm() : true), interactive: () => o.interactive ?? false,
+      readSecret: async () => o.secret ?? "", cwd: () => o.cwd ?? resolve("."),
+    };
+    const program = new Command();
+    registerHub(program, deps); registerProject(program, deps); registerEnv(program, deps); registerPromote(program, deps); registerRun(program, deps); registerVersion(program, deps);
+    registerDiff(program, deps); registerPull(program, deps);
+    const loadRubric = (ref: string, mock?: boolean) => loadCommandRubric(ref, mock, readText);
+    registerEvaluate(program, { loadRubric, parseInput, readStdin: async () => "", remote: () => undefined, localEngine: () => local, stdout: out, setExitCode: vi.fn(), server: deps });
+    registerCheck(program, { engine: () => local, remote: () => undefined, out, fail: vi.fn(), loadRubric, readText, server: deps });
+    const run = async (...args: string[]) => { out.mockClear(); warn.mockClear(); await program.parseAsync(args, { from: "user" }); return { out: out.mock.calls.map((c) => String(c[0])), warn: warn.mock.calls.map((c) => String(c[0])) }; };
+    const lock = () => files.get(resolve("verdict.lock")) ?? "";
+    return { run, files, saved, lock, warn, local };
   };
-  const program = new Command();
-  registerHub(program, deps); registerProject(program, deps); registerEnv(program, deps); registerPromote(program, deps); registerRun(program, deps); registerVersion(program, deps);
-  const run = async (...args: string[]) => { out.mockClear(); warn.mockClear(); await program.parseAsync(args, { from: "user" }); return { out: out.mock.calls.map((c) => String(c[0])), warn: warn.mock.calls.map((c) => String(c[0])) }; };
-  const lock = () => files.get(resolve("verdict.lock")) ?? "";
-  return { run, files, sent, saved, control: remote.control, lock, warn };
+  return { ...machine(), sent, control: remote.control, machine };
 }
 
 /** A project with staging and prod, and intent.yaml frozen in the lock. */
@@ -132,10 +147,12 @@ describe("verdict project, env, push, promote, rollback", () => {
     t.files.set(resolve("new.yaml"), rubric("human"));
     await expect(t.run("promote", "new.yaml", "--env", "prod", "--yes")).rejects.toThrow("verdict.lock does not list it");
     expect(t.sent.filter((r) => r.method === "POST" && r.path.includes("/promotions"))).toEqual([]);
-    // Uploading is not promoting: an unfrozen file can be pushed, but a name given by hand is not recorded for it.
+    // Uploading a file freezes it: the lock then lists it under the name it was given, and it can be promoted.
     const pushed = await t.run("push", "new.yaml", "--name", "fallback");
     expect(pushed.out[0]).toMatch(/^pushed fallback at rv_/);
-    expect(pushed.warn).toEqual([expect.stringContaining("new.yaml is not in verdict.lock, so the name fallback is not recorded")]);
+    expect(pushed.warn).toEqual([]);
+    expect(t.lock()).toMatch(/new\.yaml:\n {4}name: fallback\n {4}version: rv_/);
+    expect((await t.run("promote", "new.yaml", "--env", "prod", "--yes")).out.at(-1)).toMatch(/^promoted fallback to rv_\w+ in prod$/);
   });
 
   it("shows the change and asks first; without a terminal it needs --yes", async () => {
@@ -192,6 +209,113 @@ describe("verdict project, env, push, promote, rollback", () => {
     expect((await t.run("promote", "intent", "--from", "staging", "--env", "prod", "--yes")).out).toEqual([`intent is already at ${t.a} in prod`]);
     await expect(t.run("promote", "intent.yaml", "--env", "nowhere", "--yes")).rejects.toThrow("environment nowhere not found");
     await expect(t.run("rollback", "intent", "--env", "prod", "--yes")).rejects.toThrow("no earlier version on record");
+  });
+});
+
+describe("using a rubric the server keeps, from any machine", () => {
+  /** One machine uploads and promotes; `other` is a second one that has the cases but no rubric file. */
+  async function shared() {
+    const t = await ready();
+    await t.run("push", "intent.yaml");
+    await t.run("promote", "intent.yaml", "--env", "prod", "--yes");
+    return { ...t, other: t.machine([["cases.jsonl", cases]]) };
+  }
+  const asked = (t: { sent: unknown[] }) => t.sent.length;
+
+  it("runs what an environment runs, the newest upload, or one version, without a rubric file", async () => {
+    const t = await shared(), b = t.other;
+    const viaEnv = await b.run("run", "-r", "intent", "--env", "prod", "-d", "cases.jsonl");
+    expect(viaEnv.warn).toEqual([`intent: ${t.a}, what prod runs in bot on ${SERVER}`]);
+    expect(viaEnv.out.join("\n")).toContain(t.a);
+    // What it fetched is the same version, and it is kept here.
+    expect((await b.local.store.getRubricVersion(t.a))?.id).toBe(t.a);
+    expect(b.files.has(resolve("intent.yaml"))).toBe(false);
+
+    // A newer version that nobody promoted yet is shared by uploading it; the other machine asks for the newest.
+    const newer = await freezeNew(t, "agent, human");
+    await t.run("push", "intent.yaml");
+    expect((await b.run("run", "-r", "intent@latest", "-d", "cases.jsonl")).warn).toEqual([`intent: ${newer}, the newest version in bot on ${SERVER}`]);
+    // prod still runs the first one.
+    expect((await b.run("run", "-r", "intent", "--env", "prod", "-d", "cases.jsonl")).warn).toEqual([`intent: ${t.a}, what prod runs in bot on ${SERVER}`]);
+
+    // A version never changes: one already on the machine is used without asking anybody.
+    const before = asked(t);
+    expect((await b.run("run", "-r", `intent@${newer}`, "-d", "cases.jsonl")).warn).toEqual([`intent: ${newer} (already on this machine)`]);
+    expect(asked(t)).toBe(before);
+    // On a machine that never saw it, it is fetched by id.
+    const c = t.machine([["cases.jsonl", cases]]);
+    expect((await c.run("run", "-r", `intent@${t.a}`, "-d", "cases.jsonl")).warn).toEqual([`intent: ${t.a} from bot on ${SERVER}`]);
+  });
+
+  it("reports such a run under the name it was asked for by", async () => {
+    const t = await shared();
+    const reported = await t.other.run("run", "-r", "intent", "--env", "prod", "-d", "cases.jsonl", "--report");
+    expect(reported.warn.at(-1)).toMatch(new RegExp(`^reported run_\\w+ \\(intent at ${t.a}\\) to bot on `));
+  });
+
+  it("judges with it in the everyday commands too", async () => {
+    const t = await shared(), b = t.other;
+    const judged = await b.run("eval", "-r", "intent", "--env", "prod", "-i", "text:connect me to an agent", "--json");
+    expect(judged.warn).toEqual([`intent: ${t.a}, what prod runs in bot on ${SERVER}`]);
+    expect(JSON.parse(judged.out[0]!)).toMatchObject({ status: "completed", rubric: { name: "Wants an agent" } });
+    b.files.set(resolve("gold.jsonl"), JSON.stringify({ name: "explicit", inputs: [{ type: "text", text: "connect me to an agent" }], expected: { wants: "yes" } }));
+    const checked = await b.run("check", "-r", "intent@latest", "-g", "gold.jsonl");
+    expect(checked.warn).toEqual([`intent: ${t.a}, the newest version in bot on ${SERVER}`]);
+    // The gold set labels the one criterion, so the agreement is on that line.
+    expect(checked.out.join("\n")).toMatch(/wants\s+1\/1 \(100%\)/);
+  });
+
+  it("compares a file being edited with what an environment runs", async () => {
+    const t = await shared();
+    t.files.set(resolve("intent.yaml"), rubric("agent, human"));
+    const compared = await t.run("diff", "--base", "intent", "--env", "prod", "--head", "intent.yaml", "-d", "cases.jsonl", "--json");
+    expect(compared.warn[0]).toBe(`intent: ${t.a}, what prod runs in bot on ${SERVER}`);
+    expect(JSON.parse(compared.out[0]!)).toMatchObject({ base: { rubricVersionId: t.a } });
+  });
+
+  it("says what to do when the name cannot be resolved, and uses nothing the server misnamed", async () => {
+    const t = await shared(), b = t.other;
+    const run = (...ref: string[]) => b.run("run", "-r", ...ref, "-d", "cases.jsonl");
+    await expect(run("intent")).rejects.toThrow("say which version: `intent --env <environment>` (what it runs), `intent@latest` (the newest uploaded) or `intent@rv_…`");
+    await expect(run("intent@latest", "--env", "prod")).rejects.toThrow("name a version or an environment, not both");
+    await expect(run("intent@yesterday")).rejects.toThrow("after @ comes `latest` or a version id");
+    await expect(run("intent", "--env", "staging")).rejects.toThrow(`staging in bot on ${SERVER} does not run intent; nothing has been promoted to it yet`);
+    await expect(run("urgency", "--env", "prod")).rejects.toThrow(`prod in bot on ${SERVER} does not run urgency; it runs intent`);
+    await expect(run("intent", "--env", "nowhere")).rejects.toThrow(`bot on ${SERVER} has no environment nowhere`);
+    await expect(run("urgency@latest")).rejects.toThrow(`bot on ${SERVER} keeps no version of urgency`);
+    await expect(run("intent@rv_00000000000000000000")).rejects.toThrow(`keeps no version rv_00000000000000000000 of intent`);
+    // `--env` does not change what a file means.
+    expect((await t.run("run", "-r", "intent.yaml", "--env", "prod", "-d", "cases.jsonl")).warn).toEqual([]);
+
+    // Asking what an environment runs needs the server; the message says what works without it.
+    const offline = setup({ routes: () => { throw new TypeError("fetch failed"); } });
+    await expect(offline.run("run", "-r", "intent", "--env", "prod", "-d", "cases.jsonl")).rejects.toThrow(`cannot reach ${SERVER} to ask which version of intent that is; a version this machine already holds runs without the server`);
+
+    // A server that names one version and sends another document is not believed.
+    const lying = setup({ routes: (path) => (path.endsWith("/environments/prod") ? Response.json({ name: "prod", createdAt: "2026-01-01T00:00:00.000Z", pointers: [{ name: "intent", versionId: t.a, updatedAt: "2026-01-01T00:00:00.000Z", rubric: { name: "Something else", criteria: [{ id: "x", name: "X", scale: { type: "binary" }, judge: { type: "benchmark", method: "keywords", keywords: ["x"] } }] } }] }) : undefined) });
+    await expect(lying.run("run", "-r", "intent", "--env", "prod", "-d", "cases.jsonl")).rejects.toThrow(new RegExp(`named ${t.a} for intent, but the rubric it sent freezes to rv_\\w+; nothing was used`));
+    expect(await lying.local.store.getRubricVersion(t.a)).toBeUndefined();
+  });
+
+  it("pulls a version into a file, and uploading an edited copy takes one command", async () => {
+    const t = await shared(), b = t.other;
+    expect((await b.run("pull", "intent", "--env", "prod")).out).toEqual([`wrote intent.yaml (intent: ${t.a}, what prod runs in bot on ${SERVER})`]);
+    // The file is the same version, and the lock knows its name on the server.
+    expect(b.lock()).toMatch(new RegExp(`intent\\.yaml:\\n {4}name: intent\\n {4}version: ${t.a}\\n`));
+    expect((await b.run("version", "verify")).out.join("\n")).toContain(t.a);
+    await expect(b.run("pull", "intent@latest")).rejects.toThrow("intent.yaml exists; pass --force to replace it");
+    expect((await b.run("pull", "intent@latest", "--to", "copy.yaml")).out[0]).toMatch(/^wrote copy\.yaml /);
+    await expect(b.run("pull", "intent")).rejects.toThrow("expected a hub card (hub:owner/slug[@rv_…]) or a rubric on your team's server");
+
+    // Edited there, uploaded with one command, and promoted: no separate freeze.
+    b.files.set(resolve("intent.yaml"), rubric("agent, human"));
+    const pushed = await b.run("push", "intent.yaml");
+    const next = /pushed intent at (rv_\w+) to bot/.exec(pushed.out[0]!)![1]!;
+    expect(next).not.toBe(t.a);
+    expect(b.lock()).toContain(`version: ${next}`);
+    expect((await b.run("promote", "intent.yaml", "--env", "prod", "--yes")).out.at(-1)).toBe(`promoted intent to ${next} in prod`);
+    // And the first machine gets it by name.
+    expect((await t.run("run", "-r", "intent", "--env", "prod", "-d", "cases.jsonl")).warn).toEqual([`intent: ${next}, what prod runs in bot on ${SERVER}`]);
   });
 });
 
@@ -254,7 +378,7 @@ describe("where the commands look for the project, the server and the key", () =
     expect((await remote.run("promote", "intent.yaml", "--env", "prod", "--yes")).out.at(-1)).toBe(`promoted intent to ${local.a} in prod`);
   });
 
-  it("names the organisation from the option, the environment, then verdict.yaml — and sends none otherwise", async () => {
+  it("names the organization from the option, the environment, then verdict.yaml — and sends none otherwise", async () => {
     const t = setup();
     await t.run("project", "list");
     expect(t.sent.at(-1)!.org).toBeNull();
@@ -270,7 +394,7 @@ describe("where the commands look for the project, the server and the key", () =
     expect(viaEnv.sent.at(-1)!.org).toBe("from-env");
     await viaEnv.run("project", "list", "--org", "from-flag");
     expect(viaEnv.sent.at(-1)!.org).toBe("from-flag");
-    await expect(viaEnv.run("project", "list", "--org", "Not A Slug")).rejects.toThrow("organisation name");
+    await expect(viaEnv.run("project", "list", "--org", "Not A Slug")).rejects.toThrow("organization name");
     viaEnv.files.set(resolve("verdict.yaml"), "project: bot\norg: Not A Slug\n");
     await expect(setup().run("project", "list")).resolves.toBeTruthy();
     await expect(viaEnv.run("env", "list")).rejects.toThrow("org must be");

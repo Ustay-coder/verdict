@@ -3,26 +3,29 @@ import { ValidationError, type Rubric, type Subject } from "@verdict-ai/core";
 import type { BatchResult } from "@verdict-ai/sdk";
 import { Command } from "commander";
 
+import { addServerRefOptions, serverRubric, type ServerRefOptions } from "../control/server-ref.js";
+import type { HubDependencies } from "../hub/deps.js";
 import { parseInput } from "../inputs.js";
 import { loadCommandRubric } from "../remote.js";
 import { fmt } from "../report.js";
 import { guardRubric } from "../versions/guard.js";
 
 /** Registers compare operations; handler failures propagate to the transport error boundary. */
-export function registerCompare(program: Command, deps: CommandDependencies & { loadRubric: typeof loadCommandRubric; guard?: typeof guardRubric } = { ...commandDefaults, loadRubric: loadCommandRubric }) {
-  program
+export function registerCompare(program: Command, deps: CommandDependencies & { loadRubric: typeof loadCommandRubric; guard?: typeof guardRubric; server?: HubDependencies } = { ...commandDefaults, loadRubric: loadCommandRubric }) {
+  const command = program
     .command("compare")
     .description("rank several subjects against one rubric (each -s is one subject: name=input[,input...])")
-    .requiredOption("-r, --rubric <fileOrId>")
+    .requiredOption("-r, --rubric <ref>", "rubric file, stored rubric id, or a name on your team's server: <name> with --env, <name>@latest, <name>@rv_…")
     .requiredOption("-s, --subject <subject...>", "name=input[,input...]")
     .option("--json")
     .option("--idempotency-key <key>")
     .option("--mock")
     .option("--strict", "fail when the rubric file no longer matches verdict.lock or its locked run")
-    .option("--lock <path>", "lock file", "verdict.lock")
+    .option("--lock <path>", "lock file", "verdict.lock");
+  addServerRefOptions(command)
     .action(async (o: CompareOptions) => {
       const guard = await (deps.guard ?? guardRubric)(o.rubric, o);
-      const rubric = await deps.loadRubric(o.rubric, o.mock);
+      const rubric = (await serverRubric(o.rubric, o, deps.server)) ?? (await deps.loadRubric(o.rubric, o.mock));
       const subjects = o.subject.map(parseSubject);
       const result = await runComparison(rubric, subjects, deps, o.idempotencyKey);
       const { ranking } = result;
@@ -45,7 +48,7 @@ function renderRank(r: BatchResult["ranking"][number], replayed: boolean) {
   return `${String(r.rank).padStart(3)}. ${r.subject.padEnd(24)} ${fmt(r.score, 2).padStart(7)}  ${r.grade ?? ""} ${r.passed === undefined ? "" : r.passed ? "PASS" : "FAIL"}  ${r.status !== "completed" ? r.status : ""}${replayed ? " (replayed)" : ""}`;
 }
 
-interface CompareOptions { rubric: string; subject: string[]; json?: boolean; mock?: boolean; idempotencyKey?: string; strict?: boolean; lock?: string }
+interface CompareOptions extends ServerRefOptions { rubric: string; subject: string[]; json?: boolean; mock?: boolean; idempotencyKey?: string; strict?: boolean; lock?: string }
 
 function parseSubject(value: string): Subject {
   const [name, inputs] = value.split(/=(.*)/s);

@@ -1,6 +1,7 @@
 /**
  * Registers `verdict push`, `verdict promote` and `verdict rollback` (docs/design/control-plane.md §8.2, §8.3).
- * `push` uploads a frozen version. `promote` makes an environment run a version: it uploads the version if needed,
+ * `push` uploads a version; given a rubric file it freezes it and records that in verdict.lock first, so a file can be
+ * shared with one command (C27). `promote` makes an environment run a version: it uploads the version if needed,
  * shows what would change, asks, and names the versions it saw so a concurrent change is refused instead of
  * overwritten. `rollback` undoes a pointer's latest change.
  */
@@ -11,7 +12,7 @@ import { rubricNameFor } from "../control/names.js";
 import { applyChanges, describeChange, planChanges, pointerRefusal, pointersOf, type Change, type Wanted } from "../control/pointers.js";
 import { addTargetOptions, asking, confirmed, controlTarget, type ControlTarget, type TargetOptions } from "../control/target.js";
 import { hubDefaults, type HubDependencies } from "../hub/deps.js";
-import { lockKey, readLock, updateLock } from "../versions/lock.js";
+import { lockFrozen, lockKey, readLock, updateLock } from "../versions/lock.js";
 import { isRubricFile, resolveVersion, workspace, type Workspace } from "../versions/workspace.js";
 
 interface PushOptions extends TargetOptions { name?: string; lock?: string; json?: boolean }
@@ -72,7 +73,7 @@ async function warnUnreported(deps: HubDependencies, target: ControlTarget, chan
 
 /** Registers push, promote and rollback; failures reach the CLI failure handler. */
 export function registerPromote(program: Command, deps: HubDependencies = hubDefaults) {
-  targetOptions(program.command("push <ref>").description("upload a frozen rubric version (file or rv_…) to a project"))
+  targetOptions(program.command("push <ref>").description("upload a rubric version to a project: a rubric file (frozen and recorded in verdict.lock first) or rv_…"))
     .option("--name <name>", "name services ask for this rubric by (default: verdict.lock, the rubric's id, its file name)").option("--lock <path>", "lock file", "verdict.lock").option("--json")
     .action(async (ref: string, o: PushOptions) => {
       const ws = workspace(deps, o, true);
@@ -81,6 +82,8 @@ export function registerPromote(program: Command, deps: HubDependencies = hubDef
       const v = wanted.version;
       if (!v) throw new ValidationError(`${ref} is not in this data directory; there is nothing to upload`);
       const result = await asking(target, (client) => client.versions.push(target.project, wanted.name, { id: v.id, rubric: v.rubric, ...(v.parentVersionId ? { parentVersionId: v.parentVersionId } : {}), ...(v.fork ? { fork: v.fork } : {}) }));
+      // What was uploaded is what the file is from now on: the lock says so, as `verdict version freeze` would have.
+      if (wanted.file) await lockFrozen(ws.deps.lockIo, ws.lockPath, wanted.file, v);
       await recordName(ws, wanted.file, wanted.name, o.name !== undefined);
       if (o.json) { deps.out(JSON.stringify(result, null, 2)); return; }
       deps.out(`${result.created ? "pushed" : "already there:"} ${wanted.name} at ${v.id} ${result.created ? "to" : "in"} ${target.project} on ${target.server}`);

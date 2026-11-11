@@ -1,6 +1,6 @@
 /**
  * `verdict.yaml`: which project a repository's rubrics belong to, and optionally which server keeps it and which
- * organisation on that server (docs/design/control-plane.md C18). Committed, so everyone and CI use the same project. Looked for from the working
+ * organization on that server (docs/design/control-plane.md C18). Committed, so everyone and CI use the same project. Looked for from the working
  * directory upwards.
  */
 import { CONTROL_NAME, ValidationError } from "@verdict-ai/core";

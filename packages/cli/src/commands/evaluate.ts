@@ -5,6 +5,8 @@ import { type Rubric } from "@verdict-ai/core";
 import { Command } from "commander";
 
 import { parseInput, readStdin } from "../inputs.js";
+import { addServerRefOptions, serverRubric, type ServerRefOptions } from "../control/server-ref.js";
+import type { HubDependencies } from "../hub/deps.js";
 import { loadCommandRubric, localEngine, remote } from "../remote.js";
 import { renderReport } from "../report.js";
 import { guardRubric } from "../versions/guard.js";
@@ -20,6 +22,8 @@ export interface EvaluateDependencies {
   setExitCode: (code: number) => void;
   /** Checks a locked rubric file before and after running (verdict.lock); defaults to the real lock file. */
   guard?: typeof guardRubric;
+  /** How a rubric named on a server is fetched (tests); defaults to the real network and sign-in. */
+  server?: HubDependencies;
 }
 
 const defaultDependencies: EvaluateDependencies = {
@@ -28,11 +32,11 @@ const defaultDependencies: EvaluateDependencies = {
 };
 
 export function registerEvaluate(program: Command, dependencies: EvaluateDependencies = defaultDependencies) {
-  program
+  const command = program
     .command("evaluate")
     .alias("eval")
     .description("evaluate inputs against a rubric")
-    .requiredOption("-r, --rubric <fileOrId>", "rubric YAML/JSON file, or stored rubric id")
+    .requiredOption("-r, --rubric <ref>", "rubric YAML/JSON file, stored rubric id, or a name on your team's server: <name> with --env, <name>@latest, <name>@rv_…")
     .requiredOption("-i, --input <input...>", "file or image path, URL, YouTube URL, text:..., json:... (prefix with tag= to tag)")
     .option("-n, --name <name>", "subject name")
     .option("--json", "print the full evaluation as JSON")
@@ -42,10 +46,11 @@ export function registerEvaluate(program: Command, dependencies: EvaluateDepende
     .option("--mock", "use mock providers (no API calls) — overrides every decision and llm judge")
     .option("--screenshot", "also screenshot every URL input for vision-capable judges (local engine: needs Playwright)")
     .option("--strict", "fail when the rubric file no longer matches verdict.lock, or sends other questions or reaches another model than its locked run")
-    .option("--lock <path>", "lock file", "verdict.lock")
+    .option("--lock <path>", "lock file", "verdict.lock");
+  addServerRefOptions(command)
     .action(async (o: EvaluateOptions) => {
       const guard = await (dependencies.guard ?? guardRubric)(o.rubric, o);
-      const rubric = await dependencies.loadRubric(o.rubric, o.mock);
+      const rubric = (await serverRubric(o.rubric, o, dependencies.server)) ?? (await dependencies.loadRubric(o.rubric, o.mock));
       const result = await runEvaluation(rubric, o, dependencies);
       const ev = result.evaluation;
       // why: evidence can contain large or sensitive source text; omit it unless explicitly requested.
@@ -58,7 +63,7 @@ export function registerEvaluate(program: Command, dependencies: EvaluateDepende
 
 }
 
-interface EvaluateOptions {
+interface EvaluateOptions extends ServerRefOptions {
   rubric: string; mock?: boolean; json?: boolean; strict?: boolean; lock?: string;
   input: string[]; name?: string; webhook?: string; evidence?: boolean; idempotencyKey?: string; screenshot?: boolean;
 }

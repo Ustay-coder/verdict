@@ -18,12 +18,12 @@ export interface ControlTarget extends ServerTarget { project: string }
 const config = (deps: HubDependencies) => findConfig(deps.lockIo, (deps.cwd ?? (() => process.cwd()))());
 
 /**
- * The organisation a request is about, on servers where one key reaches several: option, environment, verdict.yaml.
- * Unset means the server's default for the key (a person's own organisation); servers without organisations ignore it.
+ * The organization a request is about, on servers where one key reaches several: option, environment, verdict.yaml.
+ * Unset means the server's default for the key (a person's own organization); servers without organizations ignore it.
  */
-function organisation(deps: HubDependencies, o: Pick<TargetOptions, "org">, found: { org?: string } | undefined): string | undefined {
+function organization(deps: HubDependencies, o: Pick<TargetOptions, "org">, found: { org?: string } | undefined): string | undefined {
   const org = o.org || deps.env.VERDICT_ORG || found?.org;
-  if (org && !CONTROL_NAME.test(org)) throw new ValidationError(`organisation name "${org}": use lowercase letters, digits and dashes`);
+  if (org && !CONTROL_NAME.test(org)) throw new ValidationError(`organization name "${org}": use lowercase letters, digits and dashes`);
   return org || undefined;
 }
 
@@ -31,7 +31,7 @@ function organisation(deps: HubDependencies, o: Pick<TargetOptions, "org">, foun
 export async function serverTarget(deps: HubDependencies, o: Pick<TargetOptions, "hub" | "org">): Promise<ServerTarget> {
   const found = await config(deps);
   const target = await hubTarget(deps.credentials, deps.env, o.hub, found?.server);
-  return { client: hubClient(deps, target.hub, target.apiKey, organisation(deps, o, found)), server: target.hub };
+  return { client: hubClient(deps, target.hub, target.apiKey, organization(deps, o, found)), server: target.hub };
 }
 
 export async function controlTarget(deps: HubDependencies, o: TargetOptions): Promise<ControlTarget> {
@@ -40,14 +40,14 @@ export async function controlTarget(deps: HubDependencies, o: TargetOptions): Pr
   if (!project) throw new ValidationError("no project: pass --project <name>, set VERDICT_PROJECT, or add `project: <name>` to verdict.yaml");
   if (!CONTROL_NAME.test(project)) throw new ValidationError(`project name "${project}": use lowercase letters, digits and dashes`);
   const target = await hubTarget(deps.credentials, deps.env, o.hub, found?.server);
-  return { client: hubClient(deps, target.hub, target.apiKey, organisation(deps, o, found)), server: target.hub, project };
+  return { client: hubClient(deps, target.hub, target.apiKey, organization(deps, o, found)), server: target.hub, project };
 }
 
 /** The options every management command takes to say where it works. */
 export function addTargetOptions<T extends { option(flags: string, description?: string): T }>(command: T, withProject = true): T {
   const base = withProject ? command.option("--project <name>", "project (or VERDICT_PROJECT, or verdict.yaml)") : command;
   return base.option("--hub <url>", "server (or VERDICT_HUB_URL, verdict.yaml, else the latest sign-in)")
-    .option("--org <name>", "organisation on that server (or VERDICT_ORG, or verdict.yaml; default: your own)");
+    .option("--org <name>", "organization on that server (or VERDICT_ORG, or verdict.yaml; default: your own)");
 }
 
 /** Runs a request; a rejected key becomes an instruction instead of a bare 401. */

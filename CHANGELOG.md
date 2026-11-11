@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+- Use a rubric your team's server keeps from any machine, by name instead of by file. `verdict run`, `diff`, `eval`, `check` and `compare` take `-r <name> --env <environment>` (the version that environment runs), `-r <name>@latest` (the newest uploaded) and `-r <name>@rv_…`. The document is frozen locally and used only when it freezes to the id the server named, then kept in the local data directory, so a version already there needs neither sign-in nor network. Judging stays on the machine, with its own model keys. A bare name without `--env` or `@…` means what it always did.
+- `verdict pull <name> --env <environment>` (or `<name>@latest`, `<name>@rv_…`) writes a version from a project into a rubric file that freezes to the same id, and records the version and its name in `verdict.lock`. `verdict pull hub:…` is unchanged.
+- `verdict push <file>` freezes the file and records it in `verdict.lock` before uploading, so sharing a rubric takes one command and `verdict promote <file>` works straight after it. It no longer warns that a name given with `--name` could not be recorded.
+- SDK: `environments.get(project, name, { include: "rubrics" })` returns each pointer's rubric document.
+- Spelling: the CLI's help and messages say "organization". Option, variable and header names are unchanged (`--org`, `VERDICT_ORG`, `x-verdict-org`).
+
 ## 0.2.0
 
 - Control plane: which rubric version each environment runs. Projects, environments, immutable rubric versions, pointers and their history under `/v1/projects` (route group `control`; `createApp({ routes })` and `VERDICT_ROUTES` choose which groups a server offers). An uploaded version is frozen again and must match its id; a promotion applies all of its changes or none, only from the versions the caller saw (a stale one answers 409 with where the pointers are), and a rollback undoes a pointer's latest change. New `ControlStore` (`store.control`) on the Memory, File and Drizzle stores, with SQLite/D1 and Postgres migrations; every read and write is scoped to a tenant and a project.

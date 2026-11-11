@@ -315,7 +315,7 @@ describe("on a database", () => {
 describe("what a server that knows people needs from the seams", () => {
   it("hands the request to auth, and what auth established to authorize", async () => {
     const seen: Array<Record<string, unknown> | undefined> = [];
-    // The key belongs to a person; the request says which of their organisations it is about. A browser sends no key.
+    // The key belongs to a person; the request says which of their organizations it is about. A browser sends no key.
     const auth: Auth = {
       resolve: (key, request) => {
         const org = request?.headers.get("x-verdict-org") ?? "personal";
@@ -335,7 +335,7 @@ describe("what a server that knows people needs from the seams", () => {
     expect((await call("POST", "/v1/projects", { ...key, "x-verdict-org": "acme" }, { name: "theirs" })).status).toBe(403);
     expect((await call("GET", "/v1/projects", { ...key, "x-verdict-org": "acme" })).status).toBe(200);
     expect((await call("GET", "/v1/projects", { ...key, "x-verdict-org": "elsewhere" })).status).toBe(401);
-    // Each organisation is its own tenant: the same key sees different projects.
+    // Each organization is its own tenant: the same key sees different projects.
     expect((await (await call("GET", "/v1/projects", key)).json() as { data: unknown[] }).data).toHaveLength(1);
     expect((await (await call("GET", "/v1/projects", { ...key, "x-verdict-org": "acme" })).json() as { data: unknown[] }).data).toEqual([]);
     expect((await call("GET", "/v1/projects", { cookie: "session=s1" })).status).toBe(200);

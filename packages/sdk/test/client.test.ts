@@ -52,6 +52,7 @@ it("maps every client method to its REST request with an injected fetch", async 
     [() => client.environments.create("bot", "prod"), "POST", "/v1/projects/bot/environments", { name: "prod" }],
     [() => client.environments.list("bot"), "GET", "/v1/projects/bot/environments"],
     [() => client.environments.get("bot", "prod"), "GET", "/v1/projects/bot/environments/prod"],
+    [() => client.environments.get("bot", "prod", { include: "rubrics" }), "GET", "/v1/projects/bot/environments/prod?include=rubrics"],
     [() => client.environments.delete("bot", "prod"), "DELETE", "/v1/projects/bot/environments/prod", { confirm: "prod" }],
     [() => client.environments.promote("bot", "prod", { changes: [{ name: "intent", versionId: "rv_b", expected: "rv_a" }], note: "n" }), "POST", "/v1/projects/bot/environments/prod/promotions", { changes: [{ name: "intent", versionId: "rv_b", expected: "rv_a" }], note: "n" }],
     [() => client.environments.rollback("bot", "prod", { name: "intent", expected: "rv_b" }), "POST", "/v1/projects/bot/environments/prod/rollbacks", { name: "intent", expected: "rv_b" }],
@@ -77,7 +78,7 @@ it("maps every client method to its REST request with an injected fetch", async 
   }
 });
 
-it("names the organisation on every request when one is given, and never otherwise", async () => {
+it("names the organization on every request when one is given, and never otherwise", async () => {
   const seen: Array<string | null> = [];
   const fetch = vi.fn(async (_url: RequestInfo | URL, init?: RequestInit) => { seen.push(new Headers(init?.headers).get("x-verdict-org")); return Response.json({ data: [], pointers: [] }); });
   const acme = new Verdict({ baseUrl: "https://example.com", fetch, org: "acme" });
