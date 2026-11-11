@@ -4,20 +4,31 @@ What Verdict can ask, and what you can hand it, on one page. The rubric stays th
 
 ## Decision models
 
-| Name it | Model | Service | Keys in your environment | Checked against the live service | Images | Context |
-| --- | --- | --- | --- | --- | --- | --- |
-| `jev` | Jev (`jev-latest`) | TypeSafe | `TYPESAFE_API_KEY` | Yes (2026-11-11, `jev-1.14.0`) | No, text only | 64k tokens a request |
-| `jev-preview` | Jev preview | TypeSafe | `TYPESAFE_API_KEY` | Not separately: the same endpoint as `jev` | No | — |
-| `clef` | Clef | Cloudflare Workers AI | `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_API_TOKEN` | Yes (2026-11-11) | Up to 4 | 65,536 tokens |
-| `clef-flash` | Clef-flash | Cloudflare Workers AI | `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_API_TOKEN` | Yes (2026-11-11; with an image 2026-11-05) | Up to 4 | 24,576 tokens |
-| `openrouter:<model>` | For example `typesafe/jev-1.13` | OpenRouter | `OPENROUTER_API_KEY` | Not yet: written from public documentation | No | — |
-| `openai:<model>` | OpenAI's Decisions API | OpenAI | `OPENAI_API_KEY` | Not yet: written from public documentation | No | — |
-| `systemone:<model>` | Any endpoint that takes the same request: a self-hosted Clef, a gateway | Yours | `SYSTEMONE_BASE_URL`, `SYSTEMONE_API_KEY` | You check it | No | — |
-| `mock` | A deterministic stand-in | None | None | — | — | — |
+| Name it | Model | Service | Checked against the live service | Images |
+| --- | --- | --- | --- | --- |
+| `jev` | Jev (`jev-latest`) | TypeSafe | Yes (2026-11-11, `jev-1.14.0`) | No, text only |
+| `jev-preview` | Jev preview | TypeSafe | Not separately: the same endpoint as `jev` | No |
+| `clef` | Clef | Cloudflare Workers AI | Yes (2026-11-11) | Up to 4 |
+| `clef-flash` | Clef-flash | Cloudflare Workers AI | Yes (2026-11-11; with an image 2026-11-05) | Up to 4 |
+| `openrouter:<model>` | For example `typesafe/jev-1.13` | OpenRouter | Not yet: written from public documentation | No |
+| `openai:<model>` | OpenAI's Decisions API | OpenAI | Not yet: written from public documentation | No |
+| `systemone:<model>` | Any endpoint that takes the same request: a self-hosted Clef, a gateway | Yours | You check it | No |
+| `mock` | A deterministic stand-in, for trying things without a key | None | — | — |
 
 "Name it" is what you write after `--models` to [compare models on your cases](../guide/decision-models#which-model-on-your-cases), for example `--models jev,clef,clef-flash`. In a rubric the same model is a judge: `defaultJudge: { type: decision, provider: cloudflare, model: "@cf/cloudflare/clef" }` ([providers](./providers)).
 
-- A token for Clef needs Workers AI: Read.
+### Keys and limits
+
+Each model is called from where Verdict runs, with keys from that environment.
+
+| Service | Keys | Context |
+| --- | --- | --- |
+| TypeSafe | `TYPESAFE_API_KEY` | 64k tokens a request |
+| Cloudflare Workers AI | `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_API_TOKEN` (Workers AI: Read) | Clef 65,536 tokens; Clef-flash 24,576 |
+| OpenRouter | `OPENROUTER_API_KEY` | the model's own |
+| OpenAI | `OPENAI_API_KEY` | the model's own |
+| Your endpoint | `SYSTEMONE_BASE_URL`, and `SYSTEMONE_API_KEY` if it wants one | the model's own |
+
 - Images are PNG, JPEG or WebP, at most 4 MiB each and 8 MiB in a request.
 - Long evidence is cut to the model's context before it is sent, and the rating says so (`raw.stateTruncated`).
 - The request and response of each service, and the dates they were checked, are in [docs/PROVIDERS.md](https://github.com/Ustay-coder/verdict/blob/main/docs/PROVIDERS.md).
