@@ -23,6 +23,7 @@ import { registerProjectVersions } from "./routes/project-versions.js";
 import { registerPromotions } from "./routes/promotions.js";
 import { registerReports } from "./routes/reports.js";
 import { ApiError } from "./routes/shared.js";
+import { VERSION } from "./version.js";
 
 /** A request's account and who made it. `claims` reach `authorize` as they are (a role, what a key may reach). */
 export interface Identity { tenantId: string; actor: Actor; claims?: Record<string, unknown> }
@@ -113,7 +114,7 @@ export function createApp(options: AppOptions) {
   if (log) app.use(logger());
   app.use("*", cors({ exposeHeaders: ["Idempotency-Replayed", "ETag"] }));
 
-  app.get("/", (c) => c.json({ name: "verdict", version: "0.1.0", docs: "/v1/openapi.json" }));
+  app.get("/", (c) => c.json({ name: "verdict", version: VERSION, docs: "/v1/openapi.json" }));
   app.get("/v1/health", (c) => c.json({ ok: true }));
   const openapi = openapiFor(routes);
   app.get("/v1/openapi.json", (c) => c.json(openapi));

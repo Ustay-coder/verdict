@@ -12,9 +12,13 @@ fi
 [[ -z $(git status --porcelain) ]] || { echo 'Release requires a clean tree.' >&2; exit 1; }
 git rev-parse "v$version" >/dev/null 2>&1 && { echo "Tag v$version already exists." >&2; exit 1; }
 backup=$(mktemp -d)
+# The API runs on Workers and cannot read its package.json, so its version is also a constant in the source.
+api_version=packages/api/src/version.ts
 for package in packages/*; do cp "$package/package.json" "$backup/$(basename "$package").json"; done
+cp "$api_version" "$backup/api-version.ts"
 restore() {
   for package in packages/*; do cp "$backup/$(basename "$package").json" "$package/package.json"; done
+  cp "$backup/api-version.ts" "$api_version"
   rm -rf "$backup"
 }
 # A preview (or failure) must not leave version bumps behind.
@@ -25,6 +29,8 @@ for (const dir of readdirSync('packages')) {
   const path = `packages/${dir}/package.json`, pkg = JSON.parse(readFileSync(path));
   if (!pkg.private) { pkg.version = process.argv[2]; writeFileSync(path, JSON.stringify(pkg, null, 2) + '\n'); }
 }
+const constant = 'packages/api/src/version.ts';
+writeFileSync(constant, readFileSync(constant, 'utf8').replace(/VERSION = "[^"]*"/, `VERSION = "${process.argv[2]}"`));
 JS
 export NODE_USE_ENV_PROXY=1
 pnpm build && pnpm test
@@ -32,7 +38,7 @@ if [[ $mode == --dry-run ]]; then
   pnpm -r publish --dry-run --no-git-checks
   scripts/verify-packages.sh
 elif [[ $mode == --tag-only ]]; then
-  git add packages/*/package.json
+  git add packages/*/package.json "$api_version"
   git commit -m "Release v$version"
   # Tags are created by the release workflow after publishing: a push of main with an
   # unpublished version is the trigger, so this also works where tag pushes are refused.
@@ -42,7 +48,7 @@ elif [[ $mode == --tag-only ]]; then
 else
   pnpm -r --filter './packages/*' publish --access public --no-git-checks
   # The local release owns publication; the tag workflow detects already-published versions.
-  git add packages/*/package.json
+  git add packages/*/package.json "$api_version"
   git commit -m "Release v$version"
   git tag "v$version"
   git push origin "v$version"

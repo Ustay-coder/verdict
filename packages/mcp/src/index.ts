@@ -3,6 +3,7 @@ import { evaluateSubject, compareSubjects } from "./operations.js";
 import { registerAgreement } from "./agreement.js";
 import { registerHub } from "./hub.js";
 import { text, toolResult } from "./result.js";
+import { VERSION } from "./package-version.js";
 import { readFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 /**
@@ -39,7 +40,7 @@ export function createMcpServer(opts: McpOptions = {}) {
   const client = opts.client ?? (mode === "remote" ? new Verdict({ baseUrl: opts.apiUrl ?? process.env.VERDICT_API_URL, apiKey: opts.apiKey ?? process.env.VERDICT_API_KEY }) : undefined);
   const engine = opts.engine ?? (mode === "local" ? new Engine({ store: (opts.dataDir ?? process.env.VERDICT_DATA_DIR) ? new FileStore(opts.dataDir ?? process.env.VERDICT_DATA_DIR!) : new MemoryStore(), ingest: { allowLocalFiles: opts.allowLocalFiles ?? true, screenshot: lazyPlaywrightScreenshot() } }) : undefined);
 
-  const server = new McpServer({ name: "verdict", version: "0.1.0" }, { instructions: "Verdict scores documents, websites, YouTube videos, JSON and text against customizable rubrics. Judges: decision models (Jev / Clef / OpenAI Decisions — typed questions, probabilities, one call per rubric), humans, deterministic benchmarks, optional generative LLM for rationales. Create or inline a rubric, then call evaluate." });
+  const server = new McpServer({ name: "verdict", version: VERSION }, { instructions: "Verdict scores documents, websites, YouTube videos, JSON and text against customizable rubrics. Judges: decision models (Jev / Clef / OpenAI Decisions — typed questions, probabilities, one call per rubric), humans, deterministic benchmarks, optional generative LLM for rationales. Create or inline a rubric, then call evaluate." });
 
   registerRubrics(server, engine, client);
   registerEvaluations(server, engine, client);
