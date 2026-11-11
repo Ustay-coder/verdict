@@ -33,3 +33,31 @@ npx @verdict-ai/cli calibrate rub_ID
 Reports compare stored decision ratings, including escalations, against human consensus. They include agreement, normalized error and bias, confidence buckets, ECE, inter-rater alpha, and a suggested threshold. A suggestion requires at least three pairs in each populated bucket at or above it meeting the target (default 0.8); insufficient metrics are null. Review performance by population and repeat after rubric or provider changes.
 
 Next, [configure a provider](/reference/providers), run your rubric on representative evidence, and resolve escalations through the [human inbox](./humans#work-the-inbox).
+
+## Which model, on your cases
+
+A rubric does not have to name the model that answers it. `verdict run --models` runs the same rubric over the same cases once per model and reads the runs side by side:
+
+```bash
+verdict run -r intent.yaml -d cases.jsonl --models jev,clef,clef-flash
+```
+
+```text
+Wants a human × cases.jsonl: 4 case(s), 3 model(s), the same questions to each
+  model        answered by             agreed with labels   failed   asked a human   input tokens   calls   time
+  jev          typesafe/jev-1.14.0     7/8 (88%)            0        0               2,041          4       0.5 s
+  clef         cloudflare/clef         7/8 (88%)            0        0               1,547          4       0.9 s
+  clef-flash   cloudflare/clef-flash   8/8 (100%)           0        0               1,547          4       0.4 s
+the models gave one answer on 7 of 8 question(s) they all answered; they differ on 1:
+  explicit · urgency   expected medium   jev low (0.67) | clef low (0.53) | clef-flash medium (0.11)
+```
+
+- **Agreed with labels** counts every labelled criterion the model decided itself, over all cases. Unlabelled cases still show up below the table when the models differ on them — those are the cases worth labelling next.
+- **The same questions to each** is read from the runs: every run records the questions it sent. If the line says otherwise, the rows are not comparable.
+- A model is `jev`, `jev-preview`, `clef`, `clef-flash`, or `provider:model`: `typesafe:jev-1.14.0`, `cloudflare:@cf/cloudflare/clef`, `openrouter:typesafe/jev-1.13`, `openai:<model>`, `systemone:<model>` (with `SYSTEMONE_BASE_URL`). Keys come from the environment, as for any run.
+- Only decision judges are re-pointed. Criteria judged by rules, people or prompted models answer as the rubric says, and a rubric with no decision judge is refused.
+- The rubric file and `verdict.lock` are not touched. Each model's run is of a version that differs only in which model answers, and is kept: `verdict diff --base run_… --head run_…` compares two case by case, and `--json` prints the whole comparison.
+- A model that cannot answer (no key, a model the account cannot use) keeps its row with the reason, and is left out of the disagreements. The command exits 1 only when no model answered.
+- The table does not pick a winner. On a handful of cases the difference between two models is noise; bring the cases you care about, then put the model you chose in the rubric (`defaultJudge: { type: decision, provider: cloudflare, model: "@cf/cloudflare/clef" }`) and freeze it.
+
+Checked against the live services: Jev, Clef and Clef-flash. The OpenRouter and OpenAI adapters follow public documentation and are not yet checked against the live endpoints.

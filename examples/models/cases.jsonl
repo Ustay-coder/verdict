@@ -1,0 +1,4 @@
+{"id":"explicit","name":"explicit","inputs":[{"type":"text","text":"please connect me to an agent"}],"expected":{"wants_human":"yes","urgency":"medium"}}
+{"id":"indirect","name":"indirect","inputs":[{"type":"text","text":"this bot is useless, is there anyone real there? I've been locked out of my account all day and payroll is due"}],"expected":{"wants_human":"yes","urgency":"high"}}
+{"id":"faq","name":"faq","inputs":[{"type":"text","text":"what are your opening hours on Sunday?"}],"expected":{"wants_human":"no","urgency":"low"}}
+{"id":"mention","name":"mention","inputs":[{"type":"text","text":"your agent yesterday told me the refund takes 5 days, is that right?"}],"expected":{"wants_human":"no","urgency":"low"}}

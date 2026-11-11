@@ -5,8 +5,8 @@ vendor's official documentation. Keep this honest: update the status column when
 
 | Provider | Endpoint | Request | Response | Verified |
 | --- | --- | --- | --- | --- |
-| `typesafe` (Jev) | `POST https://api.typesafe.ai/v1/systemone`, `Authorization: Bearer $TYPESAFE_API_KEY` | `{ model, state, questions }` | `{ model, answers, usage }` | **Live** (2026-11-05, `jev-1.14.0`) + official API reference |
-| `cloudflare` (Clef) | `POST https://api.cloudflare.com/client/v4/accounts/{id}/ai/run/@cf/cloudflare/clef[-flash]`, `Authorization: Bearer $CLOUDFLARE_API_TOKEN` | `{ model: "clef"\|"clef-flash", state, questions, images? }` | `{ success, result: { model, answers, usage } }` | **Live** (2026-11-05, `clef-flash`, 0.40 s, HTTP 200) + official model pages |
+| `typesafe` (Jev) | `POST https://api.typesafe.ai/v1/systemone`, `Authorization: Bearer $TYPESAFE_API_KEY` | `{ model, state, questions }` | `{ model, answers, usage }` | **Live** (2026-11-05, `jev-1.14.0`; again 2026-11-11 through `verdict run --models`) + official API reference |
+| `cloudflare` (Clef) | `POST https://api.cloudflare.com/client/v4/accounts/{id}/ai/run/@cf/cloudflare/clef[-flash]`, `Authorization: Bearer $CLOUDFLARE_API_TOKEN` | `{ model: "clef"\|"clef-flash", state, questions, images? }` | `{ success, result: { model, answers, usage } }` | **Live** (2026-11-05, `clef-flash`, 0.40 s, HTTP 200; 2026-11-11 `clef` and `clef-flash` through `verdict run --models`) + official model pages |
 | `openrouter` | `POST https://openrouter.ai/api/alpha/decisions` | System One shape, `model: typesafe/jev-1.13` | System One shape | Public write-ups only |
 | `openai` (Decisions API) | `POST https://api.openai.com/v1/decisions` | `noul` sent as `predicate` | parsed defensively (`noul` / `predicate` / `probability`) | Public write-ups only (beta) |
 | `systemone` | `baseUrl` + `/systemone` | System One shape | System One shape | By construction (same as Jev) |

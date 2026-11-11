@@ -200,21 +200,27 @@ function compareItem(rubric: Rubric, item: LabelledCase, ev: Evaluation, preview
   };
 }
 
+/**
+ * What was answered on one criterion, on the criterion's own terms: the option id for choices, a value on its scale
+ * otherwise. Null while it waits on a human or failed. `confidence` is the model's, where a model answered.
+ */
+export function criterionAnswer(rubric: Rubric, criterion: Criterion, result: CriterionResult | undefined): { answer: number | string | null; confidence: number | null } {
+  const confidence = modelConfidence(result?.ratings ?? []);
+  // Choices are option ids: two options that share a value are still different answers.
+  if (criterion.choices) return { answer: result?.status === "scored" ? result.choice ?? null : null, confidence };
+  const scored = result?.status === "scored" && typeof result.normalized === "number";
+  // On the criterion's own scale, as calibrate() does, so "close" never counts as a match.
+  return { answer: scored ? denormalizeScore(result.normalized!, criterionScale(rubric, criterion)) : null, confidence };
+}
+
 function compareCriterion(rubric: Rubric, id: string, value: number | string | boolean, result: CriterionResult | undefined): CriterionAgreement | undefined {
   const criterion = rubric.criteria.find((c) => c.id === id);
   // Labels for criteria the rubric doesn't have are ignored: gold sets outlive rubric edits.
   if (!criterion) return undefined;
   const human = readLabel(rubric, criterion, value);
-  const confidence = modelConfidence(result?.ratings ?? []), askedHuman = result?.status === "pending";
-  if (typeof human === "string") {
-    // Choices compare option ids: two options that share a value are still different answers.
-    const verdict = result?.status === "scored" ? result.choice ?? null : null;
-    return { verdict, human, confidence, agrees: verdict === null ? null : verdict === human, askedHuman };
-  }
+  const { answer: verdict, confidence } = criterionAnswer(rubric, criterion, result), askedHuman = result?.status === "pending";
+  if (typeof human === "string") return { verdict, human, confidence, agrees: verdict === null ? null : verdict === human, askedHuman };
   const scale = criterionScale(rubric, criterion);
-  const scored = result?.status === "scored" && typeof result.normalized === "number";
-  // Compare on the criterion's own scale, as calibrate() does, so "close" never counts as a match.
-  const verdict = scored ? denormalizeScore(result.normalized!, scale) : null;
   const agrees = verdict === null ? null : verdict === denormalizeScore(normalizeScore(human, scale), scale);
   return { verdict, human, confidence, agrees, askedHuman };
 }
