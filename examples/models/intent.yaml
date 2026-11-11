@@ -1,0 +1,13 @@
+# One rubric for `verdict run --models`: it names no model, so its decision judge is the default (Jev) until you say otherwise.
+name: Wants a human
+context: Messages sent to a support bot. Decide whether the customer is asking to be handed to a person.
+criteria:
+  - id: wants_human
+    name: Asks for a person
+    description: The customer asks, directly or indirectly, to talk to a human agent instead of the bot.
+    scale: { type: binary, labels: ["no", "yes"] }
+    anchors: { "no": "No request for a person; a question the bot can answer.", "yes": "Asks for an agent, a human, a representative, or to stop talking to the bot." }
+  - id: urgency
+    name: Urgency
+    scale: { type: ordinal, labels: [low, medium, high] }
+    anchors: { low: "No time pressure.", medium: "Wants it soon.", high: "Blocked now, money or access at stake." }

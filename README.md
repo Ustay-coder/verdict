@@ -1,4 +1,29 @@
-# Verdict — the evaluation engine API
+# Verdict — one rubric, every decision model
+
+**Write the rubric once. Run it on Jev, Clef and any other decision model, and see which one agrees with your labels.**
+
+Decision models (TypeSafe **Jev**, Cloudflare **Clef**, OpenAI's Decisions API, …) answer typed questions with probabilities instead of prose. Every vendor publishes benchmarks; none of them is about your cases. Verdict turns a rubric — criteria, scales, levels — into the questions these models take, sends the same questions to each, and puts the answers side by side:
+
+```bash
+npm install -g @verdict-ai/cli
+verdict run -r examples/models/intent.yaml -d examples/models/cases.jsonl --models jev,clef,clef-flash
+```
+
+```text
+Wants a human × cases.jsonl: 4 case(s), 3 model(s), the same questions to each
+  model        answered by             agreed with labels   failed   asked a human   input tokens   calls   time
+  jev          typesafe/jev-1.14.0     7/8 (88%)            0        0               2,041          4       0.5 s
+  clef         cloudflare/clef         7/8 (88%)            0        0               1,547          4       0.9 s
+  clef-flash   cloudflare/clef-flash   8/8 (100%)           0        0               1,547          4       0.4 s
+the models gave one answer on 7 of 8 question(s) they all answered; they differ on 1:
+  explicit · urgency   expected medium   jev low (0.67) | clef low (0.53) | clef-flash medium (0.11)
+```
+
+That is a real run of the [example](examples/models) in this repository (2026-11-11); for your own, start from `verdict rubric init` and a file of cases. Four cases say nothing about which model is better — the point is that the table is about *your* cases once you bring them. The rubric file is not edited: `--models` re-points its decision judges, one run per model, and each run is kept, so `verdict diff --base run_… --head run_…` shows any two case by case. A model is `jev`, `clef`, `clef-flash`, or `provider:model` (`typesafe:jev-1.14.0`, `openrouter:typesafe/jev-1.13`, `openai:<model>`, `systemone:<model>` for any endpoint that speaks the same request). Each provider's key comes from your environment (`TYPESAFE_API_KEY`; `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_API_TOKEN`); a model that cannot answer gets a row that says why. **Checked against the live services: Jev, Clef and Clef-flash.** The OpenRouter and OpenAI adapters are written from public documentation and have not been checked against the live endpoints yet ([docs/PROVIDERS.md](docs/PROVIDERS.md)).
+
+**Then keep the rubric where every machine can reach it.** A Verdict server (this repository, self-hosted) stores every frozen version and says which one each environment runs. `verdict login`, then `verdict push intent.yaml` uploads a version; any other machine judges with it by name — `verdict run -r intent --env prod -d cases.jsonl` — with no rubric file and its own model keys. The server never receives a case, an input or an answer. See [Using a rubric from any machine](website/guide/versions.md#using-a-rubric-from-any-machine).
+
+## Verdict — the evaluation engine API
 
 **Score anything, your way.** Send documents, websites, YouTube links, JSON or raw text; define *what* to grade (criteria), *who* grades it (decision models such as Jev or Clef, humans, deterministic benchmarks) and *how* scores roll up (aggregation). Get a number, a grade, a pass/fail and per-criterion probability distributions back in one call — via REST, CLI, MCP or the TypeScript SDK.
 

@@ -20,7 +20,7 @@ The `verdict` binary uses the local engine and `.verdict` file store by default.
 | `check` | Run a rubric over a human-labelled gold set and report agreement |
 | `version freeze`, `version show`, `version list`, `version export`, `version verify` | Freeze rubric files into content-addressed versions, record them in `verdict.lock`, export a version exactly, and check in CI that files still match the lock |
 | `fork` | Copy a version (`rv_…`, a rubric file, or a hub card `hub:owner/slug@rv_…`) into a new rubric file to edit; the parent is recorded in `verdict.lock` |
-| `run` | Run a rubric version over a gold file and keep the run |
+| `run` | Run a rubric version over a gold file and keep the run. `--models jev,clef,clef-flash` runs it once per decision model instead, without editing the rubric, and shows the models side by side ([guide](../guide/decision-models#which-model-on-your-cases)) |
 | `diff` | Compare two versions or runs case by case (fixed, regressed, near boundary…); a policy-only change is re-scored from recorded answers without judge calls (`--rerun` asks again); `--fail-on regressed` gates CI; `--markdown` for PR comments |
 | `rescore` | Score a stored run against new labels without calling judges |
 | `hub login`, `hub whoami`, `hub list`, `hub logout` | Sign in to a hub with GitHub (device flow), check who you publish as, list your publications, sign out (revokes the key) |
