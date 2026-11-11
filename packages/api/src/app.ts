@@ -33,7 +33,7 @@ export interface Auth {
    * single-tenant open mode. A bare tenant id means an unnamed key made the request.
    *
    * `request` is the request being authenticated, for servers where the key alone does not settle the tenant: a
-   * person who belongs to several organisations names one (`x-verdict-org`), and a browser sends a session cookie
+   * person who belongs to several organizations names one (`x-verdict-org`), and a browser sends a session cookie
    * and no key. Servers that map a key to one tenant ignore it.
    */
   resolve(apiKey: string | undefined, request?: Request): Promise<string | Identity | undefined> | string | Identity | undefined;

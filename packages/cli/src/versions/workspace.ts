@@ -64,6 +64,9 @@ async function keep(ws: Workspace, rubric: Rubric, parent?: RubricVersion, note?
   return remember(ws, await freezeRubric(rubric, { ...(parent ? { parent } : {}), ...(note ? { note } : {}) }));
 }
 
+/** The same rubric on mock providers: another binding, so another version (kept, like any version that runs). */
+export const mocked = (ws: Workspace, version: RubricVersion): Promise<RubricVersion> => keep(ws, mockify(version.rubric));
+
 /** Stores a version unless one with its id is already there, and returns the stored one. */
 export async function remember(ws: Workspace, version: RubricVersion): Promise<RubricVersion> {
   // Content-derived ids make this idempotent: re-freezing keeps the first createdAt.

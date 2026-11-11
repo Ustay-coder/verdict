@@ -6,7 +6,7 @@ import { freezeRubric, loadRubricText, rubricToYaml } from "@verdict-ai/core";
 import { Command } from "commander";
 import { dirname, resolve } from "node:path";
 
-import { readLock, updateLock } from "../versions/lock.js";
+import { lockFrozen, readLock } from "../versions/lock.js";
 import { renderVersion } from "../versions/render.js";
 import { resolveVersion, versionDefaults, workspace, type VersionDependencies } from "../versions/workspace.js";
 
@@ -21,11 +21,7 @@ export function registerVersion(program: Command, deps: VersionDependencies = ve
     .action(async (file: string, o: LockOption & { json?: boolean }) => {
       const ws = workspace(deps, o);
       const { version: v } = await resolveVersion(ws, file);
-      await updateLock(deps.lockIo, ws.lockPath, file, (entry) => {
-        // A run recorded for an older version says nothing about this one.
-        const { verified, ...rest } = entry;
-        return { ...rest, version: v.id, contentHash: v.contentHash, judgmentHash: v.judgmentHash, ...(verified && entry.version === v.id ? { verified } : {}) };
-      });
+      await lockFrozen(deps.lockIo, ws.lockPath, file, v);
       if (o.json) { deps.out(JSON.stringify(v, null, 2)); return; }
       for (const line of renderVersion(v)) deps.out(line);
     });

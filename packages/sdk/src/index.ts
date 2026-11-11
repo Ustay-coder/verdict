@@ -19,7 +19,7 @@ export interface VerdictOptions {
   fetch?: typeof fetch;
   /** Request timeout in ms (sync evaluations can take a while). Default 10 min. */
   timeoutMs?: number;
-  /** The organisation requests are about, on servers where one key reaches several (sent as `x-verdict-org`). Other servers ignore it. */
+  /** The organization requests are about, on servers where one key reaches several (sent as `x-verdict-org`). Other servers ignore it. */
   org?: string;
 }
 
@@ -203,7 +203,9 @@ export class Verdict {
   environments = {
     create: (project: string, name: string) => this.request<EnvironmentView>("POST", `/v1/projects/${seg(project)}/environments`, { name }),
     list: (project: string) => this.request<{ data: EnvironmentView[] }>("GET", `/v1/projects/${seg(project)}/environments`),
-    get: (project: string, name: string) => this.request<EnvironmentView & { pointers: PointerView[] }>("GET", `/v1/projects/${seg(project)}/environments/${seg(name)}`),
+    /** `include: "rubrics"` adds each pointer's rubric document: everything the environment runs, in one answer. Freeze a document and compare its id before using it. */
+    get: <I extends "rubrics" | undefined = undefined>(project: string, name: string, opts: { include?: I } = {}) =>
+      this.request<EnvironmentView & { pointers: Array<PointerView & (I extends "rubrics" ? { rubric: unknown } : unknown)> }>("GET", `/v1/projects/${seg(project)}/environments/${seg(name)}${query(opts)}`),
     delete: (project: string, name: string) => this.request<void>("DELETE", `/v1/projects/${seg(project)}/environments/${seg(name)}`, { confirm: name }),
     /** Moves pointers, all or none. `versionId: null` removes a pointer. A stale `expected` throws `pointer_conflict`. */
     promote: (project: string, name: string, request: PromotionRequest) =>

@@ -27,7 +27,7 @@ console.log(evaluation.aggregate, replayed);
 | `batches` | `create`, `createIdempotent` |
 | `publications` | `preview`, `create`, `list`, `withdraw` (public hub) |
 | `projects` | `create(name)`, `list`, `delete(name)`, `history(project, { environment, name, limit })` |
-| `environments` | `create(project, name)`, `list(project)`, `get(project, name)` (with pointers), `delete(project, name)`, `promote(project, name, { changes, note })`, `rollback(project, name, { name, expected, note })` |
+| `environments` | `create(project, name)`, `list(project)`, `get(project, name, { include? })` (with pointers; `include: "rubrics"` adds each pointer's rubric document), `delete(project, name)`, `promote(project, name, { changes, note })`, `rollback(project, name, { name, expected, note })` |
 | `versions` | `names(project)`, `push(project, name, { id, rubric })`, `list(project, name)`, `get(project, name, id)`, `delete(project, name, id)` |
 | `reports` | `run(project, request)`, `runs(project, { name, versionId, dataset, limit })`, `getRun(project, runId)`, `comparison(project, request)`, `comparisons(project, { name, head, limit })`. Build requests with `runReportRequest` / `comparisonReportRequest` from `@verdict-ai/core`: they copy conditions and counts only |
 | `hub` | `config`, `login(githubToken)`, `me`, `revokeKey(id)` (hub sign-in); `search(q)`, `card(owner, slug, { version })`, `publication(id)` (public reads, no key) |

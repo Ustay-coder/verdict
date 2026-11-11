@@ -23,7 +23,7 @@ export interface LockEntry {
 
 export interface Lock { lockVersion: 1; rubrics: Record<string, LockEntry> }
 
-const HEADER = "# verdict.lock — written by `verdict version freeze`, `fork`, `run`, `push` and `promote`. Commit it; `verdict version verify` checks it.\n";
+const HEADER = "# verdict.lock — written by `verdict version freeze`, `fork`, `run`, `push`, `pull` and `promote`. Commit it; `verdict version verify` checks it.\n";
 
 /** Reads and writes text files; `read` resolves undefined for a missing file. */
 export interface LockIo { read(path: string): Promise<string | undefined>; write(path: string, text: string): Promise<void> }
@@ -46,6 +46,14 @@ export async function writeLock(io: LockIo, path: string, lock: Lock): Promise<v
 export function lockKey(lockPath: string, file: string): string {
   const rel = relative(dirname(resolve(lockPath)), resolve(file));
   return rel.split(sep).join("/");
+}
+
+/** Records that `file` froze to `version`. A run recorded for another version says nothing about this one, so it goes. */
+export function lockFrozen(io: LockIo, lockPath: string, file: string, version: { id: string; contentHash: string; judgmentHash: string }): Promise<LockEntry> {
+  return updateLock(io, lockPath, file, (entry) => {
+    const { verified, ...rest } = entry;
+    return { ...rest, version: version.id, contentHash: version.contentHash, judgmentHash: version.judgmentHash, ...(verified && entry.version === version.id ? { verified } : {}) };
+  });
 }
 
 /** Reads the lock, applies `change` to one file's entry, and writes it back. */

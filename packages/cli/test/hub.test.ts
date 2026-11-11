@@ -176,7 +176,8 @@ describe("verdict pull and fork hub:", () => {
     await expect(t.run("pull", "hub:alice/agent-intent")).rejects.toThrow(/exists; pass --force/);
     expect(await t.run("pull", `hub:alice/agent-intent@${versionId}`, "--to", "copy.yaml", "--no-cases")).toHaveLength(1);
     await expect(t.run("pull", "hub:alice/nothing")).rejects.toThrow(/no card alice\/nothing/);
-    await expect(t.run("pull", "alice/agent-intent")).rejects.toThrow(/not a hub reference/);
+    // Without `hub:` it is neither a card nor a rubric on a team's server, and the message says how to write both.
+    await expect(t.run("pull", "alice/agent-intent")).rejects.toThrow(/expected a hub card \(hub:owner\/slug\[@rv_…\]\) or a rubric on your team's server/);
   });
 
   it("forks a card: the hub version becomes the recorded parent, and freezing the edit lists what changed", async () => {

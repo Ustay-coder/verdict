@@ -9,16 +9,19 @@ import { dirname, resolve } from "node:path";
 import { commandDefaults, type CommandDependencies } from "../command-deps.js";
 import { readText } from "../files.js";
 import { loadCommandRubric } from "../remote.js";
+import { addServerRefOptions, serverRubric, type ServerRefOptions } from "../control/server-ref.js";
+import type { HubDependencies } from "../hub/deps.js";
 import { guardRubric } from "../versions/guard.js";
 
-type CheckDependencies = CommandDependencies & { loadRubric: typeof loadCommandRubric; readText: typeof readText; guard?: typeof guardRubric };
+type CheckDependencies = CommandDependencies & { loadRubric: typeof loadCommandRubric; readText: typeof readText; guard?: typeof guardRubric; server?: HubDependencies };
 
 /** Registers the check command; handler failures propagate to the CLI failure handler. */
 export function registerCheck(program: Command, deps: CheckDependencies = { ...commandDefaults, loadRubric: loadCommandRubric, readText }) {
-  program.command("check").description("run a rubric over a human-labelled gold set and report agreement with the humans")
-    .requiredOption("-r, --rubric <fileOrId>").requiredOption("-g, --gold <file>", "JSON array or JSON lines of {id?, name, inputs, expected?: {criterion: label}, human?: {passed?, criteria?}, labelSource?, split?}")
+  const command = program.command("check").description("run a rubric over a human-labelled gold set and report agreement with the humans")
+    .requiredOption("-r, --rubric <ref>", "rubric file, stored rubric id, or a name on your team's server: <name> with --env, <name>@latest, <name>@rv_…").requiredOption("-g, --gold <file>", "JSON array or JSON lines of {id?, name, inputs, expected?: {criterion: label}, human?: {passed?, criteria?}, labelSource?, split?}")
     .option("--json").option("--mock", "use mock providers (no API calls)")
-    .option("--strict", "fail when the rubric file no longer matches verdict.lock or its locked run").option("--lock <path>", "lock file", "verdict.lock")
+    .option("--strict", "fail when the rubric file no longer matches verdict.lock or its locked run").option("--lock <path>", "lock file", "verdict.lock");
+  addServerRefOptions(command)
     .action(async (o: CheckOptions) => {
       // The gold set lives on this machine, so a configured remote API cannot run the check.
       if (deps.remote()) return deps.fail("check runs on the local engine; unset VERDICT_API_URL");
@@ -26,7 +29,7 @@ export function registerCheck(program: Command, deps: CheckDependencies = { ...c
       const items = parseGoldSet(await deps.readText(goldPath), dirname(goldPath));
       const guard = await (deps.guard ?? guardRubric)(o.rubric, o);
       const engine = deps.engine();
-      const report = await checkAgainstHumans(engine, await deps.loadRubric(o.rubric, o.mock), items);
+      const report = await checkAgainstHumans(engine, (await serverRubric(o.rubric, o, deps.server)) ?? (await deps.loadRubric(o.rubric, o.mock)), items);
       if (o.json) deps.out(JSON.stringify(report, null, 2));
       else for (const line of renderAgreement(report)) deps.out(line);
       const evaluations = await Promise.all(report.results.map((r) => engine.store.getEvaluation(r.evaluationId)));
@@ -65,4 +68,4 @@ function provenanceLines(report: AgreementReport): string[] {
   return lines;
 }
 
-interface CheckOptions { rubric: string; gold: string; json?: boolean; mock?: boolean; strict?: boolean; lock?: string }
+interface CheckOptions extends ServerRefOptions { rubric: string; gold: string; json?: boolean; mock?: boolean; strict?: boolean; lock?: string }

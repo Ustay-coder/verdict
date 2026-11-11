@@ -7,18 +7,19 @@ import { Command } from "commander";
 
 import { rubricNameFor } from "../control/names.js";
 import { addReportOptions, openReporter, ownAgreement, type Reporter, type ReportOptions } from "../control/report.js";
+import { addServerRefOptions, resolveRef, serverRef } from "../control/server-ref.js";
 import { withHub } from "../hub/deps.js";
 import { renderComparison, renderComparisonMarkdown } from "../versions/render.js";
-import { isRubricFile, latestRun, loadRun, resolveDataset, resolveVersion, versionDefaults, workspace, type LoadedRun, type VersionDependencies, type Workspace } from "../versions/workspace.js";
+import { isRubricFile, latestRun, loadRun, resolveDataset, versionDefaults, workspace, type LoadedRun, type VersionDependencies, type Workspace } from "../versions/workspace.js";
 
-interface DiffOptions extends ReportOptions { base: string; head: string; data?: string; labels?: string; mock?: boolean; rerun?: boolean; failOn?: string; nearMargin?: string; json?: boolean; markdown?: boolean; title?: string; lock?: string }
+interface DiffOptions extends ReportOptions { base: string; head: string; env?: string; data?: string; labels?: string; mock?: boolean; rerun?: boolean; failOn?: string; nearMargin?: string; json?: boolean; markdown?: boolean; title?: string; lock?: string }
 
 const GATES = ["fixed", "regressed", "kept_miss", "changed_unlabelled", "escalated", "error", "missing", "incomparable", "near_boundary"] as const;
 
 /** Registers diff; failures reach the CLI failure handler, a tripped gate only sets the exit code. */
 export function registerDiff(program: Command, deps: VersionDependencies = versionDefaults) {
   const command = program.command("diff").description("compare two rubric versions or runs case by case (local engine)")
-    .requiredOption("--base <ref>", "rubric file, rv_… or run_…").requiredOption("--head <ref>", "rubric file, rv_… or run_…")
+    .requiredOption("--base <ref>", "rubric file, rv_…, run_…, or a name on your team's server (<name> with --env, <name>@latest, <name>@rv_…)").requiredOption("--head <ref>", "the same")
     .option("-d, --data <file>", "gold cases to run on (required unless both refs are runs)")
     .option("--labels <file>", "score both sides against these labels instead (same inputs)")
     .option("--rerun", "run again even when a stored run of the same version and inputs exists")
@@ -27,7 +28,7 @@ export function registerDiff(program: Command, deps: VersionDependencies = versi
     .option("--mock", "use mock providers for rubric files and versions").option("--lock <path>", "lock file", "verdict.lock").option("--json")
     .option("--markdown", "print GitHub-flavoured Markdown (PR comments, job summaries)").option("--title <text>", "Markdown heading", "Verdict diff")
     .option("--report", "report both runs and the comparison's counts to a project (no cases, inputs or outputs are sent)");
-  addReportOptions(command)
+  addServerRefOptions(addReportOptions(command), false)
     .action(async (o: DiffOptions) => {
       const gates = parseGates(o.failOn);
       const nearMargin = Number(o.nearMargin);
@@ -35,8 +36,8 @@ export function registerDiff(program: Command, deps: VersionDependencies = versi
       const ws = workspace(deps, o);
       const reporter = o.report ? await openReporter(withHub(deps), ws, o) : undefined;
       const dataset = o.data ? await resolveDataset(ws, o.data) : undefined;
-      const base = await side(ws, o.base, dataset, o.rerun);
-      const head = await side(ws, o.head, dataset, o.rerun, base);
+      const base = await side(ws, o, o.base, dataset);
+      const head = await side(ws, o, o.head, dataset, base);
       const labels = o.labels ? await resolveDataset(ws, o.labels) : dataset ?? (await requireDataset(ws, head.run.datasetVersionId));
       const comparison = compareRuns(base, head, labels, { nearMargin });
       if (o.json) deps.out(JSON.stringify(comparison, null, 2));
@@ -58,7 +59,9 @@ export function registerDiff(program: Command, deps: VersionDependencies = versi
 /** Both runs, each scored against the labels it ran on, then the comparison's counts. Said on stderr. */
 async function report(ws: Workspace, reporter: Reporter, o: DiffOptions, done: { base: LoadedRun; head: LoadedRun; comparison: Comparison }) {
   const file = (ref: string) => (isRubricFile(ref) ? ref : undefined);
-  const name = await rubricNameFor(ws, o.name, [{ version: done.head.version, file: file(o.head) }, { version: done.base.version, file: file(o.base) }]);
+  // A side named on the server says what the rubric is called there.
+  const said = o.name ?? serverRef(o.head, o)?.name ?? serverRef(o.base, o)?.name;
+  const name = await rubricNameFor(ws, said, [{ version: done.head.version, file: file(o.head) }, { version: done.base.version, file: file(o.base) }]);
   for (const loaded of [done.base, done.head]) {
     const { agreement, datasetName } = await ownAgreement(ws, loaded);
     ws.deps.warn(await reporter.run(name, loaded, agreement, datasetName));
@@ -66,10 +69,11 @@ async function report(ws: Workspace, reporter: Reporter, o: DiffOptions, done: {
   ws.deps.warn(await reporter.comparison(name, done.comparison));
 }
 
-async function side(ws: Workspace, ref: string, dataset: DatasetVersion | undefined, rerun?: boolean, base?: LoadedRun): Promise<LoadedRun> {
+async function side(ws: Workspace, o: DiffOptions, ref: string, dataset: DatasetVersion | undefined, base?: LoadedRun): Promise<LoadedRun> {
+  const { rerun } = o;
   if (ref.startsWith("run_")) return loadRun(ws, ref);
   if (!dataset) throw new ValidationError(`--data is required to run ${ref}`);
-  const { version } = await resolveVersion(ws, ref);
+  const { version } = await resolveRef(ws, ref, o);
   const stored = rerun ? undefined : await latestRun(ws, version, dataset);
   if (stored) {
     ws.deps.warn(`reusing ${stored.id} (${stored.startedAt}) for ${version.id}; --rerun to run again`);
