@@ -1,5 +1,7 @@
 # Providers
 
+Every model and input on one page: [Models and inputs](./models). This page is how to configure each provider.
+
 Choose an adapter below, set its environment variables in the process running Verdict, and copy its `defaultJudge` into your rubric. Remote clients configure credentials on the API server, not in the client. Never put secret values in YAML.
 
 ## TypeSafe Jev

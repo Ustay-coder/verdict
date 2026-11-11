@@ -23,6 +23,28 @@ That is a real run of the [example](examples/models) in this repository (2026-11
 
 **Then keep the rubric where every machine can reach it.** A Verdict server (this repository, self-hosted) stores every frozen version and says which one each environment runs. `verdict login`, then `verdict push intent.yaml` uploads a version; any other machine judges with it by name — `verdict run -r intent --env prod -d cases.jsonl` — with no rubric file and its own model keys. The server never receives a case, an input or an answer. See [Using a rubric from any machine](website/guide/versions.md#using-a-rubric-from-any-machine).
 
+## Models and inputs
+
+| Name it | Model | Service | Checked against the live service | Images |
+| --- | --- | --- | --- | --- |
+| `jev` | Jev | TypeSafe | Yes | No, text only |
+| `clef` | Clef | Cloudflare Workers AI | Yes | Up to 4 |
+| `clef-flash` | Clef-flash | Cloudflare Workers AI | Yes | Up to 4 |
+| `openrouter:<model>` | For example `typesafe/jev-1.13` | OpenRouter | Not yet | No |
+| `openai:<model>` | OpenAI's Decisions API | OpenAI | Not yet | No |
+| `systemone:<model>` | Any endpoint that takes the same request | Yours | You check it | No |
+
+| Input | With `verdict eval -i` | What the judge receives |
+| --- | --- | --- |
+| Text | `text:…`, a text file, or `-` | the text |
+| File | a `.pdf`, `.html`, `.md`, `.txt` or `.json` path | its text |
+| JSON | `json:{…}` | the document, checkable against a schema |
+| Web page | a URL | the page's visible text; with `--screenshot`, a picture too |
+| YouTube | a YouTube URL | the transcript |
+| Image | a `.png`, `.jpg` or `.webp` path | the picture, for models that take images |
+
+Rules (`benchmark`), people (`human`) and prompted models (`llm`) can judge a criterion too. Keys, context sizes and what each scale becomes: [Models and inputs](https://docs.verdict-ai.dev/reference/models).
+
 ## Verdict — the evaluation engine API
 
 **Score anything, your way.** Send documents, websites, YouTube links, JSON or raw text; define *what* to grade (criteria), *who* grades it (decision models such as Jev or Clef, humans, deterministic benchmarks) and *how* scores roll up (aggregation). Get a number, a grade, a pass/fail and per-criterion probability distributions back in one call — via REST, CLI, MCP or the TypeScript SDK.

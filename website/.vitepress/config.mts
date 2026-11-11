@@ -74,6 +74,10 @@ export default defineConfig({
             "link": "/reference/rubric"
           },
           {
+            "text": "Models and inputs",
+            "link": "/reference/models"
+          },
+          {
             "text": "Providers",
             "link": "/reference/providers"
           },
