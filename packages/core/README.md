@@ -19,4 +19,4 @@ console.log(evaluation.status);
 console.log(evaluation.aggregate.score);
 ```
 
-Requires Node 20 or newer. [Documentation](https://verdict-docs.developerolim.workers.dev/reference/rest). MIT licensed.
+Requires Node 20 or newer. [Documentation](https://docs.verdict-ai.dev/reference/rest). MIT licensed.

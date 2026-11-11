@@ -71,7 +71,7 @@ Every hiring pipeline, accelerator, grant committee, school, hackathon, content 
 
 ## Documentation
 
-Read the [Verdict documentation](https://verdict-docs.developerolim.workers.dev) for guides, API references, and complete example rubrics. This Pages URL is the placeholder until a domain is chosen.
+Read the [Verdict documentation](https://docs.verdict-ai.dev) for guides, API references, and complete example rubrics.
 
 ## Install
 
@@ -95,7 +95,7 @@ Run `scripts/release.sh 0.1.0 --tag-only` to bump the publishable package versio
 
 Configure `NPM_TOKEN` in GitHub Actions as a **granular automation token** with publish access to the selected scope. The workflow uses Node 22, registry authentication, and `id-token: write` for provenance. Root LICENSE is copied into packages by `prepack`; generated copies are ignored by git.
 
-Build docs with `pnpm --filter verdict-website build`. `scripts/deploy-docs.sh` creates the `verdict-docs` Pages project if missing and deploys it. The docs workflow deploys main using `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` secrets; create the project once with the script before the first CI deployment.
+Build docs with `pnpm --filter verdict-website build`. `scripts/deploy-docs.sh` deploys it as a Cloudflare Worker with static assets (`website/wrangler.toml`) at `docs.verdict-ai.dev`. The docs workflow deploys main using the `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` secrets; the token needs Workers Scripts: Edit and, for the domain, Workers Routes: Edit on the zone.
 
 ## Quick start
 
