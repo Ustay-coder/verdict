@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- OpenAI's Decisions API works: the adapter now sends what the live endpoint takes (`input`, an array of named questions, `levels` for a score, `choices` for a choice, a predicate with instructions only) and reads its array of answers. Before, it sent the System One shape and every request was refused (`Missing required parameter: 'input'`). Checked live with `gpt-6-luna`; `verdict run --models openai,jev,clef` puts it beside the others.
+- OpenRouter's decisions endpoint is checked live (`openrouter:typesafe/jev-1.13`); nothing had to change.
+- `verdict --version`, the API's root and OpenAPI document, and the MCP server report the version that was published. They said `0.1.0` in every release so far.
+- `examples/control-plane/demo.sh` stops at once and prints the server's log when its server cannot start (a port that is taken), where it used to wait and then fail with "fetch failed".
 - Documentation: [Models and inputs](https://docs.verdict-ai.dev/reference/models) lists every decision model with the name to give `--models`, its keys, whether it was checked against the live service, images and context; what each scale becomes as a question; the other judges; and every kind of input with how to pass it. The documentation's front page and the README carry the short tables.
 
 ## 0.3.0
