@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Documentation: [Models and inputs](https://docs.verdict-ai.dev/reference/models) lists every decision model with the name to give `--models`, its keys, whether it was checked against the live service, images and context; what each scale becomes as a question; the other judges; and every kind of input with how to pass it. The documentation's front page and the README carry the short tables.
+
 ## 0.3.0
 
 - One rubric, several decision models: `verdict run -r <rubric> -d <cases> --models jev,clef,clef-flash` runs the rubric once per model without editing it and shows the models side by side — agreement with your labels, failures, tokens, calls and time per model, then every case the models answered differently, with the expected label where there is one. A model is an alias (`jev`, `jev-preview`, `clef`, `clef-flash`) or `provider:model`. Only decision judges are re-pointed; each run is of a version that differs only in its binding and is kept for `verdict diff`. A model that could not answer keeps its row with the reason and is left out of the disagreements. `--json` prints the comparison. Core: `compareModels`, `answerLabel`, `criterionAnswer`. Checked live with Jev, Clef and Clef-flash (2026-11-11); `examples/models` is the rubric and cases of that run.
