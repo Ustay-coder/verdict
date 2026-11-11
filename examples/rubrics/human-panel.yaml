@@ -1,0 +1,35 @@
+# Hiring debrief: decision-model pre-screen with confidence gating + two interviewers, majority on a binary hire decision.
+name: Engineering hiring debrief
+scale: { type: numeric, min: 1, max: 4 }
+judges:
+  screen: { type: decision, provider: typesafe, minConfidence: 0.4, onLowConfidence: human, escalateTo: [interviewer_1, interviewer_2] }
+criteria:
+  - id: coding
+    name: Coding exercise
+    weight: 2
+    anchors:
+      "1": Does not compile or solve the task
+      "2": Works but unclear or untested
+      "3": "Correct, readable, some tests"
+      "4": "Correct, idiomatic, well tested"
+    judge: { type: ref, ref: screen }   # unsure answers fall through to an interviewer
+  - id: system_design
+    name: System design
+    weight: 2
+    judge: { type: human, raters: [interviewer_1, interviewer_2], required: 2 }
+    rater: mean
+  - id: communication
+    name: Communication
+    weight: 1
+    judge: [{ type: human, raters: [interviewer_1], required: 1 }, { type: human, raters: [interviewer_2], required: 1 }, { type: ref, ref: screen }]
+    rater: median
+  - id: hire
+    name: Hire?
+    weight: 0
+    scale: { type: binary, labels: [no hire, hire] }
+    judge: { type: human, raters: [interviewer_1, interviewer_2, hiring_manager], required: 3 }
+    rater: majority
+aggregation:
+  method: weighted_mean
+  gates: [{ criterion: hire, min: 1, message: Majority of the panel must vote hire }]
+  passThreshold: 70

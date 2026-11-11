@@ -1,0 +1,62 @@
+{
+  "name": "@verdict-ai/core",
+  "version": "0.1.0",
+  "description": "Verdict evaluation engine: rubrics, ingestion, judges (LLM / human / benchmark), aggregation.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "prepack": "node ../../scripts/package-license.mjs"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^1.5.0",
+    "html-to-text": "^10.0.1",
+    "unpdf": "^2.1.0",
+    "yaml": "^2.9.1",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/html-to-text": "^9.0.4"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ustay-coder/verdict.git",
+    "directory": "packages/core"
+  },
+  "homepage": "https://github.com/Ustay-coder/verdict#readme",
+  "bugs": {
+    "url": "https://github.com/Ustay-coder/verdict/issues"
+  },
+  "keywords": [
+    "evaluation",
+    "rubric",
+    "decision-model",
+    "jev",
+    "clef",
+    "scoring",
+    "llm-judge",
+    "mcp"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "sideEffects": false
+}

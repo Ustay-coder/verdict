@@ -1,0 +1,9 @@
+# Documentation site as a Cloudflare Worker with static assets (needs only the Workers Scripts permission).
+# Deploy: pnpm --filter verdict-website build && wrangler deploy   (or scripts/deploy-docs.sh from the repo root)
+name = "verdict-docs"
+compatibility_date = "2026-10-01"
+
+[assets]
+directory = "./.vitepress/dist"
+not_found_handling = "404-page"
+html_handling = "auto-trailing-slash"

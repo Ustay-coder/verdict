@@ -1,0 +1,75 @@
+# Documentation page quality — used on Verdict's own website (dogfooding). Input tags: `page` (the page under review),
+# `outline` (headings + first lines of every other page, for redundancy judgement).
+name: Documentation page quality
+version: "1"
+language: en
+context: |
+  You are reviewing one page of developer documentation for an API product. The reader is an engineer deciding whether
+  to adopt the product and then integrating it. Judge only the page tagged `page`; the `outline` input lists what the
+  other pages of the same site already cover and is there only to spot duplicated explanations.
+scale: { type: numeric, min: 1, max: 5 }
+defaultJudge: { type: decision, provider: typesafe, model: jev-latest }
+criteria:
+  - id: slop
+    name: Free of AI slop
+    weight: 3
+    inputs: [page]
+    anchors:
+      "1": Padded with generic filler, marketing adjectives, hedges and throat-clearing sentences that carry no information
+      "3": Mostly substantive but with noticeable filler, vague superlatives or sentences that restate the heading
+      "5": Every sentence carries specific information; no filler, no marketing adjectives, no restated headings
+  - id: redundancy
+    name: No duplicated explanation
+    weight: 3
+    inputs: [page, outline]
+    anchors:
+      "1": Re-explains at length concepts that other pages already cover instead of linking to them
+      "3": Some overlap with other pages; a few paragraphs could be replaced by a link
+      "5": Explains each thing once, in the right place, and links elsewhere instead of repeating
+  - id: concreteness
+    name: Concrete and runnable
+    weight: 2
+    inputs: [page]
+    anchors:
+      "1": Abstract prose only; no commands, code, field names or example values
+      "3": Some examples, but key steps are described rather than shown, or examples are incomplete
+      "5": Commands, code and field names the reader can copy; examples complete enough to run
+  - id: structure
+    name: Scannable structure
+    weight: 2
+    inputs: [page]
+    anchors:
+      "1": Walls of text, headings that do not match content, or no headings
+      "3": Headings exist but paragraphs mix several ideas or the order forces the reader to jump around
+      "5": Headings answer the reader's questions in order; one idea per paragraph; tables or lists where they help
+  - id: audience
+    name: Audience fit
+    weight: 2
+    inputs: [page]
+    anchors:
+      "1": Explains basics the reader already knows or assumes internal knowledge the reader cannot have
+      "3": Mostly right level but occasionally condescending or occasionally assumes unexplained internals
+      "5": Pitched exactly at an engineer evaluating and integrating the product
+  - id: next_step
+    name: Clear next step
+    weight: 1
+    inputs: [page]
+    anchors:
+      "1": The reader finishes without knowing what to do next
+      "3": Next steps are implied or buried
+      "5": The page ends or links so the reader knows exactly what to read or run next
+  - id: marketing_phrases
+    name: Marketing phrase count (benchmark)
+    weight: 1
+    inputs: [page]
+    judge: { type: benchmark, method: regex, pattern: "\\b(seamless(ly)?|robust|powerful|unlock|empower(s|ing)?|leverag(e|es|ing)|cutting[- ]edge|state[- ]of[- ]the[- ]art|effortless(ly)?|delve|streamlin(e|es|ing)|harness|supercharge|game[- ]chang(er|ing)|elevate|journey|best[- ]in[- ]class|world[- ]class|revolutioniz(e|es|ing)|comprehensive|holistic)\\b", flags: i, perMatch: 0.25, negate: true }
+  - id: length
+    name: Length within reason (benchmark)
+    weight: 1
+    inputs: [page]
+    judge: { type: benchmark, method: length, unit: words, min: 120, max: 1100, tolerance: 0.6 }
+aggregation:
+  method: weighted_mean
+  normalize: [0, 100]
+  grades: [{ label: good, min: 80 }, { label: ok, min: 65 }, { label: fix, min: 0 }]
+  passThreshold: 65

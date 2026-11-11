@@ -1,0 +1,61 @@
+{
+  "name": "@verdict-ai/mcp",
+  "version": "0.1.0",
+  "description": "Verdict MCP server — expose the evaluation engine to any agent.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "verdict-mcp": "./dist/bin.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json && chmod +x dist/bin.js",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run --passWithNoTests",
+    "prepack": "node ../../scripts/package-license.mjs"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.32.2",
+    "@verdict-ai/core": "workspace:*",
+    "@verdict-ai/sdk": "workspace:*",
+    "zod": "^4.6.7"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ustay-coder/verdict.git",
+    "directory": "packages/mcp"
+  },
+  "homepage": "https://github.com/Ustay-coder/verdict#readme",
+  "bugs": {
+    "url": "https://github.com/Ustay-coder/verdict/issues"
+  },
+  "keywords": [
+    "evaluation",
+    "rubric",
+    "decision-model",
+    "jev",
+    "clef",
+    "scoring",
+    "llm-judge",
+    "mcp"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "sideEffects": false
+}

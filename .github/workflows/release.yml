@@ -1,0 +1,49 @@
+name: release
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+permissions:
+  contents: write
+  id-token: write
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          registry-url: https://registry.npmjs.org
+      - name: Is this version already on npm?
+        id: version
+        run: |
+          version=$(node -p 'require("./packages/core/package.json").version')
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          if npm view "@verdict-ai/core@$version" version >/dev/null 2>&1; then
+            echo "published=true" >> "$GITHUB_OUTPUT"; echo "@verdict-ai/core@$version is already published; nothing to do"
+          else
+            echo "published=false" >> "$GITHUB_OUTPUT"; echo "@verdict-ai/core@$version is not published yet"
+          fi
+      - if: steps.version.outputs.published == 'false'
+        run: pnpm install --frozen-lockfile
+      - if: steps.version.outputs.published == 'false'
+        run: pnpm build
+      - if: steps.version.outputs.published == 'false'
+        run: pnpm test
+      - name: Publish with provenance (pnpm skips versions already on npm)
+        if: steps.version.outputs.published == 'false'
+        # pnpm drops --provenance silently; npm reads it from the environment instead.
+        run: pnpm -r publish --access public --no-git-checks
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_CONFIG_PROVENANCE: 'true'
+      - name: Tag the release
+        if: steps.version.outputs.published == 'false' && github.ref == 'refs/heads/main'
+        run: |
+          tag="v${{ steps.version.outputs.version }}"
+          if git ls-remote --exit-code --tags origin "$tag" >/dev/null; then echo "$tag exists"; exit 0; fi
+          git config user.name github-actions && git config user.email github-actions@github.com
+          git tag -a "$tag" -m "Release $tag" && git push origin "$tag"

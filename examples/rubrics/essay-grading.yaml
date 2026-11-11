@@ -1,0 +1,47 @@
+# Academic essay grading — ordinal levels scored by a decision model in one call; a generative judge adds feedback prose.
+name: Essay grading
+version: "3"
+context: Grade an undergraduate argumentative essay for a first-year writing seminar.
+scale: { type: ordinal, labels: [poor, developing, proficient, excellent] }
+judges:
+  jev: { type: decision, provider: typesafe, model: jev-latest }
+  feedback: { type: llm, provider: anthropic, model: claude-opus-5-5, effort: medium, instructions: Write feedback the student can act on. }
+defaultJudge: { type: ref, ref: jev }
+criteria:
+  - id: thesis
+    name: Thesis & argument
+    weight: 3
+    anchors:
+      poor: No identifiable thesis
+      developing: Thesis present but vague or unsupported
+      proficient: Clear thesis supported by relevant evidence
+      excellent: Precise, arguable thesis sustained with well-integrated evidence
+  - id: structure
+    name: Organization
+    weight: 2
+    anchors:
+      poor: Paragraphs lack topic sentences; order feels random
+      developing: Some structure but transitions are weak
+      proficient: Logical order with clear transitions
+      excellent: Structure actively strengthens the argument
+  - id: style
+    name: Style & mechanics
+    weight: 1
+  - id: feedback
+    name: Written feedback (for the student)
+    weight: 0
+    judge: { type: ref, ref: feedback }
+  - id: length
+    name: Length requirement (800–1500 words)
+    weight: 0
+    judge: { type: benchmark, method: length, unit: words, min: 800, max: 1500, tolerance: 0.2 }
+  - id: citations
+    name: Has citations
+    weight: 0.5
+    scale: { type: binary, labels: [missing, present] }
+    judge: { type: benchmark, method: regex, pattern: "\\(\\w+,? \\d{4}\\)|\\[\\d+\\]" }
+aggregation:
+  method: weighted_mean
+  normalize: [0, 100]
+  gates: [{ criterion: length, min: 1, message: Essay must be within the required length }]
+  grades: [{ label: A, min: 90 }, { label: B, min: 80 }, { label: C, min: 70 }, { label: D, min: 60 }, { label: F, min: 0 }]

@@ -1,0 +1,69 @@
+/**
+ * Supplies the starter rubric written by the CLI init command.
+ * The example is standalone and contains environment references rather than embedded credentials.
+ */
+export const starterRubric = `# Verdict rubric — see docs/RUBRICS.md for every option
+name: Startup pitch review
+version: "1"
+description: Scores a pitch deck / website / demo video for an early-stage program.
+context: |
+  You are reviewing applications to a pre-seed accelerator. Be rigorous; most applicants should score in the middle.
+language: en
+scale: { type: numeric, min: 1, max: 5 }
+
+judges:
+  # Decision models answer every criterion in ONE call: state + typed questions -> probabilities (no prose).
+  jev:   { type: decision, provider: typesafe, model: jev-latest, minConfidence: 0.35, onLowConfidence: human, escalateTo: [partner_a, partner_b] }
+  clef:  { type: decision, provider: cloudflare, model: "@cf/cloudflare/clef-flash" }
+  # Generative judge: slower, costs more, but returns a rationale and quotes. Use it where you need an explanation.
+  claude: { type: llm, provider: anthropic, model: claude-opus-5-5, effort: medium }
+  partner:
+    type: human
+    raters: [partner_a, partner_b]
+    required: 1
+    instructions: Rate founder-market fit from the deck and any call notes.
+
+defaultJudge: { type: ref, ref: jev }
+
+criteria:
+  - id: problem
+    name: Problem clarity
+    weight: 2
+    # Anchors become the ordered rubric levels the decision model scores on (2-10 levels).
+    anchors:
+      "1": No clear problem stated
+      "3": Problem stated but audience/urgency vague
+      "5": "Specific, painful, quantified problem for a named audience"
+  - id: traction
+    name: Traction evidence
+    weight: 2
+    judge:
+      type: panel
+      combine: mean
+      judges:
+        - { type: ref, ref: jev }
+        - { type: ref, ref: clef }
+        - { type: benchmark, method: keywords, keywords: [revenue, users, customers, retention, MRR, ARR], mode: ratio }
+  - id: team
+    name: Team
+    weight: 1.5
+    judge: { type: ref, ref: partner }
+  - id: why_now
+    name: Why now (needs an explanation for the memo)
+    weight: 1
+    judge: { type: ref, ref: claude }
+  - id: deck_length
+    name: Deck is concise
+    weight: 0.5
+    optional: true
+    judge: { type: benchmark, method: length, unit: words, min: 300, max: 2500 }
+
+aggregation:
+  method: weighted_mean
+  normalize: [0, 100]
+  rater: mean
+  gates: [{ criterion: problem, min: 2, message: Problem must be at least somewhat clear }]
+  grades: [{ label: invite, min: 75 }, { label: maybe, min: 55 }, { label: pass, min: 0 }]
+  passThreshold: 55
+`;
+

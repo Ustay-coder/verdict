@@ -1,0 +1,48 @@
+{
+  "target": 90,
+  "gateTolerance": 1.0,
+  "maxRounds": 3,
+  "judge": "jev",
+  "agent": {
+    "command": "codex",
+    "args": [
+      "exec",
+      "--cd",
+      "."
+    ],
+    "timeoutMinutes": 90
+  },
+  "protectedPaths": [
+    "examples/rubrics/code-quality-repo.yaml",
+    "examples/rubrics/code-quality-file.yaml",
+    "scripts/code-metrics.mjs",
+    "scripts/score-code.mjs",
+    "scripts/harness/",
+    "eslint.config.mjs",
+    ".github/workflows/"
+  ],
+  "verify": {
+    "build": "pnpm -r --filter './packages/*' run build",
+    "typecheck": "pnpm typecheck",
+    "test": "pnpm test",
+    "lint": "pnpm lint --max-warnings 0",
+    "website": "pnpm --filter verdict-website build"
+  },
+  "metricsFloor": {
+    "cognitiveViolations": 0,
+    "longFunctions": 0,
+    "longFiles": 0,
+    "unusedVars": 0,
+    "duplicationMaxPct": 1.4,
+    "lintErrors": 0
+  },
+  "fileFocus": {
+    "minLines": 25,
+    "below": 82,
+    "max": 30
+  },
+  "commit": {
+    "enabled": true,
+    "author": "verdict-harness <harness@verdict.local>"
+  }
+}

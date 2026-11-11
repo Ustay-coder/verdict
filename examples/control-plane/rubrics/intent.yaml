@@ -1,0 +1,8 @@
+# Does the customer want a human agent? An offline rubric (keyword match), so the walk-through needs no model key.
+# In a real project this would be a decision-model question; nothing else in the example changes.
+name: Wants an agent
+criteria:
+  - id: wants
+    name: Wants an agent
+    scale: { type: binary, labels: [no, yes] }
+    judge: { type: benchmark, method: keywords, keywords: [agent] }

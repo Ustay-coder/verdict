@@ -1,0 +1,35 @@
+{
+  "name": "verdict-monorepo",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Verdict \u2014 the evaluation engine API. Customizable rubrics, pluggable judges (Decision AI / human / benchmark), customizable aggregation. API, CLI and MCP.",
+  "type": "module",
+  "packageManager": "pnpm@10.28.0",
+  "scripts": {
+    "build": "pnpm -r --filter './packages/*' run build",
+    "test": "pnpm -r --filter './packages/*' run test",
+    "typecheck": "pnpm -r --filter './packages/*' run typecheck",
+    "dev:api": "pnpm --filter @verdict-ai/api run dev",
+    "verdict": "node packages/cli/dist/bin.js",
+    "lint": "eslint packages/*/src",
+    "quality": "node scripts/score-code.mjs",
+    "quality:metrics": "node scripts/code-metrics.mjs",
+    "quality:improve": "node scripts/harness/run.mjs",
+    "smoke": "node scripts/harness/smoke.mjs"
+  },
+  "devDependencies": {
+    "@types/node": "^22.19.0",
+    "@vitest/coverage-v8": "^3.2.7",
+    "eslint": "^9.39.5",
+    "eslint-plugin-sonarjs": "^4.2.2",
+    "jscpd": "^5.4.2",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.72.1",
+    "vitest": "^3.2.4"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "better-sqlite3"
+    ]
+  }
+}

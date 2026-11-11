@@ -1,0 +1,103 @@
+# 청년창업 보육공간 입주심사 (한국어) — 사업계획서를 결정모델로 채점. 텍스트 전용: 도표·이미지 내용은 반영되지 않음.
+name: 청년창업 입주심사 (사업계획서)
+version: "1"
+language: ko
+context: |
+  지자체 청년창업 보육공간(청년디딤터) 입주 심사입니다. 초기 창업기업의 사업계획서를 심사위원 관점에서 평가합니다.
+  근거는 계획서 본문에 적힌 내용에 한정하고, 근거 없는 주장은 낮게 평가합니다.
+scale: { type: numeric, min: 1, max: 5 }
+judges:
+  jev:  { type: decision, provider: typesafe, model: jev-latest }
+  clef: { type: decision, provider: cloudflare, model: "@cf/cloudflare/clef-flash" }
+  panel: { type: panel, combine: mean, judges: [{ type: ref, ref: jev }, { type: ref, ref: clef }] }
+defaultJudge: { type: ref, ref: jev }
+checks:
+  - id: is_business_plan
+    question: 이 문서는 창업기업의 사업계획서(입주신청서 포함)인가?
+    criteria: { true: 사업 아이템, 고객, 기술, 추진계획 등이 서술된 사업계획서, false: 무관한 문서, 빈 양식, 스팸 }
+    action: abort
+    message: 사업계획서가 아님
+criteria:
+  - id: clarity
+    name: 사업 아이템의 명확성
+    group: 사업개요
+    weight: 15
+    anchors:
+      "1": 무엇을 파는지, 누구에게 파는지가 불분명함
+      "3": 아이템과 고객은 있으나 문제 정의나 해결 방식이 모호함
+      "5": 고객·문제·해결책이 구체적이고 서로 맞물려 설명됨
+  - id: problem_evidence
+    name: 고객 문제의 근거
+    group: 사업개요
+    weight: 10
+    anchors:
+      "1": 고객 문제를 추정만 함
+      "3": 일부 인터뷰나 사례로 문제를 뒷받침함
+      "5": 복수의 고객 인터뷰·사용 피드백으로 문제와 반복 부담을 구체적으로 입증함
+  - id: tech
+    name: 보유기술 및 구현 수준
+    group: 기술
+    weight: 15
+    anchors:
+      "1": 기술 설명이 없거나 계획 단계임
+      "3": 핵심 기술이 설명되나 구현 여부가 불분명함
+      "5": 실제 구현·운영 중인 기술과 아키텍처가 구체적으로 제시됨
+  - id: differentiation
+    name: 서비스 차별성
+    group: 기술
+    weight: 10
+    anchors:
+      "1": 경쟁 대안과의 차이가 없음
+      "3": 차별점을 주장하나 비교 근거가 약함
+      "5": 경쟁 대안 대비 차별점이 고객 관점에서 명확히 비교됨
+  - id: customer
+    name: 핵심고객 정의와 확보 가능성
+    group: 시장성
+    weight: 15
+    anchors:
+      "1": 고객이 막연함
+      "3": 고객군은 정의됐으나 확보 경로가 불명확함
+      "5": 구매 담당자까지 특정되고 실제 고객·PoC로 확보 가능성이 입증됨
+  - id: market
+    name: 시장 규모와 진입 전략
+    group: 시장성
+    weight: 10
+    anchors:
+      "1": 시장 규모 추정이 없음
+      "3": 시장 규모를 제시하나 근거나 진입 경로가 약함
+      "5": TAM·SAM·SOM과 진입 경로가 근거와 함께 제시됨
+  - id: traction
+    name: 추진 실적 (PoC·계약·매출)
+    group: 실적
+    weight: 10
+    anchors:
+      "1": 실적 없음
+      "3": PoC나 시범 사용 실적이 있음
+      "5": 유료 계약 또는 반복 사용 실적이 있음
+  - id: plan
+    name: 향후 추진계획의 구체성과 실현가능성
+    group: 계획
+    weight: 10
+    anchors:
+      "1": 일정·목표가 없음
+      "3": 일정은 있으나 지표나 자원 계획이 없음
+      "5": 단계별 일정·확인지표·자원(자금·인력) 계획이 구체적이고 현실적임
+  - id: team
+    name: 대표자 역량 및 조직 운영
+    group: 조직
+    weight: 5
+    anchors:
+      "1": 대표자 역량이 서술되지 않음
+      "3": 역할은 서술되나 관련 경험·전문성이 불명확함
+      "5": 사업과 직결된 경험·전문성과 운영 체계가 제시됨
+  - id: revenue_realism
+    name: 매출 목표의 현실성
+    group: 계획
+    weight: 0
+    scale: { type: binary, labels: [비현실적, 현실적] }
+    anchors: { 현실적: 매출 가정의 산식과 전제가 제시되고 과장되지 않음, 비현실적: 근거 없는 큰 숫자이거나 산식이 없음 }
+aggregation:
+  method: weighted_mean
+  normalize: [0, 100]
+  grades: [{ label: 선정, min: 80 }, { label: 보류, min: 65 }, { label: 탈락, min: 0 }]
+  passThreshold: 65

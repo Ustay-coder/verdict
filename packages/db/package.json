@@ -1,0 +1,86 @@
+{
+  "name": "@verdict-ai/db",
+  "version": "0.1.0",
+  "description": "Verdict persistence on Drizzle ORM — SQLite, Cloudflare D1 and Postgres.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./schema": {
+      "types": "./dist/schema/sqlite.d.ts",
+      "import": "./dist/schema/sqlite.js"
+    },
+    "./sqlite": {
+      "types": "./dist/sqlite.d.ts",
+      "import": "./dist/sqlite.js"
+    },
+    "./postgres": {
+      "types": "./dist/postgres.d.ts",
+      "import": "./dist/postgres.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "drizzle/"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate:local": "wrangler d1 migrations apply verdict --local",
+    "db:migrate:remote": "wrangler d1 migrations apply verdict --remote",
+    "db:generate:pg": "drizzle-kit generate --config drizzle.pg.config.ts",
+    "db:migrate:pg": "node --input-type=module -e 'const { fromPostgres } = await import(\"./dist/postgres.js\"); const h = await fromPostgres(process.env.DATABASE_URL); await h.close();'",
+    "prepack": "node ../../scripts/package-license.mjs"
+  },
+  "dependencies": {
+    "@verdict-ai/core": "workspace:*",
+    "drizzle-orm": "^0.45.4"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20261104.1",
+    "@electric-sql/pglite": "^0.5.15",
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/pg": "^8.23.1",
+    "drizzle-kit": "^0.31.11",
+    "miniflare": "^4.20260730.0"
+  },
+  "optionalDependencies": {
+    "better-sqlite3": "^13.0.3",
+    "pg": "^8.23.1"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ustay-coder/verdict.git",
+    "directory": "packages/db"
+  },
+  "homepage": "https://github.com/Ustay-coder/verdict#readme",
+  "bugs": {
+    "url": "https://github.com/Ustay-coder/verdict/issues"
+  },
+  "keywords": [
+    "evaluation",
+    "rubric",
+    "decision-model",
+    "jev",
+    "clef",
+    "scoring",
+    "llm-judge",
+    "mcp"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "sideEffects": false
+}

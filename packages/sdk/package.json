@@ -1,0 +1,55 @@
+{
+  "name": "@verdict-ai/sdk",
+  "version": "0.1.0",
+  "description": "Verdict TypeScript SDK — a Resend-style client for the evaluation API.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run --passWithNoTests",
+    "prepack": "node ../../scripts/package-license.mjs"
+  },
+  "dependencies": {
+    "@verdict-ai/core": "workspace:*"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ustay-coder/verdict.git",
+    "directory": "packages/sdk"
+  },
+  "homepage": "https://github.com/Ustay-coder/verdict#readme",
+  "bugs": {
+    "url": "https://github.com/Ustay-coder/verdict/issues"
+  },
+  "keywords": [
+    "evaluation",
+    "rubric",
+    "decision-model",
+    "jev",
+    "clef",
+    "scoring",
+    "llm-judge",
+    "mcp"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "sideEffects": false
+}

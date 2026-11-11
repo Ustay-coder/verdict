@@ -1,0 +1,37 @@
+# Creator / sponsorship screening — YouTube link + channel page + brand brief as JSON. Two decision models in a panel.
+name: Sponsorship fit
+scale: { type: numeric, min: 0, max: 10, step: 0.5 }
+judges:
+  jev:  { type: decision, provider: typesafe, model: jev-latest }
+  clef: { type: decision, provider: cloudflare, model: "@cf/cloudflare/clef" }
+defaultJudge: { type: ref, ref: jev }
+criteria:
+  - id: relevance
+    name: Audience relevance to brand
+    weight: 3
+    inputs: [video, brief]          # only inputs tagged video/brief go into the state
+    anchors: { "0": Audience has nothing to do with the brand, "5": Partial overlap, "10": Audience is exactly the brand's buyer }
+  - id: production
+    name: Production quality (from transcript & description)
+    weight: 1
+    judge: { type: panel, combine: median, judges: [{ type: ref, ref: jev }, { type: ref, ref: clef }] }
+  - id: safety
+    name: Brand safe
+    weight: 2
+    scale: { type: binary, labels: [unsafe, safe] }
+    anchors: { unsafe: "Profanity, political content, gambling or unsafe stunts", safe: Advertiser-friendly throughout }
+    judge:
+      type: panel
+      combine: min                    # any member can veto
+      judges:
+        - { type: ref, ref: jev }
+        - { type: benchmark, method: regex, pattern: "\\b(nsfw|gambling|crypto giveaway)\\b", flags: i, negate: true }
+  - id: budget_fit
+    name: Rate within budget
+    weight: 1
+    judge: { type: benchmark, method: formula, expression: "clamp(brief.budget_usd / creator.rate_usd, 0, 1)" }
+aggregation:
+  method: formula
+  formula: "safety_n < 0.5 ? 0 : (relevance_n * 0.5 + production_n * 0.2 + budget_fit_n * 0.3)"
+  normalize: [0, 100]
+  passThreshold: 65

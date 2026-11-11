@@ -1,0 +1,41 @@
+name: quality
+on:
+  pull_request:
+  push:
+    branches: [main]
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    env:
+      HAS_JUDGE_KEY: ${{ secrets.TYPESAFE_API_KEY != '' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - run: pnpm lint --max-warnings 0
+      - name: Behaviour goldens
+        run: node scripts/harness/smoke.mjs
+      - name: Measured metrics (floors)
+        run: |
+          node scripts/code-metrics.mjs --out metrics.json > /dev/null
+          node -e '
+            const m = require("./metrics.json"), f = require("./scripts/harness/config.json").metricsFloor;
+            const bad = [];
+            if (m.complexity.cognitiveViolations > f.cognitiveViolations) bad.push("cognitive complexity " + m.complexity.cognitiveViolations);
+            if (m.complexity.longFunctions > f.longFunctions) bad.push("long functions " + m.complexity.longFunctions);
+            if (m.complexity.longFiles > f.longFiles) bad.push("long files " + m.complexity.longFiles);
+            if (m.types.unusedVars > f.unusedVars) bad.push("unused " + m.types.unusedVars);
+            if ((m.duplication.percentage ?? 0) > f.duplicationMaxPct) bad.push("duplication " + m.duplication.percentage.toFixed(2) + "%");
+            console.log("coverage lines " + m.coverage.lines + "% branches " + m.coverage.branches + "%");
+            if (bad.length) { console.error("metric floors broken: " + bad.join(", ")); process.exit(1); }'
+      - name: Full score (main only; needs TYPESAFE_API_KEY)
+        if: github.ref == 'refs/heads/main' && env.HAS_JUDGE_KEY == 'true'
+        env:
+          TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY }}
+        run: |
+          node scripts/score-code.mjs --metrics metrics.json --out score.json | tail -3
+          # Jev varies by ~0.1 between runs, so the gate sits gateTolerance below the harness target.
+          node -e 'const c=require("./scripts/harness/config.json"), v=Number(require("./score.json").overall.toFixed(1)), floor=c.target-(c.gateTolerance??0); if (v < floor) { console.error(`score ${v} below gate ${floor} (target ${c.target})`); process.exit(1); } console.log(`score ${v} passes gate ${floor} (target ${c.target})`);'

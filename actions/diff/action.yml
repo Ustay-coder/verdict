@@ -1,0 +1,88 @@
+name: Verdict diff
+description: Compare a rubric changed in a pull request with its base-branch version on the same gold cases, comment the result and gate on regressions.
+inputs:
+  rubric:
+    description: Rubric file (YAML or JSON) to compare, relative to the repository root.
+    required: true
+  data:
+    description: Gold cases (JSON array or JSON lines) both versions run on.
+    required: true
+  base-ref:
+    description: Git ref holding the base version of the rubric. Defaults to the pull request's base commit.
+    required: false
+    default: ""
+  fail-on:
+    description: Fail the job when any case falls in these classes (comma-separated; e.g. regressed,error,near_boundary). Empty never fails.
+    required: false
+    default: regressed,error
+  verify-lock:
+    description: Also run `verdict version verify` (fails when a locked rubric file no longer matches verdict.lock).
+    required: false
+    default: "false"
+  mock:
+    description: Use mock providers (no API calls, no keys). For trying the action out only.
+    required: false
+    default: "false"
+  comment:
+    description: Post or update one pull request comment per rubric with the result.
+    required: false
+    default: "true"
+  report:
+    description: Also report both runs and the comparison's counts to a project on a Verdict server (numbers only; no cases, inputs or outputs are sent). A report that cannot be sent is noted in the comment and does not fail the job.
+    required: false
+    default: "false"
+  project:
+    description: Project to report to. Defaults to the VERDICT_PROJECT environment variable.
+    required: false
+    default: ""
+  server:
+    description: Verdict server to report to. Defaults to the VERDICT_HUB_URL environment variable.
+    required: false
+    default: ""
+  server-key:
+    description: API key for the server (pass a secret). Defaults to the VERDICT_HUB_KEY environment variable.
+    required: false
+    default: ""
+  name:
+    description: Name the rubric is kept under on the server. Defaults to verdict.lock, the rubric's id, then its file name.
+    required: false
+    default: ""
+  cli:
+    description: Command that runs the Verdict CLI.
+    required: false
+    default: npx --yes @verdict-ai/cli@latest
+  github-token:
+    description: Token for the pull request comment (needs pull-requests write).
+    required: false
+    default: ${{ github.token }}
+outputs:
+  kind:
+    description: rubric_change, policy_change, same_conditions or different_conditions.
+    value: ${{ steps.diff.outputs.kind }}
+  regressed:
+    description: Number of regressed cases over all criteria.
+    value: ${{ steps.diff.outputs.regressed }}
+runs:
+  using: composite
+  steps:
+    - id: diff
+      shell: bash
+      run: bash "$GITHUB_ACTION_PATH/run.sh"
+      env:
+        RUBRIC: ${{ inputs.rubric }}
+        DATA: ${{ inputs.data }}
+        BASE_REF: ${{ inputs.base-ref || github.event.pull_request.base.sha }}
+        FAIL_ON: ${{ inputs.fail-on }}
+        VERIFY_LOCK: ${{ inputs.verify-lock }}
+        MOCK: ${{ inputs.mock }}
+        COMMENT: ${{ inputs.comment }}
+        REPORT: ${{ inputs.report }}
+        PROJECT: ${{ inputs.project }}
+        SERVER: ${{ inputs.server }}
+        SERVER_KEY: ${{ inputs.server-key }}
+        RUBRIC_NAME: ${{ inputs.name }}
+        HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        VERDICT_CLI: ${{ inputs.cli }}
+        GH_TOKEN: ${{ inputs.github-token }}
+        PR_NUMBER: ${{ github.event.pull_request.number }}
+        REPOSITORY: ${{ github.repository }}

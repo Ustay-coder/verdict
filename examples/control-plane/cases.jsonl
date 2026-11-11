@@ -1,0 +1,3 @@
+{"id":"explicit","name":"asks for an agent","inputs":[{"type":"text","text":"please connect me to an agent"}],"expected":{"wants":"yes"},"labelSource":"human"}
+{"id":"human","name":"asks for a human","inputs":[{"type":"text","text":"can I talk to a human about my bill"}],"expected":{"wants":"yes"},"labelSource":"human"}
+{"id":"hours","name":"opening hours","inputs":[{"type":"text","text":"what are your opening hours"}],"expected":{"wants":"no"},"labelSource":"human"}

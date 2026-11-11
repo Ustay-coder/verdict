@@ -1,0 +1,3 @@
+# Which project this repository's rubrics belong to. Commit it: people and CI then use the same project.
+project: support-bot
+# server: https://verdict.example.com   # or VERDICT_HUB_URL

@@ -1,0 +1,45 @@
+# Repository-level code quality from measured metrics (scripts/code-metrics.mjs output as a JSON input tagged `metrics`).
+# Thresholds follow SonarQube "Sonar way" (coverage ≥ 80 %, duplication ≤ 3 %, cognitive complexity ≤ 15 per function),
+# SIG/TÜViT unit-size guidance and a zero-tolerance for high/critical vulnerabilities. Every criterion is deterministic.
+name: Code quality — repository metrics
+version: "1"
+scale: { type: numeric, min: 0, max: 100 }
+criteria:
+  - id: coverage_lines
+    name: Line coverage (90 % = full marks, 50 % = none)
+    weight: 3
+    judge: { type: benchmark, method: formula, expression: "clamp((coverage.lines - 50) / 40, 0, 1)" }
+  - id: coverage_branches
+    name: Branch coverage (85 % = full marks)
+    weight: 1
+    judge: { type: benchmark, method: formula, expression: "clamp((coverage.branches - 40) / 45, 0, 1)" }
+  - id: duplication
+    name: Duplicated lines (0 % = full, 6 % = none; Sonar gate 3 %)
+    weight: 2
+    judge: { type: benchmark, method: formula, expression: "clamp(1 - duplication.percentage / 6, 0, 1)" }
+  - id: complexity
+    name: Functions over cognitive complexity 15 (per 100 functions; 8 % = none)
+    weight: 3
+    judge: { type: benchmark, method: formula, expression: "clamp(1 - complexity.cognitiveViolationsPer100Functions / 8, 0, 1)" }
+  - id: unit_size
+    name: Unit size (long functions > 60 lines, files > 400 lines, nesting > 4)
+    weight: 2
+    judge: { type: benchmark, method: formula, expression: "clamp(1 - (complexity.longFunctions + complexity.longFiles * 2 + complexity.deepNesting) / 20, 0, 1)" }
+  - id: lint
+    name: Lint errors and unused code
+    weight: 2
+    judge: { type: benchmark, method: formula, expression: "clamp(1 - (lint.errors * 5 + types.unusedVars) / (kloc * 5), 0, 1)" }
+  - id: typing
+    name: Strict TypeScript without explicit any
+    weight: 2
+    judge: { type: benchmark, method: formula, expression: "types.strict * clamp(1 - types.anyPerKloc / 2, 0, 1)" }
+  - id: typecheck
+    name: Typecheck passes
+    weight: 1
+    scale: { type: binary }
+    judge: { type: benchmark, method: jsonpath, path: typecheck }
+  - id: security
+    name: Dependency vulnerabilities (none high/critical; moderate costs 20 %)
+    weight: 2
+    judge: { type: benchmark, method: formula, expression: "(security.critical + security.high) == 0 ? (security.moderate == 0 ? 1 : 0.8) : 0" }
+aggregation: { method: weighted_mean, normalize: [0, 100], grades: [{ label: A, min: 90 }, { label: B, min: 80 }, { label: C, min: 70 }, { label: D, min: 0 }] }

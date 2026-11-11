@@ -1,0 +1,17 @@
+node_modules
+dist
+*.log
+.env
+.verdict/
+coverage
+.wrangler/
+.verdict-deploy.env
+
+# Generated package licenses and documentation output
+packages/*/LICENSE
+website/.vitepress/dist/
+website/.vitepress/cache/
+*.tgz
+.verdict-metrics.json
+packages/*/coverage/
+.verdict-quality/

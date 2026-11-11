@@ -1,0 +1,33 @@
+# Cloudflare Workers + D1 deployment for the Verdict API. Build first: pnpm build (from the repo root).
+# Secrets (wrangler secret put <NAME>): TYPESAFE_API_KEY (Jev), VERDICT_ADMIN_KEY (key management),
+#   optional VERDICT_API_KEYS (bootstrap keys), VERDICT_WEBHOOK_SECRET. Clef runs through the AI binding below.
+name = "verdict-api"
+main = "dist/worker.js"
+compatibility_date = "2026-10-01"
+compatibility_flags = ["nodejs_compat"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "verdict"
+database_id = "6ca093bb-06d9-41f4-ad29-0cef046c62d5"
+migrations_dir = "../db/drizzle"
+
+# Workers AI binding: the "cloudflare" decision provider (Clef / Clef-flash) runs through env.AI — no CLOUDFLARE_API_TOKEN needed in the Worker.
+[ai]
+binding = "AI"
+
+[observability]
+enabled = true
+
+# Queues require the Workers Paid plan. Create both queues before enabling:
+# wrangler queues create verdict-jobs && wrangler queues create verdict-dlq
+# [[queues.producers]]
+# binding = "QUEUE"
+# queue = "verdict-jobs"
+#
+# [[queues.consumers]]
+# queue = "verdict-jobs"
+# max_retries = 5
+# max_batch_size = 10
+# max_concurrency = 4
+# dead_letter_queue = "verdict-dlq"

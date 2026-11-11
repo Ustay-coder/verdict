@@ -1,0 +1,73 @@
+{
+  "name": "@verdict-ai/api",
+  "version": "0.1.0",
+  "description": "Verdict REST API (Hono). Runs on Node and Cloudflare Workers.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./server": {
+      "types": "./dist/server.d.ts",
+      "import": "./dist/server.js"
+    },
+    "./worker": {
+      "types": "./dist/worker.d.ts",
+      "import": "./dist/worker.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "dev": "node --watch dist/server.js",
+    "start": "node dist/server.js",
+    "prepack": "node ../../scripts/package-license.mjs"
+  },
+  "dependencies": {
+    "@hono/node-server": "^2.1.6",
+    "@verdict-ai/core": "workspace:*",
+    "@verdict-ai/db": "workspace:*",
+    "hono": "^4.13.16",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20261104.1"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ustay-coder/verdict.git",
+    "directory": "packages/api"
+  },
+  "homepage": "https://github.com/Ustay-coder/verdict#readme",
+  "bugs": {
+    "url": "https://github.com/Ustay-coder/verdict/issues"
+  },
+  "keywords": [
+    "evaluation",
+    "rubric",
+    "decision-model",
+    "jev",
+    "clef",
+    "scoring",
+    "llm-judge",
+    "mcp"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "wrangler.example.toml"
+  ],
+  "sideEffects": false
+}

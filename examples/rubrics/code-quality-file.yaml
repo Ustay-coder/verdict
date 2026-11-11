@@ -1,0 +1,80 @@
+# Source-file code quality judged by a decision model. Criteria map ISO/IEC 25010 maintainability sub-characteristics
+# (modularity, analysability, modifiability, testability) and Google's code-review guide (design, naming, comments, tests)
+# onto one file. Input tags: `file` (the source under review). Pair with code-quality-repo.yaml for measured metrics.
+name: Code quality — source file
+version: "1"
+language: en
+context: |
+  You are reviewing one TypeScript source file from a Node/Cloudflare Workers library. Judge the file as a senior
+  engineer doing a maintainability review. Base every judgement on what is in the file; do not assume problems that are
+  not visible. Judge each criterion relative to what this file is responsible for: a criterion that does not apply
+  (a re-export barrel has no error handling to do; self-evident code needs no rationale comments; a pure function has
+  no dependencies to inject) scores 5, not 3 — absence of a concern is not a defect.
+scale: { type: numeric, min: 1, max: 5 }
+defaultJudge: { type: decision, provider: typesafe, model: jev-latest }
+criteria:
+  - id: cohesion
+    name: Cohesion and modularity (one responsibility)
+    weight: 3
+    anchors:
+      "1": The file mixes unrelated concerns (I/O, parsing, business rules, presentation) with no boundaries
+      "3": Mostly one concern, but with some unrelated helpers or a section that belongs elsewhere
+      "5": One clear responsibility; helpers support it; boundaries to other modules are explicit imports/exports
+  - id: analysability
+    name: Analysability (easy to follow)
+    weight: 3
+    anchors:
+      "1": Long functions with deeply nested branches; control flow requires rereading; magic values everywhere
+      "3": Readable overall, but one or two functions are long or dense enough to need notes
+      "5": Short functions, early returns, flat control flow; a reader can predict behaviour from the signature
+  - id: naming
+    name: Naming and readability
+    weight: 2
+    anchors:
+      "1": Cryptic or misleading names; inconsistent conventions
+      "3": Adequate names with occasional abbreviations or inconsistencies
+      "5": Names reveal intent at every level; consistent conventions throughout
+  - id: error_handling
+    name: Error handling and edge cases
+    weight: 2
+    anchors:
+      "1": Errors swallowed or turned into misleading values; obvious edge cases unhandled
+      "3": Main paths handled; some catches are too broad or edge cases that this file is responsible for are implicit
+      "5": Every failure this file can produce is explicit, typed and recoverable, and its edge cases are visibly considered — or the file has no failure modes of its own (pure mapping, re-exports, declarations)
+  - id: types
+    name: Type precision and contracts
+    weight: 2
+    anchors:
+      "1": any / unchecked casts hide mismatches; public API shapes unclear
+      "3": Mostly precise types with a few casts (as unknown as) that bypass checking
+      "5": Precise types; casts only at validated boundaries; exported API is self-describing
+  - id: comments
+    name: Comments explain why
+    weight: 1
+    anchors:
+      "1": Non-obvious decisions left unexplained, or comments that restate the code
+      "3": Some useful comments; some noise, stale remarks, or one non-obvious decision still unexplained
+      "5": Every non-obvious decision, invariant or external constraint in the file is explained and nothing is stale — a file with no non-obvious decisions needs no comments and scores 5
+  - id: testability
+    name: Testability
+    weight: 2
+    anchors:
+      "1": Logic entangled with network/filesystem/global state; impossible to test without the real system
+      "3": Partly injectable; some paths need the real environment
+      "5": Dependencies injectable, pure logic separated from I/O, deterministic — pure functions, type declarations and composition roots that only wire injected parts score 5
+  - id: dead_code
+    name: No dead or duplicated code
+    weight: 1
+    anchors:
+      "1": Unused code paths, leftover debugging, or near-duplicate blocks
+      "3": Minor repetition that could be factored
+      "5": Nothing unused; repetition factored where it would help
+  - id: file_length
+    name: File length ≤ 400 lines (benchmark)
+    weight: 1
+    judge: { type: benchmark, method: length, unit: lines, max: 400, tolerance: 0.75 }
+  - id: unchecked_casts
+    name: Unchecked casts (benchmark, as unknown as / as never / as any)
+    weight: 1
+    judge: { type: benchmark, method: regex, pattern: "as unknown as|as never|as any|: any\\b", perMatch: 0.2, negate: true }
+aggregation: { method: weighted_mean, normalize: [0, 100], grades: [{ label: A, min: 90 }, { label: B, min: 80 }, { label: C, min: 70 }, { label: D, min: 0 }] }

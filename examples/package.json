@@ -1,0 +1,16 @@
+{
+  "name": "verdict-examples",
+  "private": true,
+  "type": "module",
+  "description": "Runnable examples: SDK quickstart against a local server, MCP client session, and the control plane (a version per environment).",
+  "scripts": {
+    "sdk": "node sdk-quickstart.mjs",
+    "mcp": "node mcp-client.mjs",
+    "control-plane": "bash control-plane/demo.sh"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.32.2",
+    "@verdict-ai/core": "workspace:*",
+    "@verdict-ai/sdk": "workspace:*"
+  }
+}

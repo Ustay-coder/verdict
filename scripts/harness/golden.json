@@ -1,0 +1,180 @@
+{
+  "pitch-mock-panel-human": {
+    "status": "pending_human",
+    "score": 67.76,
+    "grade": "maybe",
+    "passed": true,
+    "criteria": [
+      {
+        "id": "problem",
+        "status": "scored",
+        "score": 4.717,
+        "pending": 0,
+        "errors": []
+      },
+      {
+        "id": "traction",
+        "status": "scored",
+        "score": 3.195,
+        "pending": 0,
+        "errors": []
+      },
+      {
+        "id": "team",
+        "status": "pending",
+        "pending": 1,
+        "errors": []
+      },
+      {
+        "id": "why_now",
+        "status": "scored",
+        "score": 2.435,
+        "pending": 0,
+        "errors": []
+      },
+      {
+        "id": "deck_length",
+        "status": "scored",
+        "score": 4.295,
+        "pending": 0,
+        "errors": []
+      }
+    ],
+    "evidence": [
+      {
+        "label": "pitch.md",
+        "truncated": false
+      },
+      {
+        "label": "deck",
+        "truncated": false
+      }
+    ],
+    "decisionCalls": 3,
+    "llmCalls": 1
+  },
+  "triage-mock-checks-choice": {
+    "status": "completed",
+    "score": 8.73,
+    "grade": "P3",
+    "passed": false,
+    "checks": [
+      {
+        "id": "on_topic",
+        "passed": true,
+        "action": "abort"
+      }
+    ],
+    "criteria": [
+      {
+        "id": "team",
+        "status": "scored",
+        "choice": "support",
+        "pending": 0,
+        "errors": []
+      },
+      {
+        "id": "urgency",
+        "status": "scored",
+        "score": 0.262,
+        "pending": 0,
+        "errors": []
+      },
+      {
+        "id": "churn_risk",
+        "status": "scored",
+        "score": 0.262,
+        "pending": 0,
+        "errors": []
+      },
+      {
+        "id": "needs_engineer",
+        "status": "scored",
+        "score": 1,
+        "pending": 0,
+        "errors": []
+      },
+      {
+        "id": "abusive",
+        "status": "scored",
+        "score": 1,
+        "pending": 0,
+        "errors": []
+      }
+    ],
+    "evidence": [
+      {
+        "label": "text #1",
+        "truncated": false
+      }
+    ],
+    "decisionCalls": 2,
+    "llmCalls": 0
+  },
+  "offline-benchmark": {
+    "status": "completed",
+    "score": 87.45,
+    "grade": "ship",
+    "passed": true,
+    "criteria": [
+      {
+        "id": "tests",
+        "status": "scored",
+        "score": 97,
+        "pending": 0,
+        "errors": []
+      },
+      {
+        "id": "coverage",
+        "status": "scored",
+        "score": 90,
+        "pending": 0,
+        "errors": []
+      },
+      {
+        "id": "changelog",
+        "status": "scored",
+        "score": 100,
+        "pending": 0,
+        "errors": []
+      },
+      {
+        "id": "readme",
+        "status": "scored",
+        "score": 0,
+        "pending": 0,
+        "errors": []
+      }
+    ],
+    "evidence": [
+      {
+        "label": "ci",
+        "truncated": false
+      },
+      {
+        "label": "CHANGELOG.md",
+        "truncated": false
+      }
+    ],
+    "decisionCalls": 0,
+    "llmCalls": 0
+  },
+  "compare-ranking": [
+    {
+      "rank": 1,
+      "subject": "v2",
+      "score": 76,
+      "grade": "hold",
+      "passed": false,
+      "status": "completed"
+    },
+    {
+      "rank": 2,
+      "subject": "v1",
+      "score": 0,
+      "grade": "hold",
+      "passed": false,
+      "status": "completed"
+    }
+  ]
+}
