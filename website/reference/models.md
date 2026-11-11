@@ -10,8 +10,8 @@ What Verdict can ask, and what you can hand it, on one page. The rubric stays th
 | `jev-preview` | Jev preview | TypeSafe | Not separately: the same endpoint as `jev` | No |
 | `clef` | Clef | Cloudflare Workers AI | Yes (2026-11-11) | Up to 4 |
 | `clef-flash` | Clef-flash | Cloudflare Workers AI | Yes (2026-11-11; with an image 2026-11-05) | Up to 4 |
-| `openrouter:<model>` | For example `typesafe/jev-1.13` | OpenRouter | Not yet: written from public documentation | No |
-| `openai:<model>` | OpenAI's Decisions API | OpenAI | Not yet: written from public documentation | No |
+| `openrouter:<model>` | For example `typesafe/jev-1.13` | OpenRouter | Yes (2026-11-11, `typesafe/jev-1.13`) | No |
+| `openai:<model>` | OpenAI's Decisions API, for example `gpt-6-luna` | OpenAI | Yes (2026-11-11, `gpt-6-luna`) | No, text only for now |
 | `systemone:<model>` | Any endpoint that takes the same request: a self-hosted Clef, a gateway | Yours | You check it | No |
 | `mock` | A deterministic stand-in, for trying things without a key | None | — | — |
 

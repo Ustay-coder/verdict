@@ -3,6 +3,7 @@
  * The published paths mirror route registration; runtime validation remains owned by request schemas.
  */
 import type { RouteGroup } from "./app.js";
+import { VERSION } from "./version.js";
 
 const GROUP_PATHS: Record<RouteGroup, string[]> = {
   evaluations: ["/v1/evaluations", "/v1/tasks", "/v1/batches"],
@@ -20,7 +21,7 @@ export function openapiFor(groups: readonly RouteGroup[]) {
 
 export const openapi = {
   openapi: "3.1.0",
-  info: { title: "Verdict Evaluation API", version: "0.1.0", description: "Customizable rubrics, pluggable judges (LLM / human / benchmark), customizable aggregation." },
+  info: { title: "Verdict Evaluation API", version: VERSION, description: "Customizable rubrics, pluggable judges (LLM / human / benchmark), customizable aggregation." },
   servers: [{ url: "/" }],
   security: [{ bearer: [] }],
   components: { securitySchemes: { bearer: { type: "http", scheme: "bearer" } } },

@@ -25,14 +25,12 @@ export const SystemOneAnswerSchema = z.object({
   legend: z.union([z.array(z.string()), z.record(z.string(), z.string())]).optional(),
   probabilities: z.union([z.array(z.number()), z.record(z.string(), z.number())]).optional(),
   confidence: z.number().optional(), noul: z.number().optional(), choice: z.string().optional(),
-  predicate: z.number().optional(), probability: z.number().optional(),
 });
 export const SystemOneResponseSchema = z.object({
   answers: z.record(z.string(), SystemOneAnswerSchema).optional(),
-  decisions: z.record(z.string(), SystemOneAnswerSchema).optional(),
   model: z.string().optional(),
   usage: z.object({ input_tokens: z.number().optional(), prompt_tokens: z.number().optional(), output_tokens: z.number().optional() }).optional(),
-}).refine(data => data.answers !== undefined || data.decisions !== undefined, { message: "answers is required", path: ["answers"] });
+}).refine(data => data.answers !== undefined, { message: "answers is required", path: ["answers"] });
 
 /** Reads provider JSON or throws ProviderError with transport status and decode context. */
 export async function readProviderJson(provider: string, response: Response): Promise<unknown> {

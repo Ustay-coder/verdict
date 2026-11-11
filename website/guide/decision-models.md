@@ -60,4 +60,4 @@ the models gave one answer on 7 of 8 question(s) they all answered; they differ 
 - A model that cannot answer (no key, a model the account cannot use) keeps its row with the reason, and is left out of the disagreements. The command exits 1 only when no model answered.
 - The table does not pick a winner. On a handful of cases the difference between two models is noise; bring the cases you care about, then put the model you chose in the rubric (`defaultJudge: { type: decision, provider: cloudflare, model: "@cf/cloudflare/clef" }`) and freeze it.
 
-Checked against the live services: Jev, Clef and Clef-flash. The OpenRouter and OpenAI adapters follow public documentation and are not yet checked against the live endpoints.
+Checked against the live services: Jev, Clef, Clef-flash, OpenRouter and OpenAI's Decisions API ([what was sent and when](https://github.com/Ustay-coder/verdict/blob/main/docs/PROVIDERS.md)).

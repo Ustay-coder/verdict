@@ -140,9 +140,13 @@ describe("actions/diff/run.sh", () => {
 // The walk-through in examples/control-plane: a self-hosted server, CI reporting, promotion, and a service that reads
 // prod. This is the M1a "done" check (docs/design/control-plane.md §10), kept running so the example cannot rot.
 describe("examples/control-plane/demo.sh", () => {
-  it("reports from CI, promotes, and the service judges with the version prod runs — through a rollback", () => {
+  it("reports from CI, promotes, and the service judges with the version prod runs — through a rollback", async () => {
     const demo = resolve(__dirname, "../../../examples/control-plane/demo.sh");
-    const port = String(20000 + Math.floor(Math.random() * 20000));
+    // A port the system says is free. A number drawn at random could be one another test's server was given.
+    const probe = createServer();
+    await new Promise<void>((done) => probe.listen(0, "127.0.0.1", done));
+    const port = String((probe.address() as AddressInfo).port);
+    await new Promise((done) => probe.close(done));
     const result = spawnSync("bash", [demo], { encoding: "utf8", env: { ...process.env, VERDICT_CLI: `node ${cli}`, PORT: port, VERDICT_HUB_URL: "", VERDICT_HUB_KEY: "", VERDICT_PROJECT: "", VERDICT_API_URL: "" } });
     expect(result.status, result.stderr).toBe(0);
     const judged = result.stdout.split("\n").filter((l) => l.startsWith("{")).map((l) => JSON.parse(l) as { message: string; wants: boolean; versionId: string; source: string });
@@ -158,6 +162,28 @@ describe("examples/control-plane/demo.sh", () => {
     // The example directory itself is left as it was.
     expect(existsSync(resolve(__dirname, "../../../examples/control-plane/verdict.lock"))).toBe(false);
   }, 120000);
+
+  it("stops at once and shows the server's own log when its server cannot start", async () => {
+    const demo = resolve(__dirname, "../../../examples/control-plane/demo.sh");
+    // The port is held by something else, which is what a failed start looked like in CI: a wait, then "fetch failed".
+    const holder = createServer((_req, res) => { res.writeHead(500).end(); });
+    await new Promise<void>((done) => holder.listen(0, done));
+    try {
+      const started = Date.now();
+      const result = await new Promise<{ status: number | null; stdout: string; stderr: string }>((done) => {
+        const child = spawn("bash", [demo], { env: { ...process.env, VERDICT_CLI: `node ${cli}`, PORT: String((holder.address() as AddressInfo).port), VERDICT_HUB_URL: "", VERDICT_HUB_KEY: "", VERDICT_PROJECT: "", VERDICT_API_URL: "" } });
+        let stdout = "", stderr = "";
+        child.stdout.on("data", (d) => { stdout += String(d); });
+        child.stderr.on("data", (d) => { stderr += String(d); });
+        child.on("close", (status) => done({ status, stdout, stderr }));
+      });
+      expect(result.status).toBe(1);
+      expect(result.stderr).toContain("did not come up. Its log:");
+      expect(result.stderr).toContain("EADDRINUSE");
+      expect(result.stdout).not.toContain("== 2.");
+      expect(Date.now() - started).toBeLessThan(10000);
+    } finally { await new Promise((done) => holder.close(done)); }
+  }, 60000);
 
   it("runs the same loop against a server that is already there, in a project of its own that it removes", async () => {
     const demo = resolve(__dirname, "../../../examples/control-plane/demo.sh");

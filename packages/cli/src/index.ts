@@ -29,6 +29,7 @@ import { registerPull } from "./commands/pull.js";
 import { registerReport } from "./commands/report.js";
 import { registerEnv, registerProject } from "./commands/project.js";
 import { registerPromote } from "./commands/promote.js";
+import { VERSION } from "./package-version.js";
 
 export { parseInput } from "./inputs.js";
 export { mockify } from "./mock.js";
@@ -36,7 +37,7 @@ export { renderReport } from "./report.js";
 
 /** Returns a configured command tree; command execution failures reject to the caller. */
 export function buildCli() {
-  const program = new Command().name("verdict").description("Evaluation engine: rubrics × judges (LLM / human / benchmark) × aggregation").version("0.1.0");
+  const program = new Command().name("verdict").description("Evaluation engine: rubrics × judges (LLM / human / benchmark) × aggregation").version(VERSION);
   registerRubric(program);
   registerEvaluate(program);
   registerCompare(program);

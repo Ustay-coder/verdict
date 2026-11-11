@@ -49,9 +49,9 @@ defaultJudge: { type: decision, provider: systemone, model: jev-latest }
 
 Verdict appends `/systemone` to the base URL.
 
-## OpenRouter and OpenAI: provisional adapters
+## OpenRouter and OpenAI
 
-These decision adapters are based on public write-ups, without a live-verified contract in this repository. Confirm endpoint availability and response compatibility before integrating them. These are separate from generative LLM providers with the same names.
+Both were checked against the live services on 2026-11-11 (OpenRouter with `typesafe/jev-1.13`, OpenAI with `gpt-6-luna`). OpenRouter takes the System One request as it is. OpenAI's Decisions API has a request shape of its own, and Verdict translates the same questions into it; [docs/PROVIDERS.md](https://github.com/Ustay-coder/verdict/blob/main/docs/PROVIDERS.md#openai-decisions-request-and-response) shows what is sent and what comes back. OpenAI is sent text only for now. These are separate from generative LLM providers with the same names.
 
 ```bash
 export OPENROUTER_API_KEY="your-openrouter-key"

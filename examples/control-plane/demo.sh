@@ -37,7 +37,18 @@ else
   server=$!
   export VERDICT_HUB_URL="http://127.0.0.1:$PORT" VERDICT_HUB_KEY="sk_demo" NO_PROXY="127.0.0.1" no_proxy="127.0.0.1"
   export VERDICT_PROJECT="${VERDICT_PROJECT:-support-bot}"
-  for _ in $(seq 1 50); do if $VERDICT_CLI project list > /dev/null 2>&1; then break; fi; sleep 0.2; done
+  up=""
+  for _ in $(seq 1 50); do
+    if $VERDICT_CLI project list > /dev/null 2>&1; then up=1; break; fi
+    # A server that has already stopped (the port was taken, say) will not answer however long we wait.
+    if ! kill -0 "$server" 2>/dev/null; then break; fi
+    sleep 0.2
+  done
+  if [ -z "$up" ]; then
+    echo "The server on port $PORT did not come up. Its log:" >&2
+    cat "$WORK/server.log" >&2 || true
+    exit 1
+  fi
 fi
 
 step "2. A project with two environments"

@@ -1,6 +1,6 @@
 /**
  * Adapts System One-compatible HTTP providers and the deterministic offline fake.
- * Cloudflare wraps results and OpenAI renames predicates; validation precedes all answer mapping.
+ * Cloudflare wraps results and OpenAI has a request shape of its own; validation precedes all answer mapping.
  */
 import { z } from "zod";
 import { canonicalJson } from "../../idempotency.js";
@@ -82,25 +82,57 @@ const cloudflareDecisionProvider: DecisionProviderAdapter = {
 };
 
 /**
- * OpenAI Decisions API — POST /v1/decisions (public beta, gpt-6-luna). Question types: predicate | choice | score.
- * Field names follow public write-ups and are parsed defensively; pin `baseUrl`/`options` if the beta shape differs.
+ * OpenAI Decisions — POST /v1/decisions. Shape checked against the live API on 2026-11-11 with gpt-6-luna; it is
+ * not the System One shape: the text goes in `input`, questions are an array carrying their own `name`, a score
+ * takes `levels` of { label, description }, a choice takes `choices` of { value, description }, and a predicate
+ * takes instructions only. Answers come back as an array in the same order. Unknown fields are refused.
  */
+const OpenAiAnswerSchema = z.object({
+  type: z.string(), name: z.string().nullable().optional(),
+  score: z.number().optional(), choice: z.string().optional(), probability: z.number().optional(), confidence: z.number().optional(),
+  probabilities: z.array(z.object({ value: z.union([z.number(), z.string()]), probability: z.number() })).optional(),
+});
+const OpenAiResponseSchema = z.object({
+  model: z.string().optional(), answers: z.array(OpenAiAnswerSchema),
+  usage: z.object({ input_tokens: z.number().optional(), output_tokens: z.number().optional() }).optional(),
+});
+type OpenAiAnswer = z.infer<typeof OpenAiAnswerSchema>;
+
+const sentence = (text: string) => (/[.!?]$/.test(text.trim()) ? text.trim() : `${text.trim()}.`);
+
+function openaiQuestion(name: string, q: SystemOneQuestion): Record<string, unknown> {
+  if (q.type === "choice") return { name, type: "choice", instructions: q.instructions, choices: Object.entries(q.criteria).map(([value, description]) => (description ? { value, description } : { value })) };
+  if (q.type === "noul") {
+    // why: a predicate has no field for what yes and no mean, so the two descriptions ride in the instructions.
+    const meaning = [q.criteria?.true ? `Yes means: ${sentence(q.criteria.true)}` : undefined, q.criteria?.false ? `No means: ${sentence(q.criteria.false)}` : undefined].filter(Boolean);
+    return { name, type: "predicate", instructions: [q.instructions, ...meaning].join(" ") };
+  }
+  // why: System One levels are "label: description" strings; answers are matched by position, so the split only decides which field carries the text.
+  return { name, type: "score", instructions: q.instructions, levels: q.criteria.map((level) => { const at = level.indexOf(": "); return at > 0 && at + 2 < level.length ? { label: level.slice(0, at), description: level.slice(at + 2) } : { label: level }; }) };
+}
+
+function openaiAnswer(a: OpenAiAnswer): SystemOneAnswer {
+  if (a.type === "predicate") return { type: "noul", noul: a.probability };
+  if (a.type === "choice") return { type: "choice", choice: a.choice, confidence: a.confidence, probabilities: a.probabilities && Object.fromEntries(a.probabilities.map((p) => [String(p.value), p.probability])) };
+  // why: a level's `value` is its index in the request, so sorting by it restores the order the levels were sent in.
+  return { type: "score", score: a.score, confidence: a.confidence, probabilities: a.probabilities && [...a.probabilities].sort((x, y) => Number(x.value) - Number(y.value)).map((p) => p.probability) };
+}
+
 const openaiDecisionsProvider: DecisionProviderAdapter = {
   name: "openai",
   async decide(req, ctx) {
     const base = (req.baseUrl ?? ctx.env("OPENAI_BASE_URL") ?? "https://api.openai.com/v1").replace(/\/$/, "");
     const key = req.apiKey ?? ctx.env("OPENAI_API_KEY");
     const model = req.model ?? ctx.env("VERDICT_OPENAI_DECISIONS_MODEL") ?? "gpt-6-luna";
-    // why: OpenAI calls binary questions predicates; normalize back to noul after validating the envelope.
-    const questions = Object.fromEntries(Object.entries(req.questions).map(([id, q]) => [id, q.type === "noul" ? { type: "predicate", instructions: q.instructions, criteria: q.criteria } : q]));
-    const data = await postJson("openai", ctx, `${base}/decisions`, { model, state: req.state, questions, ...requestExtras(req.options) }, key ? { authorization: `Bearer ${key}` } : {});
-    const validated = parseProvider("openai", SystemOneResponseSchema, data);
+    const ids = Object.keys(req.questions);
+    const questions = ids.map((id) => openaiQuestion(id, req.questions[id]!));
+    const data = await postJson("openai", ctx, `${base}/decisions`, { model, input: req.state, questions, ...requestExtras(req.options) }, key ? { authorization: `Bearer ${key}` } : {});
+    const validated = parseProvider("openai", OpenAiResponseSchema, data);
     const answers: Record<string, SystemOneAnswer> = {};
-    for (const [id, a] of Object.entries(validated.answers ?? validated.decisions ?? {})) {
-      answers[id] = { ...a, noul: a.noul ?? a.predicate ?? a.probability };
-    }
+    // why: an answer names its question; one that does not is taken by its place in the array.
+    validated.answers.forEach((a, i) => { const id = a.name ?? ids[i]; if (id !== undefined) answers[id] = openaiAnswer(a); });
     const usage = validated.usage;
-    return { answers, model: validated.model ?? model, requestedModel: model, resolvedModel: validated.model, usage: { inputTokens: usage?.input_tokens ?? usage?.prompt_tokens ?? 0, outputTokens: usage?.output_tokens ?? 0 }, raw: data };
+    return { answers, model: validated.model ?? model, requestedModel: model, resolvedModel: validated.model, usage: { inputTokens: usage?.input_tokens ?? 0, outputTokens: usage?.output_tokens ?? 0 }, raw: data };
   },
 };
 
