@@ -30,8 +30,8 @@ features:
 | `jev` | Jev | TypeSafe | Yes | No, text only |
 | `clef` | Clef | Cloudflare Workers AI | Yes | Up to 4 |
 | `clef-flash` | Clef-flash | Cloudflare Workers AI | Yes | Up to 4 |
-| `openrouter:<model>` | For example `typesafe/jev-1.13` | OpenRouter | Not yet | No |
-| `openai:<model>` | OpenAI's Decisions API | OpenAI | Not yet | No |
+| `openrouter:<model>` | For example `typesafe/jev-1.13` | OpenRouter | Yes | No |
+| `openai:<model>` | OpenAI's Decisions API, for example `gpt-6-luna` | OpenAI | Yes | No |
 | `systemone:<model>` | Any endpoint that takes the same request | Yours | You check it | No |
 
 One command runs a rubric on several of them and shows the answers side by side:

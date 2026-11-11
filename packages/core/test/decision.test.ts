@@ -7,6 +7,7 @@ import { Engine } from "../src/engine.js";
 import { readFileSync } from "node:fs";
 import jevFixture from "./fixtures/typesafe-systemone-response.json" with { type: "json" };
 import clefFixture from "./fixtures/cloudflare-clef-flash-response.json" with { type: "json" };
+import openaiFixture from "./fixtures/openai-decisions-response.json" with { type: "json" };
 void readFileSync;
 
 const rubric = parseRubric({
@@ -130,6 +131,63 @@ describe("decision judge", () => {
     expect(n.probabilities).toEqual({ no: 0.29, yes: 0.71 });
     expect(ctxs[0]!.usage.inputTokens).toBe(480);
     expect(ctxs[0]!.usage.outputTokens).toBe(71);
+  });
+
+  it("asks OpenAI Decisions in its own shape and reads a real answer (fixture captured live with gpt-6-luna)", async () => {
+    // Fixture = verbatim answer from api.openai.com/v1/decisions to these three questions about a longer text, 2026-11-11.
+    let sent: { url: string; body: Record<string, unknown>; auth?: string } | undefined;
+    const f: typeof fetch = async (url, init) => {
+      sent = { url: String(url), body: JSON.parse(String(init?.body)), auth: (init?.headers as Record<string, string>).authorization };
+      return new Response(JSON.stringify(openaiFixture));
+    };
+    const triage = parseRubric({
+      name: "triage", scale: { type: "numeric", min: 0, max: 3 },
+      criteria: [
+        { id: "urgency", name: "Urgency", levels: [{ value: 0, label: "none", description: "question or feedback, nothing broken" }, { value: 1, label: "low", description: "minor issue with a workaround" }, { value: 2, label: "high", description: "core feature degraded" }, { value: 3, label: "critical", description: "outage, data loss or billing error" }] },
+        { id: "needs_engineer", name: "Needs engineer", scale: { type: "binary", labels: ["no", "yes"] } },
+        { id: "team", name: "Team", choices: { support: "how-to questions and account help", engineering: "something is broken", billing: "charges and invoices" } },
+      ],
+    });
+    const usage = { decisionCalls: 0, llmCalls: 0, inputTokens: 0, outputTokens: 0 };
+    const mk = (id: string): JudgeContext => ({ rubric: triage, criterion: triage.criteria.find((x) => x.id === id)!, scale: triage.criteria.find((x) => x.id === id)!.scale ?? triage.scale, evidence: [{ inputIndex: 0, kind: "text", label: "t", tags: [], text: "down", stats: stats("down") }], evaluationId: "e", env: (n) => (n === "OPENAI_API_KEY" ? "k" : undefined), fetch: f, usage });
+    const m = await new DecisionJudge({ type: "decision", provider: "openai", onLowConfidence: "accept", escalateTo: [] }).rateMany(triage.criteria.map((c) => mk(c.id)));
+
+    expect(sent!.url).toBe("https://api.openai.com/v1/decisions");
+    expect(sent!.auth).toBe("Bearer k");
+    // The live API refuses any field it does not know, so the body is held to exactly these.
+    expect(Object.keys(sent!.body).sort()).toEqual(["input", "model", "questions"]);
+    expect(sent!.body.model).toBe("gpt-6-luna");
+    expect(sent!.body.input).toContain("down");
+    const [score, predicate, choice] = sent!.body.questions as Record<string, unknown>[];
+    expect(Object.keys(score!).sort()).toEqual(["instructions", "levels", "name", "type"]);
+    expect(score).toMatchObject({ name: "urgency", type: "score", levels: [{ label: "none", description: "question or feedback, nothing broken" }, { label: "low" }, { label: "high" }, { label: "critical", description: "outage, data loss or billing error" }] });
+    expect(Object.keys(predicate!).sort()).toEqual(["instructions", "name", "type"]);
+    expect(predicate).toMatchObject({ name: "needs_engineer", type: "predicate" });
+    expect(predicate!.instructions).toMatch(/Yes means: .+\. No means: .+\.$/);
+    expect(choice).toEqual({ name: "team", type: "choice", instructions: expect.any(String), choices: [{ value: "support", description: "how-to questions and account help" }, { value: "engineering", description: "something is broken" }, { value: "billing", description: "charges and invoices" }] });
+
+    const u = m.get("urgency")![0]!;
+    expect(u.status).toBe("scored");
+    expect(u.score).toBeCloseTo(2.76);
+    expect(u.probabilities).toEqual({ none: 0, low: 0.01, high: 0.22, critical: 0.77 });
+    expect(u.confidence).toBe(0.76);
+    expect((u.raw as { model: string }).model).toBe("gpt-6-luna");
+    const n = m.get("needs_engineer")![0]!;
+    expect(n.score).toBe(1);
+    expect(n.probabilities).toEqual({ no: 0.02, yes: 0.98 });
+    const t = m.get("team")![0]!;
+    expect(t.choice).toBe("engineering");
+    expect(t.probabilities).toEqual({ support: 0, engineering: 1, billing: 0 });
+    expect(usage.inputTokens).toBe(506);
+    expect(usage.decisionCalls).toBe(1);
+  });
+  it("reports an OpenAI answer that is not the documented array instead of guessing", async () => {
+    const f: typeof fetch = async () => new Response(JSON.stringify({ model: "gpt-6-luna", answers: { urgency: { score: 1 } } }));
+    const x = { ...ctx("problem"), fetch: f, env: (n: string) => (n === "OPENAI_API_KEY" ? "k" : undefined) };
+    const [r] = await new DecisionJudge({ type: "decision", provider: "openai", onLowConfidence: "accept", escalateTo: [] }).rate(x);
+    expect(r!.status).toBe("error");
+    expect(r!.error).toContain("openai");
+    expect(r!.error).toContain("answers");
   });
 
   it("parses a real Clef-flash response (fixture captured live): result envelope, fractional score index, choice probabilities", async () => {

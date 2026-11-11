@@ -7,8 +7,8 @@ vendor's official documentation. Keep this honest: update the status column when
 | --- | --- | --- | --- | --- |
 | `typesafe` (Jev) | `POST https://api.typesafe.ai/v1/systemone`, `Authorization: Bearer $TYPESAFE_API_KEY` | `{ model, state, questions }` | `{ model, answers, usage }` | **Live** (2026-11-05, `jev-1.14.0`; again 2026-11-11 through `verdict run --models`) + official API reference |
 | `cloudflare` (Clef) | `POST https://api.cloudflare.com/client/v4/accounts/{id}/ai/run/@cf/cloudflare/clef[-flash]`, `Authorization: Bearer $CLOUDFLARE_API_TOKEN` | `{ model: "clef"\|"clef-flash", state, questions, images? }` | `{ success, result: { model, answers, usage } }` | **Live** (2026-11-05, `clef-flash`, 0.40 s, HTTP 200; 2026-11-11 `clef` and `clef-flash` through `verdict run --models`) + official model pages |
-| `openrouter` | `POST https://openrouter.ai/api/alpha/decisions` | System One shape, `model: typesafe/jev-1.13` | System One shape | Public write-ups only |
-| `openai` (Decisions API) | `POST https://api.openai.com/v1/decisions` | `noul` sent as `predicate` | parsed defensively (`noul` / `predicate` / `probability`) | Public write-ups only (beta) |
+| `openrouter` | `POST https://openrouter.ai/api/alpha/decisions`, `Authorization: Bearer $OPENROUTER_API_KEY` | System One shape, `model: typesafe/jev-1.13` | System One shape; `model` names the dated model that answered | **Live** (2026-11-11, `typesafe/jev-1.13`, answered by `typesafe/jev-1.13-20260917`, through `verdict run --models`) |
+| `openai` (Decisions API) | `POST https://api.openai.com/v1/decisions`, `Authorization: Bearer $OPENAI_API_KEY` | Its own shape: `{ model, input, questions: [ … ] }` ([below](#openai-decisions-request-and-response)) | `{ model, answers: [ … ], usage }` | **Live** (2026-11-11, `gpt-6-luna`, through `verdict run --models`; the request shape was learned from the endpoint's own refusals) |
 | `systemone` | `baseUrl` + `/systemone` | System One shape | System One shape | By construction (same as Jev) |
 
 ## System One request (Jev; Clef-compatible)
@@ -50,6 +50,49 @@ Notes that matter for the engine:
 - `usage.output_tokens` is reported but free; `input_tokens` is billable. Both are added to the evaluation's usage.
 - Models listed by `GET /v1/models`: `jev-latest` (currently 1.14.0) and `jev-preview`. Pin a version in production rubrics once TypeSafe exposes dated ids; log `answers.model` (Verdict stores it in `rating.raw.resolvedModel`, sets `raw.modelVerified`, and keeps the requested name — possibly the alias — in `raw.requestedModel`).
 - Limits (Jev public docs): 64k tokens per request, 32k for state + longest question, score 2–10 levels, choice ≤255 options, text-only state.
+
+## OpenAI Decisions request and response
+
+OpenAI's endpoint asks the same three kinds of question in a shape of its own, and refuses any field it does not
+know (`Unknown parameter: 'questions[0].criteria'`). Verdict translates the System One question for it:
+
+| System One | OpenAI Decisions |
+| --- | --- |
+| `state` | `input` |
+| `questions` as an object keyed by id | `questions` as an array; each carries its id as `name` |
+| `score` with `criteria: ["label: description", …]` | `score` with `levels: [{ label, description }, …]` (at least 2) |
+| `noul` with `criteria: { true, false }` | `predicate` with `instructions` only; the two descriptions are added to the instructions as "Yes means: … No means: …" |
+| `choice` with `criteria: { value: description }` | `choice` with `choices: [{ value, description }, …]` (at least 2) |
+
+```json
+{
+  "model": "gpt-6-luna",
+  "input": "<the rendered evidence>",
+  "questions": [
+    { "name": "urgency", "type": "score", "instructions": "…", "levels": [{ "label": "none", "description": "…" }, { "label": "critical", "description": "…" }] },
+    { "name": "needs_engineer", "type": "predicate", "instructions": "… Yes means: …. No means: …." },
+    { "name": "team", "type": "choice", "instructions": "…", "choices": [{ "value": "support", "description": "…" }, { "value": "engineering", "description": "…" }] }
+  ]
+}
+```
+
+The answer (verbatim from a live call, `packages/core/test/fixtures/openai-decisions-response.json`):
+
+```json
+{
+  "model": "gpt-6-luna",
+  "answers": [
+    { "type": "score", "name": "urgency", "score": 2.76, "probabilities": [{ "value": 0, "label": "none", "probability": 0.0 }, { "value": 1, "label": "low", "probability": 0.01 }, { "value": 2, "label": "high", "probability": 0.22 }, { "value": 3, "label": "critical", "probability": 0.77 }], "confidence": 0.76 },
+    { "type": "predicate", "name": "needs_engineer", "probability": 0.98 },
+    { "type": "choice", "name": "team", "choice": "engineering", "probabilities": [{ "value": "support", "probability": 0.0 }, { "value": "engineering", "probability": 1.0 }, { "value": "billing", "probability": 0.0 }], "confidence": 1.0 }
+  ],
+  "usage": { "input_tokens": 506, "output_tokens": 0, "total_tokens": 506 }
+}
+```
+
+- A score's `value` is the level's place in the request (0 first) and `score` is the expected place, so Verdict reads it as it reads a System One score. A predicate's `probability` is P(yes).
+- The same request asked twice gave `0.97` and `0.98` for the predicate: answers are close to, but not exactly, repeatable.
+- Not checked: images (Verdict sends this provider text only), limits on the number of questions and on the length of a name.
 
 ## Clef-flash response (verbatim from a live call, `packages/core/test/fixtures/cloudflare-clef-flash-response.json`)
 

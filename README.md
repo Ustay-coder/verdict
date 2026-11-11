@@ -19,7 +19,7 @@ the models gave one answer on 7 of 8 question(s) they all answered; they differ 
   explicit · urgency   expected medium   jev low (0.67) | clef low (0.53) | clef-flash medium (0.11)
 ```
 
-That is a real run of the [example](examples/models) in this repository (2026-11-11); for your own, start from `verdict rubric init` and a file of cases. Four cases say nothing about which model is better — the point is that the table is about *your* cases once you bring them. The rubric file is not edited: `--models` re-points its decision judges, one run per model, and each run is kept, so `verdict diff --base run_… --head run_…` shows any two case by case. A model is `jev`, `clef`, `clef-flash`, or `provider:model` (`typesafe:jev-1.14.0`, `openrouter:typesafe/jev-1.13`, `openai:<model>`, `systemone:<model>` for any endpoint that speaks the same request). Each provider's key comes from your environment (`TYPESAFE_API_KEY`; `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_API_TOKEN`); a model that cannot answer gets a row that says why. **Checked against the live services: Jev, Clef and Clef-flash.** The OpenRouter and OpenAI adapters are written from public documentation and have not been checked against the live endpoints yet ([docs/PROVIDERS.md](docs/PROVIDERS.md)).
+That is a real run of the [example](examples/models) in this repository (2026-11-11); for your own, start from `verdict rubric init` and a file of cases. Four cases say nothing about which model is better — the point is that the table is about *your* cases once you bring them. The rubric file is not edited: `--models` re-points its decision judges, one run per model, and each run is kept, so `verdict diff --base run_… --head run_…` shows any two case by case. A model is `jev`, `clef`, `clef-flash`, or `provider:model` (`typesafe:jev-1.14.0`, `openrouter:typesafe/jev-1.13`, `openai:<model>`, `systemone:<model>` for any endpoint that speaks the same request). Each provider's key comes from your environment (`TYPESAFE_API_KEY`; `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_API_TOKEN`; `OPENROUTER_API_KEY`; `OPENAI_API_KEY`); a model that cannot answer gets a row that says why. **Checked against the live services: Jev, Clef, Clef-flash, OpenRouter and OpenAI's Decisions API** — what each was sent, what it answered and when is in [docs/PROVIDERS.md](docs/PROVIDERS.md).
 
 **Then keep the rubric where every machine can reach it.** A Verdict server (this repository, self-hosted) stores every frozen version and says which one each environment runs. `verdict login`, then `verdict push intent.yaml` uploads a version; any other machine judges with it by name — `verdict run -r intent --env prod -d cases.jsonl` — with no rubric file and its own model keys. The server never receives a case, an input or an answer. See [Using a rubric from any machine](website/guide/versions.md#using-a-rubric-from-any-machine).
 
@@ -30,8 +30,8 @@ That is a real run of the [example](examples/models) in this repository (2026-11
 | `jev` | Jev | TypeSafe | Yes | No, text only |
 | `clef` | Clef | Cloudflare Workers AI | Yes | Up to 4 |
 | `clef-flash` | Clef-flash | Cloudflare Workers AI | Yes | Up to 4 |
-| `openrouter:<model>` | For example `typesafe/jev-1.13` | OpenRouter | Not yet | No |
-| `openai:<model>` | OpenAI's Decisions API | OpenAI | Not yet | No |
+| `openrouter:<model>` | For example `typesafe/jev-1.13` | OpenRouter | Yes | No |
+| `openai:<model>` | OpenAI's Decisions API, for example `gpt-6-luna` | OpenAI | Yes | No |
 | `systemone:<model>` | Any endpoint that takes the same request | Yours | You check it | No |
 
 | Input | With `verdict eval -i` | What the judge receives |
@@ -408,7 +408,7 @@ Schema changes: edit `packages/db/src/schema/sqlite.ts`, run `pnpm --filter @ver
 
 ## Status
 
-v0.2 — decision-model-first engine (Jev / Clef / OpenAI Decisions / System One-compatible), API, CLI, MCP, SDK with in-memory and file stores. Provider request shapes for TypeSafe and Cloudflare follow their public documentation; OpenAI Decisions and OpenRouter adapters follow public write-ups of the beta and parse defensively — pin `baseUrl`/`options` if a shape differs. See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#roadmap) for what's next.
+v0.2 — decision-model-first engine (Jev / Clef / OpenAI Decisions / System One-compatible), API, CLI, MCP, SDK with in-memory and file stores. Every decision adapter (TypeSafe, Cloudflare, OpenRouter, OpenAI Decisions) has been checked against its live service; [docs/PROVIDERS.md](docs/PROVIDERS.md) records what was sent, what came back and when. See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#roadmap) for what's next.
 
 MIT.
 

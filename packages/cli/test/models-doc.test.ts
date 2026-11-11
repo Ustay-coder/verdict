@@ -34,11 +34,12 @@ describe("the tables of models and inputs", () => {
 
   it("say a provider was checked against the live service only where the record of contracts does", () => {
     const live = (provider: string) => new RegExp(`^\\| \`${provider}\`[^\\n]*\\*\\*Live\\*\\*`, "m").test(record);
-    expect([live("typesafe"), live("cloudflare"), live("openrouter"), live("openai")]).toEqual([true, true, false, false]);
+    expect([live("typesafe"), live("cloudflare"), live("openrouter"), live("openai")]).toEqual([true, true, true, true]);
     for (const text of [page, home, readme]) {
       const row = (name: string) => text.split("\n").find((line) => line.startsWith(`| \`${name}\` |`)) ?? "";
-      for (const name of ["jev", "clef", "clef-flash"]) expect(row(name), name).toMatch(/\| Yes/);
-      for (const name of ["openrouter:<model>", "openai:<model>"]) expect(row(name), name).toMatch(/\| Not yet/);
+      for (const name of ["jev", "clef", "clef-flash", "openrouter:<model>", "openai:<model>"]) expect(row(name), name).toMatch(/\| Yes/);
+      // An endpoint of your own is never claimed as checked.
+      expect(row("systemone:<model>")).toMatch(/\| You check it/);
     }
   });
 

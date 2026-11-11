@@ -115,7 +115,7 @@ Providers and their env vars:
 | `typesafe` | `https://api.typesafe.ai/v1/systemone` | `TYPESAFE_API_KEY` | `jev-latest` (`VERDICT_TYPESAFE_MODEL`) |
 | `cloudflare` | `…/accounts/{CLOUDFLARE_ACCOUNT_ID}/ai/run/{model}` (or `baseUrl` = AI Gateway) | `CLOUDFLARE_API_TOKEN` | `@cf/cloudflare/clef` (`clef-flash`, `typesafe/jev`) |
 | `openrouter` | `https://openrouter.ai/api/alpha/decisions` | `OPENROUTER_API_KEY` | `typesafe/jev-1.13` |
-| `openai` | `https://api.openai.com/v1/decisions` (`noul` sent as `predicate`) | `OPENAI_API_KEY` | `gpt-6-luna` |
+| `openai` | `https://api.openai.com/v1/decisions` (its own request shape; Verdict translates the questions) | `OPENAI_API_KEY` | `gpt-6-luna` |
 | `systemone` | `baseUrl` + `/systemone` | `SYSTEMONE_API_KEY` | `jev-latest` |
 | `mock` | in-process | — | options: `level`, `normalized`, `probabilities`, `noul` |
 
