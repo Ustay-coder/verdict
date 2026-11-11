@@ -13,9 +13,10 @@ jobs:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
+        # No package cache here: most runs find the version already on npm and install nothing, and saving a
+        # cache of a store that was never made fails the job after its work is done.
         with:
           node-version: 22
-          cache: pnpm
           registry-url: https://registry.npmjs.org
       - name: Is this version already on npm?
         id: version
