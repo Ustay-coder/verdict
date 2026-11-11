@@ -2,6 +2,10 @@
 # Deploy: pnpm --filter verdict-website build && wrangler deploy   (or scripts/deploy-docs.sh from the repo root)
 name = "verdict-docs"
 compatibility_date = "2026-10-01"
+# The site's address. Attaching it needs a token that may edit the zone's Workers routes, besides Workers Scripts.
+routes = [{ pattern = "docs.verdict-ai.dev", custom_domain = true }]
+# The first address stays up for links that still point at it.
+workers_dev = true
 
 [assets]
 directory = "./.vitepress/dist"
