@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.3.2
 
 - The MCP server can be listed in the official MCP registry: `packages/mcp/server.json` describes it, `@verdict-ai/mcp` names it (`mcpName`), and the release script keeps the version in step.
 - New example, `examples/banking77`: eighty customer messages about bank transfers from BANKING77 (PolyAI, CC BY 4.0), a rubric with one eight-way choice, and a saved live run on Jev, Clef, Clef-flash, OpenRouter and OpenAI's Decisions API. The models differ on ten of the eighty. A script rebuilds the cases from the published file.
