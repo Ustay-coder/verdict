@@ -21,6 +21,8 @@ export interface DecisionRaw {
   levels?: Level[]; latencyMs?: number; lowConfidence?: boolean; stateChars?: number; stateTruncated?: boolean;
   /** Images in the evidence vs. images the provider received. */
   images?: { attached: number; sent: number };
+  /** Documents (PDFs) in the evidence vs. documents the provider received as files. */
+  documents?: { attached: number; sent: number };
 }
 export interface LlmRaw {
   provider: string; model?: string; samples?: number[]; agreement?: number; latencyMs: number;

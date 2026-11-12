@@ -51,7 +51,7 @@ Verdict appends `/systemone` to the base URL.
 
 ## OpenRouter and OpenAI
 
-Both were checked against the live services on 2026-11-11 (OpenRouter with `typesafe/jev-1.13`, OpenAI with `gpt-6-luna`). OpenRouter takes the System One request as it is. OpenAI's Decisions API has a request shape of its own, and Verdict translates the same questions into it; [docs/PROVIDERS.md](https://github.com/Ustay-coder/verdict/blob/main/docs/PROVIDERS.md#openai-decisions-request-and-response) shows what is sent and what comes back. OpenAI is sent text only for now. These are separate from generative LLM providers with the same names.
+Both were checked against the live services on 2026-11-11 (OpenRouter with `typesafe/jev-1.13`, OpenAI with `gpt-6-luna`). OpenRouter takes the System One request as it is. OpenAI's Decisions API has a request shape of its own, and Verdict translates the same questions into it; [docs/PROVIDERS.md](https://github.com/Ustay-coder/verdict/blob/main/docs/PROVIDERS.md#openai-decisions-request-and-response) shows what is sent and what comes back. OpenAI is sent pictures as well as text; it refuses PDFs, so a PDF reaches it as its text. These are separate from generative LLM providers with the same names.
 
 ```bash
 export OPENROUTER_API_KEY="your-openrouter-key"
@@ -71,7 +71,7 @@ defaultJudge: { type: decision, provider: openai }
 
 ## Gemini
 
-Checked against the live service on 2026-11-12 with `gemini-decision-1`. Google's Decisions API takes the same three kinds of question with a few fields renamed, and Verdict translates them; [docs/PROVIDERS.md](https://github.com/Ustay-coder/verdict/blob/main/docs/PROVIDERS.md#gemini-decisions-request-and-response) shows what is sent and what comes back. Gemini is sent text only for now. The response does not name the model that answered, so a rating records the model that was asked for.
+Checked against the live service on 2026-11-12 with `gemini-decision-1`. Google's Decisions API takes the same three kinds of question with a few fields renamed, and Verdict translates them; [docs/PROVIDERS.md](https://github.com/Ustay-coder/verdict/blob/main/docs/PROVIDERS.md#gemini-decisions-request-and-response) shows what is sent and what comes back. Gemini is sent pictures and PDFs as they are, a scanned PDF included. The response does not name the model that answered, so a rating records the model that was asked for.
 
 ```bash
 export GEMINI_API_KEY="your-gemini-key"

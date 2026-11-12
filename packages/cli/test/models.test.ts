@@ -128,6 +128,25 @@ criteria:
     expect(json.splits[2]!.answers).toMatchObject([{ probability: null, confidence: 0.33 }, { probability: 1, confidence: 1 }]);
   });
 
+  it("says how many of the cases' pictures each model was sent, only when the cases carry pictures", async () => {
+    const PNG = "iVBORw0KGgoAAAANSUhEUgAAAAMAAAACCAIAAAASFvFNAAAAEklEQVR4nGKpsXrLAAZMDDAAAAAA//9F4ac5AAAABklEQVQDAB19AapnIGSYAAAAAElFTkSuQmCC";
+    const withPicture = [
+      JSON.stringify({ id: "agent", name: "agent", inputs: [{ type: "text", text: "connect me to an agent" }, { type: "image", base64: PNG, filename: "chat.png" }], expected: { wants: "yes" } }),
+      JSON.stringify({ id: "hours", name: "hours", inputs: [{ type: "text", text: "what are your opening hours" }], expected: { wants: "no" } }),
+    ].join("\n");
+    const t = setup([["intent.yaml", rubric], ["pictures.jsonl", withPicture]]);
+    const { out } = await t.run("-r", "intent.yaml", "-d", "pictures.jsonl", "--models", "jev,clef");
+    const cells = (row: string) => row.trim().split(/ {3,}/);
+    expect(cells(out[1]!)).toEqual(["model", "answered by", "agreed with labels", "failed", "asked a human", "pictures sent", "input tokens", "calls", "time"]);
+    // Jev takes text only, so it judged the one picture's case from its text; Clef was sent the picture.
+    expect(cells(out[2]!).slice(0, 6)).toEqual(["jev", "typesafe/jev-1.14.0", "2/2 (100%)", "0", "0", "0/1"]);
+    expect(cells(out[3]!).slice(0, 6)).toEqual(["clef", "cloudflare/clef", "2/2 (100%)", "0", "0", "1/1"]);
+    expect((t.sent.find((s) => s.url.includes("cloudflare")) as unknown as { body: { images: string[] } }).body.images).toEqual([`data:image/png;base64,${PNG}`]);
+    expect(t.sent.filter((s) => s.url.includes("typesafe")).every((s) => !("images" in s.body))).toBe(true);
+    const json = JSON.parse((await t.run("-r", "intent.yaml", "-d", "pictures.jsonl", "--models", "jev,clef", "--json")).out[0]!) as { models: Array<{ media?: unknown }> };
+    expect(json.models.map((m) => m.media)).toEqual([{ pictures: { attached: 1, sent: 0 } }, { pictures: { attached: 1, sent: 1 } }]);
+  });
+
   it("prints the same comparison as JSON", async () => {
     const t = setup();
     const { out } = await t.run("-r", "intent.yaml", "-d", "cases.jsonl", "--models", "jev,clef", "--json");

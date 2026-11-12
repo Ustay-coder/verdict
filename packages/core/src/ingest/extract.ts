@@ -11,17 +11,18 @@ export function asUint8Array(bytes: Uint8Array): Uint8Array {
 /** Parser failures reject; malformed JSON stays readable as text with an explicit warning. */
 const MIN_PDF_TEXT_CHARS = 20;
 
-export async function extractFromBuffer(buf: Uint8Array, filename = "", mimeType = ""): Promise<{ text: string; json?: unknown; warnings?: string[] }> {
+export async function extractFromBuffer(buf: Uint8Array, filename = "", mimeType = ""): Promise<{ text: string; json?: unknown; warnings?: string[]; pdfPages?: number }> {
   const { extname } = await import("node:path");
   const ext = extname(filename).toLowerCase();
   const mt = mimeType.toLowerCase();
   if (mt.includes("pdf") || ext === ".pdf") {
     const { extractText, getDocumentProxy } = await import("unpdf");
-    const pdf = await getDocumentProxy(buf);
+    // why: pdf.js detaches the buffer it is given, and the caller may still attach these bytes for judges that read the file.
+    const pdf = await getDocumentProxy(asUint8Array(buf));
     const { text, totalPages } = await extractText(pdf, { mergePages: true });
     // why: pages with almost no extracted text are likely scans; keep the content and flag the need for OCR.
     const warnings = text.trim().length < MIN_PDF_TEXT_CHARS && totalPages > 0 ? ["PDF contains little extractable text (scanned? consider OCR)"] : undefined;
-    return { text: typeof text === "string" ? text : (text as string[]).join("\n"), warnings };
+    return { text: typeof text === "string" ? text : (text as string[]).join("\n"), warnings, pdfPages: totalPages };
   }
   const str = new TextDecoder().decode(buf);
   if (mt.includes("json") || ext === ".json") {

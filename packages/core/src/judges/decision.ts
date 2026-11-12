@@ -17,6 +17,8 @@ export { criterionLevels, buildQuestion, type Level } from "./decision/questions
 export { answerToScore, binaryMargin, DEFAULT_BINARY_THRESHOLD } from "./decision/answers.js";
 import { type Judge, type JudgeContext, ratingBase, renderEvidence } from "./types.js";
 import { evidenceImages } from "../ingest/images.js";
+import { describeDocuments, evidenceDocuments } from "../ingest/documents.js";
+import type { Evidence } from "../schema/subject.js";
 
 registerBuiltInDecisionProviders();
 
@@ -34,6 +36,15 @@ function defaultStateCharLimit(provider: string, model?: string): number {
   if (m.includes("clef-flash")) return STATE_TOKEN_BUDGET.clefFlash * CHARS_PER_TOKEN;
   if (provider === "cloudflare") return STATE_TOKEN_BUDGET.cloudflare * CHARS_PER_TOKEN;
   return STATE_TOKEN_BUDGET.systemOne * CHARS_PER_TOKEN; // Jev and System One-compatible hosts
+}
+
+/**
+ * The state a provider is sent. A provider that reads PDFs itself is sent the file, so the state names the file
+ * instead of repeating its text layer; every other provider is given the text.
+ */
+function stateFor(evidence: Evidence[], provider: DecisionProviderAdapter): string {
+  if (!provider.acceptsDocuments) return renderEvidence(evidence);
+  return renderEvidence(evidence.map((e) => (evidenceDocuments(e).length ? { ...e, text: describeDocuments(e) } : e)));
 }
 
 /** Batches compatible criteria into one provider call; rate methods return error ratings on failure. */
@@ -63,12 +74,14 @@ export class DecisionJudge implements Judge {
     // why: text-only providers would reject or ignore image payloads; send only what the adapter declares it can take.
     const attached = ctx.evidence.flatMap(evidenceImages);
     const images = provider.acceptsImages ? attached.slice(0, provider.maxImages ?? attached.length) : [];
+    const files = ctx.evidence.flatMap(evidenceDocuments);
+    const documents = provider.acceptsDocuments ? files : [];
     ctx.usage.decisionCalls++;
-    const res = await provider.decide({ model: this.spec.model, state: renderEvidence(ctx.evidence).slice(0, limit), questions, baseUrl: this.spec.baseUrl, apiKey: this.spec.apiKeyEnv ? ctx.env(this.spec.apiKeyEnv) : undefined, options, images: images.length ? images : undefined }, ctx);
+    const res = await provider.decide({ model: this.spec.model, state: stateFor(ctx.evidence, provider).slice(0, limit), questions, baseUrl: this.spec.baseUrl, apiKey: this.spec.apiKeyEnv ? ctx.env(this.spec.apiKeyEnv) : undefined, options, images: images.length ? images : undefined, documents: documents.length ? documents : undefined }, ctx);
     parseProvider(this.spec.provider, z.object({ answers: z.record(z.string(), SystemOneAnswerSchema) }), res);
     ctx.usage.inputTokens += res.usage?.inputTokens ?? 0;
     ctx.usage.outputTokens += res.usage?.outputTokens ?? 0;
-    return attached.length ? { ...res, images: { attached: attached.length, sent: images.length } } : res;
+    return { ...res, ...(attached.length ? { images: { attached: attached.length, sent: images.length } } : {}), ...(files.length ? { documents: { attached: files.length, sent: documents.length } } : {}) };
   }
 
   async rate(ctx: JudgeContext): Promise<Rating[]> {
@@ -90,7 +103,7 @@ export class DecisionJudge implements Judge {
     let limit: number;
     try { questions = this.buildRequest(ctxs); limit = this.stateCharLimit(); }
     catch (error) { return errorAll((error as Error).message); }
-    const stateLength = renderEvidence(first.evidence).length;
+    const stateLength = stateFor(first.evidence, provider).length;
     const stateTruncated = stateLength > limit;
     // why: retain the historical diagnostic length, including the truncation marker, without building an unused state copy.
     const stateChars = stateTruncated ? limit + "\n[... state truncated to fit the model context ...]".length : stateLength;
@@ -137,6 +150,7 @@ export class DecisionJudge implements Judge {
           provider: provider, ...modelFields(res, this.spec.model), question: question, answer, levels, latencyMs, lowConfidence: low, stateChars, stateTruncated,
           ...cut,
           ...(res.images ? { images: res.images } : {}),
+          ...(res.documents ? { documents: res.documents } : {}),
         },
       };
       return escalateDecision(c, rating, { spec: this.spec, low, distribution: dist });

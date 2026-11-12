@@ -2,6 +2,7 @@ import { extractFromBuffer, htmlToPlain } from "./extract.js";
 import { fetchWithTimeout } from "./network.js";
 import { make, stats } from "./evidence.js";
 import { attachImages, describeImage } from "./images.js";
+import { attachPdf } from "./documents.js";
 import type { Ingestor, IngestOptions } from "./contracts.js";
 import type { Evidence, Input } from "../schema/subject.js";
 
@@ -13,14 +14,21 @@ export const urlIngestor: Ingestor = async (input, i, o) => {
   let title: string | undefined;
   let text: string;
   let json: unknown;
+  let pdf: { data: Uint8Array; pages?: number } | undefined;
   if (ct.includes("application/json")) { json = await res.json(); text = JSON.stringify(json, null, 2); }
-  else if (ct.includes("pdf")) { ({ text } = await extractFromBuffer(new Uint8Array(await res.arrayBuffer()), "download.pdf", ct)); }
+  else if (ct.includes("pdf")) {
+    const data = new Uint8Array(await res.arrayBuffer());
+    const read = await extractFromBuffer(data, "download.pdf", ct);
+    text = read.text;
+    pdf = { data, pages: read.pdfPages };
+  }
   else {
     const html = await res.text();
     title = /<title[^>]*>([^<]*)<\/title>/i.exec(html)?.[1]?.trim();
     text = ct.includes("html") || /<html/i.test(html) ? htmlToPlain(html) : html;
   }
   const e = make(input, i, text, { label: input.label ?? title ?? input.url, source: input.url, json }, o.maxChars);
+  if (pdf) attachPdf(e, pdf.data, pdf.pages);
   return input.screenshot ? attachScreenshot(e, input, o.screenshot) : e;
 };
 

@@ -23,12 +23,18 @@ function splitLine(split: ModelSplit, many: boolean): string {
   return `  ${split.name}${many ? ` · ${split.criterionId}` : ""}   ${split.expected ? `expected ${split.expected.shown}   ` : ""}${given}`;
 }
 
+/** "3/4": how many of the cases' pictures or PDFs the model was sent as such; a dash where the cases had none for it. */
+const sent = (count?: { attached: number; sent: number }) => (count ? `${count.sent}/${count.attached}` : "—");
+
 export function renderModels(cmp: ModelComparison, criteria: number): string[] {
   const asked = cmp.sameQuestions ? "the same questions to each" : "the questions sent were not the same for every model: read the rows with that in mind";
   const lines = [`${cmp.rubric} × ${cmp.dataset}: ${cmp.cases} case(s), ${cmp.models.length} model(s), ${asked}`];
+  // Shown only when the cases carry pictures or PDFs: a model that was sent none of them judged the text alone.
+  const pictures = cmp.models.some((r) => r.media?.pictures), pdfs = cmp.models.some((r) => r.media?.pdfs);
+  const carried = (r: ModelRow) => [...(pictures ? [sent(r.media?.pictures)] : []), ...(pdfs ? [sent(r.media?.pdfs)] : [])];
   lines.push(...table([
-    ["model", "answered by", "agreed with labels", "failed", "asked a human", "input tokens", "calls", "time"],
-    ...cmp.models.map((r) => [r.label, answeredBy(r), rate(r), String(r.counts.failed), String(r.counts.pendingHuman), count(r.usage.inputTokens), String(r.usage.decisionCalls), seconds(r.durationMs)]),
+    ["model", "answered by", "agreed with labels", "failed", "asked a human", ...(pictures ? ["pictures sent"] : []), ...(pdfs ? ["PDFs sent"] : []), "input tokens", "calls", "time"],
+    ...cmp.models.map((r) => [r.label, answeredBy(r), rate(r), String(r.counts.failed), String(r.counts.pendingHuman), ...carried(r), count(r.usage.inputTokens), String(r.usage.decisionCalls), seconds(r.durationMs)]),
   ]));
   // A provider's refusal can be a page of JSON; one line says enough to act on, and --json has all of it.
   const brief = (text: string) => (text.replace(/\s+/g, " ").length > 200 ? `${text.replace(/\s+/g, " ").slice(0, 200)}…` : text.replace(/\s+/g, " "));

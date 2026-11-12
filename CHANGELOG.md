@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+- **Pictures reach every model that takes them**: OpenAI and Gemini as well as Clef. Until now only Clef was sent a picture, and the other models judged one line saying a picture was there.
+- **A PDF is sent as the file to a model that reads PDFs** (Gemini). The text it is sent names the file instead of repeating its text layer; every other model is given the text layer as before. Checked live with a PDF that has a text layer and with a scan that has none.
+- **A scanned PDF is no longer refused** as empty evidence. A model that reads PDFs reads it; any other model is told there was no text to show.
+- `verdict run --models` says what each model was sent: a **pictures sent** and a **PDFs sent** column appear when the cases carry them (`1/1`, or `0/2` for a model given text instead), and `--json` has the counts as `media`. Ratings record `raw.documents` beside `raw.images`.
+- Not built yet: turning a PDF's pages into pictures for the models that take only pictures.
+
 ## 0.3.6
 
 - **`verdict run --models` shows the probability each model gave its answer** beside the answer, where it showed the provider's `confidence`. The confidences were not comparable: for an answer of probability `p` among `n` options Gemini reports `p`, Jev and OpenAI report `(p − 1/n) / (1 − 1/n)`, and Clef reports `(Σp² − 1/n) / (1 − 1/n)`, so one message read 0.62, 0.54 and 0.28 for probabilities of 0.62, 0.60 and 0.48. `--json` now carries `probability` next to `confidence` for every answer. A score that falls between two levels has no probability and shows no number.
