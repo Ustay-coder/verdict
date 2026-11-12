@@ -3,7 +3,7 @@
   "name": "io.github.Ustay-coder/verdict",
   "title": "Verdict",
   "description": "Score text, files and pages against a rubric with decision models; compare models on your cases.",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "websiteUrl": "https://docs.verdict-ai.dev/reference/mcp",
   "repository": {
     "url": "https://github.com/Ustay-coder/verdict",
@@ -14,7 +14,7 @@
     {
       "registryType": "npm",
       "identifier": "@verdict-ai/mcp",
-      "version": "0.3.2",
+      "version": "0.3.3",
       "transport": {
         "type": "stdio"
       },

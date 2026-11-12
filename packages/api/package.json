@@ -1,6 +1,6 @@
 {
   "name": "@verdict-ai/api",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "description": "Verdict REST API (Hono). Runs on Node and Cloudflare Workers.",
   "type": "module",
   "main": "./dist/index.js",
