@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Documentation
+    url: https://docs.verdict-ai.dev
+    about: Guides, references and complete example rubrics.
+  - name: A security problem
+    url: https://github.com/Ustay-coder/verdict/blob/main/SECURITY.md
+    about: Please report it privately, not as an issue.

@@ -59,6 +59,10 @@ export default defineConfig({
           {
             "text": "Agent development",
             "link": "/guide/codex"
+          },
+          {
+            "text": "Everything Verdict does",
+            "link": "/guide/overview"
           }
         ]
       },
@@ -92,6 +96,10 @@ export default defineConfig({
           {
             "text": "MCP",
             "link": "/reference/mcp"
+          },
+          {
+            "text": "Configuration",
+            "link": "/reference/configuration"
           }
         ]
       },

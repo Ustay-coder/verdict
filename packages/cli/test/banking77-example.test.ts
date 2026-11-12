@@ -44,6 +44,10 @@ describe("examples/banking77", () => {
     const readme = readFileSync(at("README.md"), "utf8"), run = readFileSync(at("run-2026-11-12.txt"), "utf8").split("\n");
     const shown = /```\n(Transfer intent[\s\S]*?)```/.exec(readme)![1]!.trimEnd().split("\n");
     expect(shown).toEqual(run.slice(0, shown.length));
+    // The repository's front page opens with the same run.
+    const front = /```text\n(Transfer intent[\s\S]*?)\n {2}…\n```/.exec(readFileSync(fileURLToPath(new URL("../../../README.md", import.meta.url)), "utf8"))![1]!.split("\n");
+    expect(front).toEqual(run.slice(0, front.length));
+    expect(front.length).toBeGreaterThan(6);
     const quoted = [...readme.matchAll(/^\| "([^"]+)" \|/gm)].map((m) => m[1]);
     expect(quoted).toHaveLength(3);
     for (const text of quoted) {

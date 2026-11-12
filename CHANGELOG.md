@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- New example, `examples/banking77`: eighty customer messages about bank transfers from BANKING77 (PolyAI, CC BY 4.0), a rubric with one eight-way choice, and a saved live run on Jev, Clef, Clef-flash, OpenRouter and OpenAI's Decisions API. The models differ on ten of the eighty. A script rebuilds the cases from the published file.
+- The README is the short way in (what it is, a first run without a key, the models and inputs, where to go next). Its long sections moved, word for word, to the documentation: [Everything Verdict does](https://docs.verdict-ai.dev/guide/overview) and [Configuration](https://docs.verdict-ai.dev/reference/configuration). What is for people changing the code moved to `CONTRIBUTING.md`.
+- `CONTRIBUTING.md`, `SECURITY.md` and issue forms.
+
 ## 0.3.1
 
 - OpenAI's Decisions API works: the adapter now sends what the live endpoint takes (`input`, an array of named questions, `levels` for a score, `choices` for a choice, a predicate with instructions only) and reads its array of answers. Before, it sent the System One shape and every request was refused (`Missing required parameter: 'input'`). Checked live with `gpt-6-luna`; `verdict run --models openai,jev,clef` puts it beside the others.

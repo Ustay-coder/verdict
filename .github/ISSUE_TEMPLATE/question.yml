@@ -1,0 +1,15 @@
+name: A question, or something missing
+description: How to do something, a model or an input Verdict does not take yet, or a page of the documentation that left you stuck.
+labels: [question]
+body:
+  - type: textarea
+    id: goal
+    attributes:
+      label: What you are trying to do
+    validations:
+      required: true
+  - type: textarea
+    id: tried
+    attributes:
+      label: What you tried, and where you got stuck
+      description: A command, a rubric, or the page you were reading.
