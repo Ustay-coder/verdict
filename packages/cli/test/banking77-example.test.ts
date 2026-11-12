@@ -41,7 +41,7 @@ describe("examples/banking77", () => {
   });
 
   it("shows in its README the table the saved run printed, and quotes messages that are among the cases", () => {
-    const readme = readFileSync(at("README.md"), "utf8"), run = readFileSync(at("run-2026-11-12.txt"), "utf8").split("\n");
+    const readme = readFileSync(at("README.md"), "utf8"), run = readFileSync(at("run-2026-11-12-six-models.txt"), "utf8").split("\n");
     const shown = /```\n(Transfer intent[\s\S]*?)```/.exec(readme)![1]!.trimEnd().split("\n");
     expect(shown).toEqual(run.slice(0, shown.length));
     // The repository's front page opens with the same run.

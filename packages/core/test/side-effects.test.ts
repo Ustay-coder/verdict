@@ -30,6 +30,6 @@ describe("bundling", () => {
   });
 
   it("registers the built-in decision providers when the engine is imported", () => {
-    for (const name of ["typesafe", "cloudflare", "systemone", "openrouter", "openai", "mock"]) expect(getDecisionProvider(name).name).toBe(name);
+    for (const name of ["typesafe", "cloudflare", "systemone", "openrouter", "openai", "gemini", "mock"]) expect(getDecisionProvider(name).name).toBe(name);
   });
 });

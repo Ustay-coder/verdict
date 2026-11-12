@@ -9,6 +9,7 @@ vendor's official documentation. Keep this honest: update the status column when
 | `cloudflare` (Clef) | `POST https://api.cloudflare.com/client/v4/accounts/{id}/ai/run/@cf/cloudflare/clef[-flash]`, `Authorization: Bearer $CLOUDFLARE_API_TOKEN` | `{ model: "clef"\|"clef-flash", state, questions, images? }` | `{ success, result: { model, answers, usage } }` | **Live** (2026-11-05, `clef-flash`, 0.40 s, HTTP 200; 2026-11-11 `clef` and `clef-flash` through `verdict run --models`) + official model pages |
 | `openrouter` | `POST https://openrouter.ai/api/alpha/decisions`, `Authorization: Bearer $OPENROUTER_API_KEY` | System One shape, `model: typesafe/jev-1.13` | System One shape; `model` names the dated model that answered | **Live** (2026-11-11, `typesafe/jev-1.13`, answered by `typesafe/jev-1.13-20260917`, through `verdict run --models`) |
 | `openai` (Decisions API) | `POST https://api.openai.com/v1/decisions`, `Authorization: Bearer $OPENAI_API_KEY` | Its own shape: `{ model, input, questions: [ … ] }` ([below](#openai-decisions-request-and-response)) | `{ model, answers: [ … ], usage }` | **Live** (2026-11-11, `gpt-6-luna`, through `verdict run --models`; the request shape was learned from the endpoint's own refusals) |
+| `gemini` (Decisions API) | `POST https://generativelanguage.googleapis.com/v1beta/decisions`, `x-goog-api-key: $GEMINI_API_KEY` | System One with three fields renamed: `{ model, input, questions }` ([below](#gemini-decisions-request-and-response)) | `{ answers, usage }`, no `model` | **Live** (2026-11-12, `gemini-decision-1`, through `verdict run --models`; the three differences were confirmed by the endpoint's own refusals) |
 | `systemone` | `baseUrl` + `/systemone` | System One shape | System One shape | By construction (same as Jev) |
 
 ## System One request (Jev; Clef-compatible)
@@ -93,6 +94,66 @@ The answer (verbatim from a live call, `packages/core/test/fixtures/openai-decis
 - A score's `value` is the level's place in the request (0 first) and `score` is the expected place, so Verdict reads it as it reads a System One score. A predicate's `probability` is P(yes).
 - The same request asked twice gave `0.97` and `0.98` for the predicate: answers are close to, but not exactly, repeatable.
 - Not checked: images (Verdict sends this provider text only), limits on the number of questions and on the length of a name.
+
+## Gemini Decisions request and response
+
+Checked against the live API on 2026-11-12 with `gemini-decision-1`. Google's endpoint takes the System One
+question types (`score`, `noul`, `choice`) in a map keyed by question id, and renames three things. It refuses the
+System One spelling of each, and says which field it does not know:
+
+| System One | Gemini Decisions | What the endpoint says to the System One spelling |
+| --- | --- | --- |
+| `state` | `input` | `Unknown parameter 'state'.` |
+| noul `criteria: { "true": …, "false": … }` | `criteria: { "true_description": …, "false_description": … }` | `Unknown parameter 'true' at 'questions.q.criteria'.` |
+| `Authorization: Bearer …` | `x-goog-api-key: …` | 403, `Method doesn't allow unregistered callers` |
+| `usage.input_tokens` | `usage.total_input_tokens` | |
+| `model` in the response | not there | |
+
+```json
+{
+  "model": "gemini-decision-1",
+  "input": "<the rendered evidence>",
+  "questions": {
+    "urgency": { "type": "score", "instructions": "…", "criteria": ["none: …", "low: …", "high: …", "critical: …"] },
+    "needs_engineer": { "type": "noul", "instructions": "…", "criteria": { "true_description": "…", "false_description": "…" } },
+    "team": { "type": "choice", "instructions": "…", "criteria": { "support": "…", "engineering": "…", "billing": "…" } }
+  }
+}
+```
+
+The answer to that request, numbers shortened to four places (verbatim in
+`packages/core/test/fixtures/gemini-decisions-response.json`):
+
+```json
+{
+  "answers": {
+    "team": { "type": "choice", "choice": "engineering", "confidence": 0.9637,
+              "probabilities": { "billing": 0.0181, "support": 0.0182, "engineering": 0.9637 } },
+    "needs_engineer": { "type": "noul", "noul": 0.9548, "confidence": 0.9548 },
+    "urgency": { "type": "score", "score": 2.894, "confidence": 0.9059,
+                 "probabilities": { "2": 0.0842, "0": 0.002, "1": 0.0079, "3": 0.9059 },
+                 "legend": { "0": "none: …", "1": "low: …", "3": "critical: …", "2": "high: …" } }
+  },
+  "usage": { "total_tokens": 378, "total_input_tokens": 378,
+             "input_tokens_by_modality": [{ "modality": "text", "tokens": 378 }], "total_output_tokens": 0 }
+}
+```
+
+Notes that matter for the engine:
+- A score's `probabilities` and `legend` are keyed by level index, and the keys arrive in no particular order.
+  Verdict reads them by index.
+- A noul answer carries a `confidence`, the probability of the likelier side (0.97 for a `noul` of 0.03). Verdict
+  does not use it: it derives its margin from the criterion `threshold`, as for every provider.
+- The response does not name the model, so `rating.raw.resolvedModel` is absent and `raw.modelVerified` is false.
+  The table of a `--models` run shows the model that was asked for.
+- `total_output_tokens` is 0: only input tokens are counted.
+- Question ids must be 1 to 64 characters of `[A-Za-z0-9_-]` (`question IDs must be 1-64 characters matching
+  [A-Za-z0-9_-]+`). Verdict's criterion and check ids are identifiers, so only a very long one is refused.
+- A choice option's description may be an empty string or `null`; Verdict sends an empty string.
+- A model the service does not have answers 404, `Requested model not found`. A key it does not know answers 400,
+  `API key not valid. Please pass a valid API key.`
+- Not checked: images, audio, video and PDF as input (Verdict sends text only), the limits (reported as 1 to 1,000
+  questions and a 262,144-token context), and what a blocked input looks like.
 
 ## Clef-flash response (verbatim from a live call, `packages/core/test/fixtures/cloudflare-clef-flash-response.json`)
 

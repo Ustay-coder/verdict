@@ -54,7 +54,7 @@ the models gave one answer on 7 of 8 question(s) they all answered; they differ 
 
 - **Agreed with labels** counts every labelled criterion the model decided itself, over all cases. Unlabelled cases still show up below the table when the models differ on them — those are the cases worth labelling next.
 - **The same questions to each** is read from the runs: every run records the questions it sent. If the line says otherwise, the rows are not comparable.
-- A model is `jev`, `jev-preview`, `clef`, `clef-flash`, or `provider:model`: `typesafe:jev-1.14.0`, `cloudflare:@cf/cloudflare/clef`, `openrouter:typesafe/jev-1.13`, `openai:<model>`, `systemone:<model>` (with `SYSTEMONE_BASE_URL`). Keys come from the environment, as for any run.
+- A model is `jev`, `jev-preview`, `clef`, `clef-flash`, `gemini`, or `provider:model`: `typesafe:jev-1.14.0`, `cloudflare:@cf/cloudflare/clef`, `openrouter:typesafe/jev-1.13`, `openai:<model>`, `systemone:<model>` (with `SYSTEMONE_BASE_URL`). Keys come from the environment, as for any run.
 - Only decision judges are re-pointed. Criteria judged by rules, people or prompted models answer as the rubric says, and a rubric with no decision judge is refused.
 - The rubric file and `verdict.lock` are not touched. Each model's run is of a version that differs only in which model answers, and is kept: `verdict diff --base run_… --head run_…` compares two case by case, and `--json` prints the whole comparison.
 - A model that cannot answer (no key, a model the account cannot use) keeps its row with the reason, and is left out of the disagreements. The command exits 1 only when no model answered.

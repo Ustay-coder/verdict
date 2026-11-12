@@ -45,6 +45,7 @@ export const DecisionProvider = z.enum([
   "cloudflare", // Clef / Clef-flash / typesafe/jev on Workers AI (CLOUDFLARE_ACCOUNT_ID + CLOUDFLARE_API_TOKEN)
   "openrouter", // typesafe/jev-*, inception/mercury-decide, ... (OPENROUTER_API_KEY)
   "openai",     // Decisions API (OPENAI_API_KEY) — predicate / choice / score
+  "gemini",     // Gemini Decisions API, gemini-decision-1 (GEMINI_API_KEY)
   "systemone",  // any endpoint speaking the /v1/systemone request shape (self-hosted Clef, DigitalOcean, gateways)
   "mock",       // deterministic fake for tests and dry runs
 ]);

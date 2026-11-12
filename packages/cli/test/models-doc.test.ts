@@ -22,7 +22,7 @@ function names(text: string): string[] {
 describe("the tables of models and inputs", () => {
   it("name every model the command line takes, and every decision provider", () => {
     const listed = names(page);
-    for (const alias of ["jev", "jev-preview", "clef", "clef-flash", "mock"]) {
+    for (const alias of ["jev", "jev-preview", "clef", "clef-flash", "gemini", "mock"]) {
       expect(listed, alias).toContain(alias);
       // The alias is one the command line really resolves.
       expect(parseModels(alias)[0]!.label).toBe(alias);
@@ -34,10 +34,10 @@ describe("the tables of models and inputs", () => {
 
   it("say a provider was checked against the live service only where the record of contracts does", () => {
     const live = (provider: string) => new RegExp(`^\\| \`${provider}\`[^\\n]*\\*\\*Live\\*\\*`, "m").test(record);
-    expect([live("typesafe"), live("cloudflare"), live("openrouter"), live("openai")]).toEqual([true, true, true, true]);
+    expect([live("typesafe"), live("cloudflare"), live("openrouter"), live("openai"), live("gemini")]).toEqual([true, true, true, true, true]);
     for (const text of [page, home, readme]) {
       const row = (name: string) => text.split("\n").find((line) => line.startsWith(`| \`${name}\` |`)) ?? "";
-      for (const name of ["jev", "clef", "clef-flash", "openrouter:<model>", "openai:<model>"]) expect(row(name), name).toMatch(/\| Yes/);
+      for (const name of ["jev", "clef", "clef-flash", "openrouter:<model>", "openai:<model>", "gemini"]) expect(row(name), name).toMatch(/\| Yes/);
       // An endpoint of your own is never claimed as checked.
       expect(row("systemone:<model>")).toMatch(/\| You check it/);
     }

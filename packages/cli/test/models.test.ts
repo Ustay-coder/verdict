@@ -117,7 +117,7 @@ describe("verdict run --models", () => {
     expect(named.out[2]).toMatch(/^ {2}typesafe:jev-1\.14\.0 /);
     expect(t.sent.filter((s) => s.url.includes("typesafe"))[0]!.body.model).toBe("jev-1.14.0");
     const refuse = (...args: string[]) => expect(t.run("-r", "intent.yaml", "-d", "cases.jsonl", ...args)).rejects;
-    await refuse("--models", "gpt").toThrow('--models "gpt": use jev, jev-preview, clef, clef-flash, or provider:model with one of typesafe, cloudflare, openrouter, openai, systemone, mock');
+    await refuse("--models", "gpt").toThrow('--models "gpt": use jev, jev-preview, clef, clef-flash, gemini, or provider:model with one of typesafe, cloudflare, openrouter, openai, gemini, systemone, mock');
     await refuse("--models", "jev,jev").toThrow("jev is named twice");
     await refuse("--models", " , ").toThrow("name at least one model");
     await refuse("--models", "jev", "--mock").toThrow("--mock and --models both say who answers");

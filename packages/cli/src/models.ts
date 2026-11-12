@@ -1,6 +1,6 @@
 /**
  * `--models`: the same rubric judged by other decision models, without editing it. A model is named by a short alias
- * (`jev`, `clef`, `clef-flash`) or as `provider:model` (`typesafe:jev-1.14.0`, `openrouter:typesafe/jev-1.13`,
+ * (`jev`, `clef`, `clef-flash`, `gemini`) or as `provider:model` (`typesafe:jev-1.14.0`, `openrouter:typesafe/jev-1.13`,
  * `openai:<model>`, `systemone:<model>` with SYSTEMONE_BASE_URL). Only decision judges are re-pointed: rules, people
  * and prompted judges answer as the rubric says. The questions a model receives do not change with the model.
  */
@@ -13,6 +13,7 @@ const ALIASES: Record<string, Omit<ModelChoice, "label">> = {
   "jev-preview": { provider: "typesafe", model: "jev-preview" },
   clef: { provider: "cloudflare", model: "@cf/cloudflare/clef" },
   "clef-flash": { provider: "cloudflare", model: "@cf/cloudflare/clef-flash" },
+  gemini: { provider: "gemini", model: "gemini-decision-1" },
   mock: { provider: "mock" },
 };
 const PROVIDERS = DecisionProvider.options as readonly string[];
