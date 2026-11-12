@@ -12,7 +12,7 @@ import { dirname, resolve } from "node:path";
  * Local engines and remote clients share result projections; transport schemas validate tool arguments.
  */
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { Aggregation, calibrate, coerceScore, criterionScale, scaleRange, NotFoundError, ValidationError, Engine, FileStore, Input, lazyPlaywrightScreenshot, loadRubricText, MemoryStore, parseRubric } from "@verdict-ai/core";
+import { Aggregation, calibrate, coerceScore, criterionScale, scaleRange, NotFoundError, ValidationError, Engine, FileStore, Input, lazyCanvasPdfPages, lazyPlaywrightScreenshot, loadRubricText, MemoryStore, parseRubric } from "@verdict-ai/core";
 import { Verdict } from "@verdict-ai/sdk";
 import { z } from "zod";
 
@@ -39,7 +39,7 @@ export interface McpOptions {
 export function createMcpServer(opts: McpOptions = {}) {
   const mode = opts.mode ?? (process.env.VERDICT_API_URL ? "remote" : "local");
   const client = opts.client ?? (mode === "remote" ? new Verdict({ baseUrl: opts.apiUrl ?? process.env.VERDICT_API_URL, apiKey: opts.apiKey ?? process.env.VERDICT_API_KEY }) : undefined);
-  const engine = opts.engine ?? (mode === "local" ? new Engine({ store: (opts.dataDir ?? process.env.VERDICT_DATA_DIR) ? new FileStore(opts.dataDir ?? process.env.VERDICT_DATA_DIR!) : new MemoryStore(), ingest: { allowLocalFiles: opts.allowLocalFiles ?? true, screenshot: lazyPlaywrightScreenshot() } }) : undefined);
+  const engine = opts.engine ?? (mode === "local" ? new Engine({ store: (opts.dataDir ?? process.env.VERDICT_DATA_DIR) ? new FileStore(opts.dataDir ?? process.env.VERDICT_DATA_DIR!) : new MemoryStore(), ingest: { allowLocalFiles: opts.allowLocalFiles ?? true, screenshot: lazyPlaywrightScreenshot(), pdfPages: lazyCanvasPdfPages() } }) : undefined);
 
   const server = new McpServer({ name: "verdict", version: VERSION }, { instructions: "Verdict scores documents, websites, YouTube videos, JSON and text against customizable rubrics. Judges: decision models (Jev / Clef / OpenAI Decisions — typed questions, probabilities, one call per rubric), humans, deterministic benchmarks, optional generative LLM for rationales. Create or inline a rubric, then call evaluate. A usual path: validate_rubric, create_rubric, evaluate (or compare for several subjects); when a result is pending_human, list_human_tasks and submit_human_score finish it. hub_search, hub_get and fork_rubric find and copy published rubrics. Model keys are read from this server's environment, never from a tool call." });
 

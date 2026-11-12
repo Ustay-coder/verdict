@@ -1,5 +1,6 @@
 import type { Evidence, Input } from "../schema/subject.js";
 import type { ScreenshotRenderer } from "./screenshot.js";
+import type { PdfPageRenderer } from "./pdf-pages.js";
 
 export interface IngestOptions {
   /** Max characters per evidence block (judges see at most this much). */
@@ -15,6 +16,11 @@ export interface IngestOptions {
   youtubeTranscript?: (videoId: string, lang?: string) => Promise<{ text: string; title?: string } | null>;
   /** Renders `url` inputs that ask for a screenshot (e.g. `lazyPlaywrightScreenshot()` in Node). Without one they keep their text and get a warning. */
   screenshot?: ScreenshotRenderer;
+  /**
+   * Turns PDF pages into pictures for judges that take pictures and do not read PDFs (e.g. `lazyCanvasPdfPages()` in
+   * Node). Without one such a judge is given the PDF's text layer alone.
+   */
+  pdfPages?: PdfPageRenderer;
 }
 
 export type Ingestor = (input: Input, index: number, opts: Required<Pick<IngestOptions, "maxChars" | "fetch" | "allowLocalFiles" | "timeoutMs">> & IngestOptions) => Promise<Evidence>;

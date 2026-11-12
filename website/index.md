@@ -48,7 +48,7 @@ Rules, people and prompted models can judge a criterion too. Keys, context sizes
 | Input | With `verdict eval -i` | What the judge receives |
 | --- | --- | --- |
 | Text | `text:…`, a text file, or `-` | the text |
-| File | a `.pdf`, `.html`, `.md`, `.txt` or `.json` path | its text; a PDF itself, for models that read PDFs |
+| File | a `.pdf`, `.html`, `.md`, `.txt` or `.json` path | its text; a PDF itself for a model that reads PDFs, pictures of its pages for one that takes pictures |
 | JSON | `json:{…}` | the document, checkable against a schema |
 | Web page | a URL | the page's visible text; with `--screenshot`, a picture too |
 | YouTube | a YouTube URL | the transcript |

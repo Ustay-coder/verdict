@@ -100,7 +100,8 @@ Checks run after ingestion and before criterion judging, in one decision request
   model: jev-latest, baseUrl: https://…, apiKeyEnv: MY_KEY,
   instructions: "Extra guidance merged into every question",
   minConfidence: 0.35, onLowConfidence: accept | human | error, escalateTo: [alice, bob],
-  options: { stateCharLimit: 80000, accountId: "…", request: { images: [] } } }   # only options.request is sent to the provider
+  options: { stateCharLimit: 80000, accountId: "…", maxPdfPages: 20, cutDocuments: send | refuse,
+             request: { images: [] } } }   # only options.request is sent to the provider
 ```
 How a criterion becomes a question:
 - numeric / ordinal scale → `score` question whose ordered `criteria` are the criterion's **levels** (`levels` → `anchors` → ordinal labels → auto-buckets). The answer's per-level probabilities give an expected value on the scale (`Σ p_i · value_i`), snapped to `step` / ordinal values; `probabilities` and `confidence` are stored on the rating.

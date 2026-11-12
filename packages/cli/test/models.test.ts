@@ -1,6 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 import { Command } from "commander";
 import { resolve } from "node:path";
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import { Engine } from "@verdict-ai/core";
 import { registerRun } from "../src/commands/run.js";
 import type { VersionDependencies } from "../src/versions/workspace.js";
@@ -26,7 +28,7 @@ interface Sent { url: string; body: { model: string; state: string; questions: R
  * Two providers that answer over HTTP as the real ones do. "Jev" hears a request for a person in "agent" and
  * "human"; "Clef" only in "agent"; "Clef-flash" is refused. What each was sent is kept.
  */
-function setup(files: Array<[string, string]> = [["intent.yaml", rubric], ["rules.yaml", rules], ["cases.jsonl", cases]], reply?: (who: "jev" | "clef") => Record<string, unknown>) {
+function setup(files: Array<[string, string]> = [["intent.yaml", rubric], ["rules.yaml", rules], ["cases.jsonl", cases]], reply?: (who: "jev" | "clef") => Record<string, unknown>, ingest?: NonNullable<ConstructorParameters<typeof Engine>[0]>["ingest"]) {
   const sent: Sent[] = [];
   const answer = (body: Sent["body"], words: string[]) => ({ model: body.model === "jev-latest" ? "jev-1.14.0" : body.model, answers: reply ? reply(words.length > 1 ? "jev" : "clef") : Object.fromEntries(Object.keys(body.questions).map((id) => [id, { type: "noul", noul: words.some((w) => body.state.includes(w)) ? 0.9 : 0.1 }])), usage: { input_tokens: 100, output_tokens: 0 } });
   const net = (async (input: RequestInfo | URL, init?: RequestInit) => {
@@ -38,7 +40,7 @@ function setup(files: Array<[string, string]> = [["intent.yaml", rubric], ["rule
     return new Response(JSON.stringify({ success: false, errors: [{ message: "model not enabled for this account" }] }, null, 2), { status: 403, headers: { "content-type": "application/json" } });
   }) as typeof fetch;
   const keys: Record<string, string> = { TYPESAFE_API_KEY: "k", CLOUDFLARE_ACCOUNT_ID: "acct", CLOUDFLARE_API_TOKEN: "t" };
-  const engine = new Engine({ fetch: net, env: (name) => keys[name] });
+  const engine = new Engine({ fetch: net, env: (name) => keys[name], ...(ingest ? { ingest } : {}) });
   const store = new Map(files.map(([path, text]) => [resolve(path), text]));
   const out = vi.fn(), warn = vi.fn(), exitCode = vi.fn();
   const read = async (p: string) => store.get(resolve(p));
@@ -145,6 +147,29 @@ criteria:
     expect(t.sent.filter((s) => s.url.includes("typesafe")).every((s) => !("images" in s.body))).toBe(true);
     const json = JSON.parse((await t.run("-r", "intent.yaml", "-d", "pictures.jsonl", "--models", "jev,clef", "--json")).out[0]!) as { models: Array<{ media?: unknown }> };
     expect(json.models.map((m) => m.media)).toEqual([{ pictures: { attached: 1, sent: 0 } }, { pictures: { attached: 1, sent: 1 } }]);
+  });
+
+  it("says how many pages of a PDF a model that takes only pictures was sent, and that a text-only model was sent none", async () => {
+    const pdf = readFileSync(fileURLToPath(new URL("../../core/test/fixtures/six-pages.pdf", import.meta.url))).toString("base64");
+    const PNG = "iVBORw0KGgoAAAANSUhEUgAAAAMAAAACCAIAAAASFvFNAAAAEklEQVR4nGKpsXrLAAZMDDAAAAAA//9F4ac5AAAABklEQVQDAB19AapnIGSYAAAAAElFTkSuQmCC";
+    const document = JSON.stringify({ id: "invoice", name: "invoice", inputs: [{ type: "file", base64: pdf, filename: "invoice.pdf" }], expected: { wants: "no" } });
+    // A stand-in for the canvas: one small picture for each page asked for.
+    const pdfPages = async (_pdf: Uint8Array, pages: number[]) => pages.map(() => ({ data: Uint8Array.from(Buffer.from(PNG, "base64")), mimeType: "image/png" as const }));
+    const t = setup([["intent.yaml", rubric], ["documents.jsonl", document]], undefined, { pdfPages });
+    const { out } = await t.run("-r", "intent.yaml", "-d", "documents.jsonl", "--models", "jev,clef");
+    const cells = (row: string) => row.trim().split(/ {3,}/);
+    expect(cells(out[1]!)).toEqual(["model", "answered by", "agreed with labels", "failed", "asked a human", "PDFs sent", "PDF pages sent as pictures", "input tokens", "calls", "time"]);
+    // Neither reads PDFs. Jev takes text only; Clef takes four pictures, so it saw four of the six pages.
+    expect(cells(out[2]!).slice(5, 7)).toEqual(["0/1", "—"]);
+    expect(cells(out[3]!).slice(5, 7)).toEqual(["0/1", "4/6"]);
+    expect((t.sent.find((s) => s.url.includes("cloudflare")) as unknown as { body: { images: string[] } }).body.images).toHaveLength(4);
+    expect(out.join("\n")).not.toContain("@napi-rs/canvas");
+
+    // With nothing to draw pages, Clef is given the text alone, and the table says what would change that.
+    const bare = setup([["intent.yaml", rubric], ["documents.jsonl", document]]);
+    const without = (await bare.run("-r", "intent.yaml", "-d", "documents.jsonl", "--models", "jev,clef")).out;
+    expect(cells(without[3]!).slice(5, 7)).toEqual(["0/1", "0/6"]);
+    expect(without).toContain("  no PDF page was sent as a picture: drawing pages needs @napi-rs/canvas where Verdict runs (npm install -g @napi-rs/canvas)");
   });
 
   it("prints the same comparison as JSON", async () => {

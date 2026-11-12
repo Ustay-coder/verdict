@@ -5,6 +5,7 @@
 import type { Criterion, Rubric, Scale } from "../schema/rubric.js";
 import type { Evidence } from "../schema/subject.js";
 import type { Rating } from "../schema/evaluation.js";
+import type { PdfPageRenderer } from "../ingest/pdf-pages.js";
 
 export interface JudgeContext {
   now?: () => number;
@@ -19,6 +20,8 @@ export interface JudgeContext {
   env: (name: string) => string | undefined;
   fetch: typeof fetch;
   signal?: AbortSignal;
+  /** Turns PDF pages into pictures for a judge that takes pictures and does not read PDFs. Absent: it gets the text. */
+  pdfPages?: PdfPageRenderer;
   /** How to wait before asking a rate-limited provider again. Absent: a 429 is not retried here (see `postJson`). */
   wait?: (ms: number) => Promise<void>;
   usage: { decisionCalls: number; llmCalls: number; inputTokens: number; outputTokens: number };

@@ -93,7 +93,7 @@ The answer (verbatim from a live call, `packages/core/test/fixtures/openai-decis
 
 - A score's `value` is the level's place in the request (0 first) and `score` is the expected place, so Verdict reads it as it reads a System One score. A predicate's `probability` is P(yes).
 - The same request asked twice gave `0.97` and `0.98` for the predicate: answers are close to, but not exactly, repeatable.
-- Pictures (checked live 2026-11-12): with a picture, `input` is a list holding one user message whose `content` has an `input_text` part and an `input_image` part per picture, `{ "type": "input_image", "image_url": "data:image/png;base64,…" }`. It refuses a file part: `Invalid value: 'input_file'. Supported values are: 'input_text', 'input_image', and 'input_json'.` So a PDF reaches it as its text layer.
+- Pictures (checked live 2026-11-12): with a picture, `input` is a list holding one user message whose `content` has an `input_text` part and an `input_image` part per picture, `{ "type": "input_image", "image_url": "data:image/png;base64,…" }`. It refuses a file part: `Invalid value: 'input_file'. Supported values are: 'input_text', 'input_image', and 'input_json'.` So a PDF reaches it as its text layer and, where pages can be drawn, a picture of each page as an `input_image` part (six pages in one request were taken, 2026-11-12).
 - Not checked: how many pictures and how large, limits on the number of questions and on the length of a name.
 
 ## Gemini Decisions request and response

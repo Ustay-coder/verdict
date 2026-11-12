@@ -30,15 +30,17 @@ export function renderModels(cmp: ModelComparison, criteria: number): string[] {
   const asked = cmp.sameQuestions ? "the same questions to each" : "the questions sent were not the same for every model: read the rows with that in mind";
   const lines = [`${cmp.rubric} × ${cmp.dataset}: ${cmp.cases} case(s), ${cmp.models.length} model(s), ${asked}`];
   // Shown only when the cases carry pictures or PDFs: a model that was sent none of them judged the text alone.
-  const pictures = cmp.models.some((r) => r.media?.pictures), pdfs = cmp.models.some((r) => r.media?.pdfs);
-  const carried = (r: ModelRow) => [...(pictures ? [sent(r.media?.pictures)] : []), ...(pdfs ? [sent(r.media?.pdfs)] : [])];
+  const pictures = cmp.models.some((r) => r.media?.pictures), pdfs = cmp.models.some((r) => r.media?.pdfs), pages = cmp.models.some((r) => r.media?.pages);
+  const carried = (r: ModelRow) => [...(pictures ? [sent(r.media?.pictures)] : []), ...(pdfs ? [sent(r.media?.pdfs)] : []), ...(pages ? [sent(r.media?.pages)] : [])];
   lines.push(...table([
-    ["model", "answered by", "agreed with labels", "failed", "asked a human", ...(pictures ? ["pictures sent"] : []), ...(pdfs ? ["PDFs sent"] : []), "input tokens", "calls", "time"],
+    ["model", "answered by", "agreed with labels", "failed", "asked a human", ...(pictures ? ["pictures sent"] : []), ...(pdfs ? ["PDFs sent"] : []), ...(pages ? ["PDF pages sent as pictures"] : []), "input tokens", "calls", "time"],
     ...cmp.models.map((r) => [r.label, answeredBy(r), rate(r), String(r.counts.failed), String(r.counts.pendingHuman), ...carried(r), count(r.usage.inputTokens), String(r.usage.decisionCalls), seconds(r.durationMs)]),
   ]));
   // A provider's refusal can be a page of JSON; one line says enough to act on, and --json has all of it.
   const brief = (text: string) => (text.replace(/\s+/g, " ").length > 200 ? `${text.replace(/\s+/g, " ").slice(0, 200)}…` : text.replace(/\s+/g, " "));
   for (const r of cmp.models) if (r.error) lines.push(`  ${r.label} failed: ${brief(r.error)}`);
+  // Pages there were, and a model that takes pictures was shown none: the usual reason is that nothing here can draw them.
+  if (cmp.models.some((r) => r.media?.pages && r.media.pages.attached > 0 && r.media.pages.sent === 0)) lines.push("  no PDF page was sent as a picture: drawing pages needs @napi-rs/canvas where Verdict runs (npm install -g @napi-rs/canvas)");
   const answering = cmp.models.filter((r) => r.status !== "failed").length;
   if (answering > 1) {
     lines.push(cmp.splits.length

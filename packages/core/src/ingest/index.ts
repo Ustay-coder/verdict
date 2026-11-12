@@ -10,7 +10,8 @@ export { stats } from "./evidence.js";
 export { extractFromBuffer, htmlToPlain } from "./extract.js";
 export { youtubeId, fetchYoutubeTranscript } from "./youtube.js";
 export { attachImages, evidenceImages, imageInfo } from "./images.js";
-export { attachPdf, evidenceDocuments } from "./documents.js";
+export { attachPdf, evidenceDocuments, evidencePdfPages } from "./documents.js";
+export { canvasPdfPages, lazyCanvasPdfPages, loadCanvas, type PdfPageRenderer } from "./pdf-pages.js";
 export { playwrightScreenshot, lazyPlaywrightScreenshot, loadChromium, type BrowserLauncher, type ScreenshotRenderer } from "./screenshot.js";
 
 // why: bound source size and network wait before judging; callers can override for known larger documents.

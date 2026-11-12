@@ -2,7 +2,7 @@
  * Selects local or remote command execution and resolves rubric references.
  * Provider keys remain in the environment; mock overrides apply only after rubric validation.
  */
-import { Engine, FileStore, lazyPlaywrightScreenshot, loadRubricText, type Rubric } from "@verdict-ai/core";
+import { Engine, FileStore, lazyCanvasPdfPages, lazyPlaywrightScreenshot, loadRubricText, type Rubric } from "@verdict-ai/core";
 import { Verdict } from "@verdict-ai/sdk";
 import { readText } from "./files.js";
 import { resolve } from "node:path";
@@ -14,7 +14,7 @@ export const dataDir = (env = process.env, cwd = process.cwd()) => env.VERDICT_D
 /** Creates a local engine with file persistence; filesystem failures surface when operations run. Playwright loads only if a URL asks for a screenshot. */
 export function localEngine(directory = dataDir()) {
   // A run from the command line waits out a provider's rate limit: the person asked for every case, and is there to wait.
-  return new Engine({ store: new FileStore(directory), ingest: { allowLocalFiles: true, screenshot: lazyPlaywrightScreenshot() }, rateLimitWait: (ms) => new Promise((resolve) => setTimeout(resolve, ms)) });
+  return new Engine({ store: new FileStore(directory), ingest: { allowLocalFiles: true, screenshot: lazyPlaywrightScreenshot(), pdfPages: lazyCanvasPdfPages() }, rateLimitWait: (ms) => new Promise((resolve) => setTimeout(resolve, ms)) });
 }
 /** Returns a configured API client, or undefined when no remote URL is set. */
 export function remote(env = process.env): Verdict | undefined {

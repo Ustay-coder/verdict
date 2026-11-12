@@ -31,9 +31,11 @@ export interface ModelRow {
   error?: string;
   /**
    * Pictures and PDFs the cases carried, and how many of them this model was sent as such. A model that takes no
-   * pictures is sent none, and one that does not read PDFs is given their text instead. Absent when no case had any.
+   * pictures is sent none, and one that does not read PDFs is given their text instead. `pages` is for a model that
+   * takes pictures and does not read PDFs: the pages the PDFs have, and how many it was sent as pictures. Absent when
+   * no case had any.
    */
-  media?: { pictures?: MediaCount; pdfs?: MediaCount };
+  media?: { pictures?: MediaCount; pdfs?: MediaCount; pages?: MediaCount };
 }
 
 /** How many were in the cases, and how many the model was sent. */
@@ -64,10 +66,10 @@ export interface ModelComparison {
 }
 
 /** What one evaluation's request carried: every criterion of a request records the same counts, so the first is enough. */
-function requestMedia(evaluation: Evaluation): { images?: MediaCount; documents?: MediaCount } {
+function requestMedia(evaluation: Evaluation): { images?: MediaCount; documents?: MediaCount; pages?: MediaCount } {
   for (const rating of evaluation.criteria.flatMap((c) => c.ratings)) {
     const raw = modelRating([rating])?.raw;
-    if (raw && ("images" in raw || "documents" in raw)) return { images: raw.images, documents: raw.documents };
+    if (raw && ("images" in raw || "documents" in raw)) return { images: raw.images, documents: raw.documents, pages: raw.pages };
   }
   return {};
 }
@@ -78,8 +80,8 @@ function media(evaluations: Evaluation[]): ModelRow["media"] {
     return seen.length ? { attached: seen.reduce((sum, c) => sum + c.attached, 0), sent: seen.reduce((sum, c) => sum + c.sent, 0) } : undefined;
   };
   const each = evaluations.map(requestMedia);
-  const pictures = total(each.map((m) => m.images)), pdfs = total(each.map((m) => m.documents));
-  return pictures || pdfs ? { ...(pictures ? { pictures } : {}), ...(pdfs ? { pdfs } : {}) } : undefined;
+  const pictures = total(each.map((m) => m.images)), pdfs = total(each.map((m) => m.documents)), pages = total(each.map((m) => m.pages));
+  return pictures || pdfs ? { ...(pictures ? { pictures } : {}), ...(pdfs ? { pdfs } : {}), ...(pages ? { pages } : {}) } : undefined;
 }
 
 function row(side: ModelSide): ModelRow {

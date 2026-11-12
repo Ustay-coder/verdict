@@ -8,7 +8,8 @@
 - `verdict run --models` says what each model was sent: a **pictures sent** and a **PDFs sent** column appear when the cases carry them (`1/1`, or `0/2` for a model given text instead), and `--json` has the counts as `media`. Ratings record `raw.documents` beside `raw.images`.
 - **A run from the command line waits out a provider's rate limit.** On HTTP 429 a decision provider is asked again after the wait it names (its `Retry-After` header, or a "retry in 35s" in its answer), up to four more times, before the case fails. A run of 100 pictures on Gemini's free tier, which allows 50,000 input tokens a minute, lost 57 cases without this and none with it. The engine does it only when given `rateLimitWait`, which the CLI gives; a server does not hold a request open, and a queued evaluation is still retried by its queue.
 - `examples/receipts`: a hundred receipt photos from a public dataset put to the four models that take pictures, with the question about the number of items written three times and the run of each.
-- Not built yet: turning a PDF's pages into pictures for the models that take only pictures.
+- **A model that takes pictures and not PDFs is shown the PDF's pages as pictures** (OpenAI, Clef), beside the text layer. A scan, which has no text, is now readable by every model that takes pictures. Drawing pages needs `@napi-rs/canvas` where Verdict runs (`npm install -g @napi-rs/canvas`); it is optional and never runs on Workers, and without it such a model is given the text alone.
+- **A document longer than a model takes is cut, and the cut is recorded.** Clef takes 4 pictures, so it is sent the first 4 pages of a 12-page PDF: the table's **PDF pages sent as pictures** column reads `4/12`, and the rating has `raw.pages`. A judge sends at most 20 pages (`options.maxPdfPages`), and `options.cutDocuments: refuse` makes a document that would be cut an error for that model.
 
 ## 0.3.6
 
