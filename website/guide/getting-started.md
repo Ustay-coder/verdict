@@ -4,7 +4,7 @@ Verdict turns a rubric and evidence into criterion scores, a total, a grade, and
 
 ## Install
 
-Use Node 20 or newer (the repository builds and tests on Node 22).
+Use Node 22 or newer.
 
 ```bash
 npm install @verdict-ai/sdk

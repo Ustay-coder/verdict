@@ -19,4 +19,4 @@ const evaluation = await verdict.evaluations.create({
 console.log(evaluation.aggregate.score);
 ```
 
-Requires Node 20 or newer. [Documentation](https://docs.verdict-ai.dev/reference/sdk). MIT licensed.
+Requires Node 22 or newer. [Documentation](https://docs.verdict-ai.dev/reference/sdk). MIT licensed.

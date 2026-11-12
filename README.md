@@ -25,7 +25,7 @@ A real run (2026-11-12) of eighty customer messages from a public dataset, on fi
 
 ## Try it
 
-Node 20 or newer. No key is needed for the first run:
+Node 22 or newer. No key is needed for the first run:
 
 ```bash
 npm install -g @verdict-ai/cli

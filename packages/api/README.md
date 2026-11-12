@@ -19,4 +19,4 @@ console.log(await response.json());
 export default app;
 ```
 
-Requires Node 20 or newer. [Documentation](https://docs.verdict-ai.dev/reference/rest). MIT licensed.
+Requires Node 22 or newer. [Documentation](https://docs.verdict-ai.dev/reference/rest). MIT licensed.
