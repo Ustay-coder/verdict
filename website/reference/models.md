@@ -77,6 +77,7 @@ What you can hand Verdict to be judged. Several inputs can make up one subject, 
 - A PDF is sent as the file to a model that reads PDFs (Gemini), and the text names the file instead of repeating it. Every other model is given the PDF's text layer.
 - A scanned PDF has no text layer. A model that reads PDFs still reads it; any other model is told there was no text to show, and its answer is a guess. Turning a PDF's pages into pictures for the models that take only pictures is not built yet.
 - When the cases carry pictures or PDFs, the table of `verdict run --models` gains a column for each that says how many every model was sent: `1/1`, or `0/2` for a model that was given text instead.
+- [examples/receipts](https://github.com/Ustay-coder/verdict/tree/main/examples/receipts) is a run of a hundred receipt photos on the four models that take pictures.
 - How many pictures, and how large, OpenAI and Gemini take in one request has not been measured; Clef takes 4, of 4 MiB each and 8 MiB together.
 - A screenshot needs Playwright where the engine runs.
 - Over REST and the SDK the same inputs are sent as objects; a file or an image travels as `base64`.

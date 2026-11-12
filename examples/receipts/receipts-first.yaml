@@ -1,0 +1,18 @@
+name: Receipt facts
+context: A photo of a receipt from a shop or restaurant in Indonesia. Amounts are in rupiah, and "." or "," separates thousands. Answer from what is printed on the receipt.
+criteria:
+  - id: payment
+    name: Payment method
+    description: How the customer paid.
+    choices:
+      cash: Paid in cash (for example "CASH" or "TUNAI", often with change given back).
+      card: Paid by credit or debit card.
+  - id: items
+    name: Number of line items
+    description: How many separate lines of products or dishes were bought. Count lines, not quantities.
+    scale: { type: ordinal, labels: [one, two, three, four_or_more] }
+    anchors: { one: "One line item.", two: "Two line items.", three: "Three line items.", four_or_more: "Four or more line items." }
+  - id: large_total
+    name: Total of 100,000 rupiah or more
+    scale: { type: binary, labels: ["no", "yes"] }
+    anchors: { "no": "The total to pay is below 100,000 rupiah.", "yes": "The total to pay is 100,000 rupiah or more." }
