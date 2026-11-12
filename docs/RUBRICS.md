@@ -96,7 +96,7 @@ Checks run after ingestion and before criterion judging, in one decision request
 
 ### `decision` — decision models (default)
 ```yaml
-{ type: decision, provider: typesafe | cloudflare | openrouter | openai | systemone | mock,
+{ type: decision, provider: typesafe | cloudflare | openrouter | openai | gemini | systemone | mock,
   model: jev-latest, baseUrl: https://…, apiKeyEnv: MY_KEY,
   instructions: "Extra guidance merged into every question",
   minConfidence: 0.35, onLowConfidence: accept | human | error, escalateTo: [alice, bob],
@@ -116,6 +116,7 @@ Providers and their env vars:
 | `cloudflare` | `…/accounts/{CLOUDFLARE_ACCOUNT_ID}/ai/run/{model}` (or `baseUrl` = AI Gateway) | `CLOUDFLARE_API_TOKEN` | `@cf/cloudflare/clef` (`clef-flash`, `typesafe/jev`) |
 | `openrouter` | `https://openrouter.ai/api/alpha/decisions` | `OPENROUTER_API_KEY` | `typesafe/jev-1.13` |
 | `openai` | `https://api.openai.com/v1/decisions` (its own request shape; Verdict translates the questions) | `OPENAI_API_KEY` | `gpt-6-luna` |
+| `gemini` | `https://generativelanguage.googleapis.com/v1beta/decisions` (not yet checked against the live service) | `GEMINI_API_KEY`, else `GOOGLE_API_KEY` | `gemini-decision-1` (`VERDICT_GEMINI_MODEL`) |
 | `systemone` | `baseUrl` + `/systemone` | `SYSTEMONE_API_KEY` | `jev-latest` |
 | `mock` | in-process | — | options: `level`, `normalized`, `probabilities`, `noul` |
 

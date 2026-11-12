@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- **Gemini's decision model can be named**: `--models gemini`, or `provider: gemini` in a rubric, asks `gemini-decision-1` through Google's Decisions API with `GEMINI_API_KEY` (or `GOOGLE_API_KEY`). It is **not yet checked against the live service**: the request is written from what Google's guide is reported to say, and the tables say "Not yet" until a request has been answered. Text only for now.
+
 ## 0.3.4
 
 - `glama.json` at the root names the maintainer of the server's page on Glama, a directory of MCP servers.

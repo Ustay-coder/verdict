@@ -9,6 +9,7 @@ vendor's official documentation. Keep this honest: update the status column when
 | `cloudflare` (Clef) | `POST https://api.cloudflare.com/client/v4/accounts/{id}/ai/run/@cf/cloudflare/clef[-flash]`, `Authorization: Bearer $CLOUDFLARE_API_TOKEN` | `{ model: "clef"\|"clef-flash", state, questions, images? }` | `{ success, result: { model, answers, usage } }` | **Live** (2026-11-05, `clef-flash`, 0.40 s, HTTP 200; 2026-11-11 `clef` and `clef-flash` through `verdict run --models`) + official model pages |
 | `openrouter` | `POST https://openrouter.ai/api/alpha/decisions`, `Authorization: Bearer $OPENROUTER_API_KEY` | System One shape, `model: typesafe/jev-1.13` | System One shape; `model` names the dated model that answered | **Live** (2026-11-11, `typesafe/jev-1.13`, answered by `typesafe/jev-1.13-20260917`, through `verdict run --models`) |
 | `openai` (Decisions API) | `POST https://api.openai.com/v1/decisions`, `Authorization: Bearer $OPENAI_API_KEY` | Its own shape: `{ model, input, questions: [ … ] }` ([below](#openai-decisions-request-and-response)) | `{ model, answers: [ … ], usage }` | **Live** (2026-11-11, `gpt-6-luna`, through `verdict run --models`; the request shape was learned from the endpoint's own refusals) |
+| `gemini` (Decisions API) | `POST https://generativelanguage.googleapis.com/v1beta/decisions`, `x-goog-api-key: $GEMINI_API_KEY` | `{ model, input, questions }` ([below](#gemini-decisions-not-yet-checked)) | `{ answers, usage }`, no `model` | **Not verified.** The route exists (2026-11-12: without a key it answers 403 and asks for one). The request and response are written from what Google's guide is reported to say; no request has been answered |
 | `systemone` | `baseUrl` + `/systemone` | System One shape | System One shape | By construction (same as Jev) |
 
 ## System One request (Jev; Clef-compatible)
@@ -93,6 +94,27 @@ The answer (verbatim from a live call, `packages/core/test/fixtures/openai-decis
 - A score's `value` is the level's place in the request (0 first) and `score` is the expected place, so Verdict reads it as it reads a System One score. A predicate's `probability` is P(yes).
 - The same request asked twice gave `0.97` and `0.98` for the predicate: answers are close to, but not exactly, repeatable.
 - Not checked: images (Verdict sends this provider text only), limits on the number of questions and on the length of a name.
+
+## Gemini Decisions (not yet checked)
+
+Written on 2026-11-12 from what Google's guide is reported to say (the guide itself could not be opened from where
+this was written). The one thing checked is the route: `POST /v1beta/decisions` without a key answers 403, "Method
+doesn't allow unregistered callers", where a route that does not exist answers 404. Replace this section with a real
+request and its verbatim answer once a key has been used.
+
+The shape is System One's, with these differences:
+
+| System One | Gemini Decisions |
+| --- | --- |
+| `state` | `input` |
+| noul `criteria: { "true": …, "false": … }` | `criteria: { "true_description": …, "false_description": … }` |
+| choice option with no description (`null`) | an empty string |
+| `Authorization: Bearer …` | `x-goog-api-key: …` |
+| `usage.input_tokens` | `usage.total_input_tokens` (`total_output_tokens` is always 0) |
+| `model` in the response | not there; Verdict records the model it asked for and does not call it verified |
+
+Reported limits: 1 to 1,000 questions, keys `[A-Za-z0-9_-]{1,64}`, 2 to 255 choice options or score levels, a
+262,144-token context for the input and all questions together. Verdict sends text only for now.
 
 ## Clef-flash response (verbatim from a live call, `packages/core/test/fixtures/cloudflare-clef-flash-response.json`)
 

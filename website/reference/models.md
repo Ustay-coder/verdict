@@ -12,6 +12,7 @@ What Verdict can ask, and what you can hand it, on one page. The rubric stays th
 | `clef-flash` | Clef-flash | Cloudflare Workers AI | Yes (2026-11-11; with an image 2026-11-05) | Up to 4 |
 | `openrouter:<model>` | For example `typesafe/jev-1.13` | OpenRouter | Yes (2026-11-11, `typesafe/jev-1.13`) | No |
 | `openai:<model>` | OpenAI's Decisions API, for example `gpt-6-luna` | OpenAI | Yes (2026-11-11, `gpt-6-luna`) | No, text only for now |
+| `gemini` | Gemini Decision 1 (`gemini-decision-1`), through Google's Decisions API | Google (Gemini API) | Not yet: written from what Google's guide is reported to say, and no request has been answered | No, text only for now |
 | `systemone:<model>` | Any endpoint that takes the same request: a self-hosted Clef, a gateway | Yours | You check it | No |
 | `mock` | A deterministic stand-in, for trying things without a key | None | — | — |
 
@@ -27,6 +28,7 @@ Each model is called from where Verdict runs, with keys from that environment.
 | Cloudflare Workers AI | `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_API_TOKEN` (Workers AI: Read) | Clef 65,536 tokens; Clef-flash 24,576 |
 | OpenRouter | `OPENROUTER_API_KEY` | the model's own |
 | OpenAI | `OPENAI_API_KEY` | the model's own |
+| Google (Gemini API) | `GEMINI_API_KEY` (or `GOOGLE_API_KEY`) | the model's own |
 | Your endpoint | `SYSTEMONE_BASE_URL`, and `SYSTEMONE_API_KEY` if it wants one | the model's own |
 
 - Images are PNG, JPEG or WebP, at most 4 MiB each and 8 MiB in a request.

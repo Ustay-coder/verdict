@@ -22,7 +22,7 @@ function names(text: string): string[] {
 describe("the tables of models and inputs", () => {
   it("name every model the command line takes, and every decision provider", () => {
     const listed = names(page);
-    for (const alias of ["jev", "jev-preview", "clef", "clef-flash", "mock"]) {
+    for (const alias of ["jev", "jev-preview", "clef", "clef-flash", "gemini", "mock"]) {
       expect(listed, alias).toContain(alias);
       // The alias is one the command line really resolves.
       expect(parseModels(alias)[0]!.label).toBe(alias);
@@ -38,6 +38,8 @@ describe("the tables of models and inputs", () => {
     for (const text of [page, home, readme]) {
       const row = (name: string) => text.split("\n").find((line) => line.startsWith(`| \`${name}\` |`)) ?? "";
       for (const name of ["jev", "clef", "clef-flash", "openrouter:<model>", "openai:<model>"]) expect(row(name), name).toMatch(/\| Yes/);
+      // Gemini's adapter was written from reports of the guide: "Yes" appears only once the record says Live.
+      expect(row("gemini"), "gemini").toMatch(live("gemini") ? /\| Yes/ : /\| Not yet/);
       // An endpoint of your own is never claimed as checked.
       expect(row("systemone:<model>")).toMatch(/\| You check it/);
     }

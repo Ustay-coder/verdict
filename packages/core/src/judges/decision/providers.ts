@@ -1,10 +1,11 @@
 /**
  * Adapts System One-compatible HTTP providers and the deterministic offline fake.
- * Cloudflare wraps results and OpenAI has a request shape of its own; validation precedes all answer mapping.
+ * Cloudflare wraps results, OpenAI has a request shape of its own and Gemini renames a few fields; validation
+ * precedes all answer mapping.
  */
 import { z } from "zod";
 import { canonicalJson } from "../../idempotency.js";
-import { parseProvider, ProviderError, readProviderJson, fetchProvider, SystemOneResponseSchema } from "../../provider-error.js";
+import { parseProvider, ProviderError, readProviderJson, fetchProvider, SystemOneAnswerSchema, SystemOneResponseSchema } from "../../provider-error.js";
 import type { JudgeContext } from "../types.js";
 import { CLEF_LIMITS, clefImages } from "./images.js";
 import { registerDecisionProvider, type DecisionProviderAdapter, type DecisionRequest, type SystemOneAnswer, type SystemOneQuestion } from "./contracts.js";
@@ -137,6 +138,46 @@ const openaiDecisionsProvider: DecisionProviderAdapter = {
 };
 
 /**
+ * Gemini Decisions: POST /v1beta/decisions with the key in `x-goog-api-key`. NOT YET CHECKED AGAINST THE LIVE API:
+ * the route exists (it asks for a key), and the shape below is what Google's guide is reported to say (2026-11-12).
+ * It is the System One shape with three differences: the text goes in `input`, a noul's two descriptions are
+ * `true_description` / `false_description`, and every choice option carries a string. Answers come back keyed like
+ * the questions, a score's probabilities keyed by level index, and the response does not name the model.
+ */
+const GeminiResponseSchema = z.object({
+  answers: z.record(z.string(), SystemOneAnswerSchema),
+  usage: z.object({ total_input_tokens: z.number().optional(), total_output_tokens: z.number().optional() }).optional(),
+});
+
+function geminiQuestion(q: SystemOneQuestion): Record<string, unknown> {
+  if (q.type === "choice") return { type: "choice", instructions: q.instructions, criteria: Object.fromEntries(Object.entries(q.criteria).map(([option, description]) => [option, description ?? ""])) };
+  if (q.type === "noul") return { type: "noul", instructions: q.instructions, ...(q.criteria ? { criteria: { true_description: q.criteria.true, false_description: q.criteria.false } } : {}) };
+  return { type: "score", instructions: q.instructions, criteria: q.criteria };
+}
+
+function geminiAnswer(a: SystemOneAnswer): SystemOneAnswer {
+  const p = a.probabilities;
+  // why: a score's probabilities arrive keyed by level index; in index order they are the array the levels were sent as.
+  if (a.choice !== undefined || !p || Array.isArray(p)) return a;
+  return { ...a, probabilities: Object.keys(p).sort((x, y) => Number(x) - Number(y)).map((index) => p[index]!) };
+}
+
+const geminiDecisionsProvider: DecisionProviderAdapter = {
+  name: "gemini",
+  async decide(req, ctx) {
+    const base = (req.baseUrl ?? ctx.env("GEMINI_BASE_URL") ?? "https://generativelanguage.googleapis.com/v1beta").replace(/\/$/, "");
+    const key = req.apiKey ?? ctx.env("GEMINI_API_KEY") ?? ctx.env("GOOGLE_API_KEY");
+    const model = req.model ?? ctx.env("VERDICT_GEMINI_MODEL") ?? "gemini-decision-1";
+    const questions = Object.fromEntries(Object.entries(req.questions).map(([id, q]) => [id, geminiQuestion(q)]));
+    const data = await postJson("gemini", ctx, `${base}/decisions`, { model, input: req.state, questions, ...requestExtras(req.options) }, key ? { "x-goog-api-key": key } : {});
+    const validated = parseProvider("gemini", GeminiResponseSchema, data);
+    const answers = Object.fromEntries(Object.entries(validated.answers).map(([id, a]) => [id, geminiAnswer(a)]));
+    const usage = validated.usage;
+    return { answers, model, requestedModel: model, usage: { inputTokens: usage?.total_input_tokens ?? 0, outputTokens: usage?.total_output_tokens ?? 0 }, raw: data };
+  },
+};
+
+/**
  * Answers recorded by an earlier run, replayed for re-scoring under another policy (`rescoreRunUnder`). A question
  * that differs from the one recorded was never asked of the model, so it is refused rather than answered.
  */
@@ -180,7 +221,7 @@ export function registerBuiltInDecisionProviders(): void {
   if (builtInsRegistered) return;
   builtInsRegistered = true;
   // Give configuration, transport and mapping failures a consistent provider/operation boundary.
-  for (const provider of [typesafeProvider, systemOneProvider, openrouterProvider, cloudflareDecisionProvider, openaiDecisionsProvider, mockDecisionProvider]) {
+  for (const provider of [typesafeProvider, systemOneProvider, openrouterProvider, cloudflareDecisionProvider, openaiDecisionsProvider, geminiDecisionsProvider, mockDecisionProvider]) {
     registerDecisionProvider({
       // The wrapper only adds error context; it must keep what the adapter can accept.
       name: provider.name, acceptsImages: provider.acceptsImages, maxImages: provider.maxImages,

@@ -181,6 +181,70 @@ describe("decision judge", () => {
     expect(usage.inputTokens).toBe(506);
     expect(usage.decisionCalls).toBe(1);
   });
+  it("asks Gemini Decisions in the shape its guide is reported to have (the answer here is written by hand, not captured)", async () => {
+    // Not a live answer: no key was at hand on 2026-11-12. Replace `answered` with a verbatim fixture once one is.
+    const answered = {
+      answers: {
+        urgency: { score: 2.76, confidence: 0.76, legend: { "0": "none", "1": "low", "2": "high", "3": "critical" }, probabilities: { "0": 0, "1": 0.01, "2": 0.22, "3": 0.77 } },
+        needs_engineer: { noul: 0.98, confidence: 0.96 },
+        team: { choice: "engineering", confidence: 1, probabilities: { support: 0, engineering: 1, billing: 0 } },
+      },
+      usage: { total_input_tokens: 412, input_tokens_by_modality: [{ modality: "text", tokens: 412 }], total_output_tokens: 0, total_tokens: 412 },
+    };
+    let sent: { url: string; body: Record<string, unknown>; headers: Record<string, string> } | undefined;
+    const f: typeof fetch = async (url, init) => {
+      sent = { url: String(url), body: JSON.parse(String(init?.body)), headers: init?.headers as Record<string, string> };
+      return new Response(JSON.stringify(answered));
+    };
+    const triage = parseRubric({
+      name: "triage", scale: { type: "numeric", min: 0, max: 3 },
+      criteria: [
+        { id: "urgency", name: "Urgency", levels: [{ value: 0, label: "none", description: "question or feedback, nothing broken" }, { value: 1, label: "low", description: "minor issue with a workaround" }, { value: 2, label: "high", description: "core feature degraded" }, { value: 3, label: "critical", description: "outage, data loss or billing error" }] },
+        { id: "needs_engineer", name: "Needs engineer", scale: { type: "binary", labels: ["no", "yes"] }, anchors: { no: "support can answer it", yes: "someone has to change code" } },
+        { id: "team", name: "Team", choices: { support: "how-to questions and account help", engineering: "something is broken", billing: "charges and invoices" } },
+      ],
+    });
+    const usage = { decisionCalls: 0, llmCalls: 0, inputTokens: 0, outputTokens: 0 };
+    const mk = (id: string): JudgeContext => ({ rubric: triage, criterion: triage.criteria.find((x) => x.id === id)!, scale: triage.criteria.find((x) => x.id === id)!.scale ?? triage.scale, evidence: [{ inputIndex: 0, kind: "text", label: "t", tags: [], text: "down", stats: stats("down") }], evaluationId: "e", env: (n) => (n === "GEMINI_API_KEY" ? "k" : undefined), fetch: f, usage });
+    const m = await new DecisionJudge({ type: "decision", provider: "gemini", onLowConfidence: "accept", escalateTo: [] }).rateMany(triage.criteria.map((c) => mk(c.id)));
+
+    expect(sent!.url).toBe("https://generativelanguage.googleapis.com/v1beta/decisions");
+    expect(sent!.headers["x-goog-api-key"]).toBe("k");
+    expect(sent!.headers.authorization).toBeUndefined();
+    expect(Object.keys(sent!.body).sort()).toEqual(["input", "model", "questions"]);
+    expect(sent!.body.model).toBe("gemini-decision-1");
+    expect(sent!.body.input).toContain("down");
+    const q = sent!.body.questions as Record<string, { type: string; instructions: string; criteria: unknown }>;
+    expect(Object.keys(q)).toEqual(["urgency", "needs_engineer", "team"]);
+    expect(q.urgency).toMatchObject({ type: "score", criteria: expect.arrayContaining([expect.stringContaining("none")]) });
+    expect((q.urgency!.criteria as string[]).length).toBe(4);
+    expect(q.needs_engineer).toMatchObject({ type: "noul", criteria: { true_description: "someone has to change code", false_description: "support can answer it" } });
+    expect(q.team).toMatchObject({ type: "choice", criteria: { support: "how-to questions and account help", engineering: "something is broken", billing: "charges and invoices" } });
+
+    const u = m.get("urgency")![0]!;
+    expect(u.status).toBe("scored");
+    expect(u.score).toBeCloseTo(2.76);
+    expect(u.probabilities).toEqual({ none: 0, low: 0.01, high: 0.22, critical: 0.77 });
+    const n = m.get("needs_engineer")![0]!;
+    expect(n.score).toBe(1);
+    expect(n.probabilities).toEqual({ no: 0.02, yes: 0.98 });
+    const t = m.get("team")![0]!;
+    expect(t.choice).toBe("engineering");
+    // The response names no model, so the one asked for is recorded and it is not called verified.
+    expect(t.raw).toMatchObject({ requestedModel: "gemini-decision-1", modelVerified: false });
+    expect((t.raw as { resolvedModel?: string }).resolvedModel).toBeUndefined();
+    expect(usage.inputTokens).toBe(412);
+    expect(usage.outputTokens).toBe(0);
+    expect(usage.decisionCalls).toBe(1);
+  });
+  it("reports what Gemini said when it refuses a request", async () => {
+    const f: typeof fetch = async () => new Response(JSON.stringify({ error: { code: 400, message: "API key not valid. Please pass a valid API key.", status: "INVALID_ARGUMENT" } }), { status: 400 });
+    const x = { ...ctx("problem"), fetch: f, env: () => undefined };
+    const [r] = await new DecisionJudge({ type: "decision", provider: "gemini", onLowConfidence: "accept", escalateTo: [] }).rate(x);
+    expect(r!.status).toBe("error");
+    expect(r!.error).toContain("gemini");
+    expect(r!.error).toContain("API key not valid");
+  });
   it("reports an OpenAI answer that is not the documented array instead of guessing", async () => {
     const f: typeof fetch = async () => new Response(JSON.stringify({ model: "gpt-6-luna", answers: { urgency: { score: 1 } } }));
     const x = { ...ctx("problem"), fetch: f, env: (n: string) => (n === "OPENAI_API_KEY" ? "k" : undefined) };
