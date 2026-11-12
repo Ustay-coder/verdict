@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- A workflow lists the MCP server in the official MCP registry after a release (`.github/workflows/mcp-registry.yml`, run by hand).
+
+## 0.3.2
+
 - The MCP server can be listed in the official MCP registry: `packages/mcp/server.json` describes it, `@verdict-ai/mcp` names it (`mcpName`), and the release script keeps the version in step.
 - New example, `examples/banking77`: eighty customer messages about bank transfers from BANKING77 (PolyAI, CC BY 4.0), a rubric with one eight-way choice, and a saved live run on Jev, Clef, Clef-flash, OpenRouter and OpenAI's Decisions API. The models differ on ten of the eighty. A script rebuilds the cases from the published file.
 - The README is the short way in (what it is, a first run without a key, the models and inputs, where to go next). Its long sections moved, word for word, to the documentation: [Everything Verdict does](https://docs.verdict-ai.dev/guide/overview) and [Configuration](https://docs.verdict-ai.dev/reference/configuration). What is for people changing the code moved to `CONTRIBUTING.md`.

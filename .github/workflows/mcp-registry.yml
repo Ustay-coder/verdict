@@ -1,0 +1,30 @@
+name: mcp registry
+# Lists the MCP server in the official MCP registry (registry.modelcontextprotocol.io) from packages/mcp/server.json.
+# Run it by hand after a release, once npm shows the new version: the registry checks that npm has the version the
+# file names and that the package's `mcpName` is the server's name. It signs in as this repository (GitHub OIDC),
+# so there is no secret to keep.
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+  id-token: write
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Does npm have the version server.json names?
+        working-directory: packages/mcp
+        run: |
+          version=$(node -p 'require("./server.json").version')
+          name=$(node -p 'require("./server.json").name')
+          published=$(npm view "@verdict-ai/mcp@$version" mcpName)
+          echo "server.json: $name $version; npm says mcpName=$published"
+          test "$published" = "$name"
+      - name: Install mcp-publisher
+        run: curl -fsSL "https://github.com/modelcontextprotocol/registry/releases/latest/download/mcp-publisher_linux_amd64.tar.gz" | tar xz mcp-publisher
+      - name: Sign in as this repository
+        run: ./mcp-publisher login github-oidc
+      - name: Publish
+        working-directory: packages/mcp
+        run: ../../mcp-publisher publish
