@@ -35,3 +35,12 @@ it("refuses an older Node with one sentence, and takes the minimum from package.
   expect(nodeTooOld("20.20.2")).toBe(`Verdict needs Node ${MINIMUM_NODE} or newer, and this is Node 20.20.2. Install a newer Node (https://nodejs.org) and run the command again.`);
   expect(nodeTooOld(process.versions.node)).toBeUndefined();
 });
+
+it("names the repository's owner as the maintainer of its listing on Glama", () => {
+  // Glama reads glama.json at the root of the repository to know who may manage the server's page there.
+  const glama = JSON.parse(readFileSync(new URL("../../../glama.json", import.meta.url), "utf8")) as { $schema: string; maintainers: string[] };
+  const pkg = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8")) as { repository: { url: string } };
+  const owner = /github\.com\/([^/]+)\//.exec(pkg.repository.url)![1];
+  expect(glama.$schema).toBe("https://glama.ai/mcp/schemas/server.json");
+  expect(glama.maintainers).toEqual([owner]);
+});

@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- `glama.json` at the root names the maintainer of the server's page on Glama, a directory of MCP servers.
 - MCP server: every tool now says enough for a host and its model to choose and call it. All 38 parameters are described (7 were), the short descriptions say what comes back and which tool to use instead, every tool carries hints (read-only, idempotent, reaches outside), and the server's instructions give the usual order of calls. Behaviour is unchanged.
 ## 0.3.3
 
