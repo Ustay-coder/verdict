@@ -1,0 +1,152 @@
+# 투자유치 IR 덱 평가 (한국어) — 시드~시리즈A 단계 IR 자료를 투자심사역 관점으로 채점.
+# 결정모델(Jev, Clef)은 텍스트만 읽습니다: PDF의 차트·이미지 속 숫자는 반영되지 않으니,
+# 핵심 수치가 이미지로만 들어간 덱은 발표 스크립트나 텍스트 요약을 함께 넣으세요 (-i script=./ir-script.md).
+name: 투자유치 IR 덱 평가
+version: "1"
+language: ko
+description: 시드~시리즈A 투자유치용 IR 덱을 투자심사 관점에서 평가합니다.
+context: |
+  벤처캐피털 투자심사역이 시드~시리즈A 단계 스타트업의 IR 덱을 1차 검토합니다.
+  근거는 덱(및 함께 제출된 자료)에 적힌 내용에 한정하고, 수치·출처 없는 주장은 낮게 평가합니다.
+  대부분의 덱은 중간 점수에 분포해야 하며, 최고점은 구체적 수치와 근거가 갖춰진 경우에만 줍니다.
+scale: { type: numeric, min: 1, max: 5 }
+
+judges:
+  # 결정모델: 같은 판정자 + 같은 근거를 쓰는 기준은 한 번의 요청으로 함께 채점됩니다.
+  jev:  { type: decision, provider: typesafe, model: jev-latest, minConfidence: 0.35, onLowConfidence: accept }
+  clef: { type: decision, provider: cloudflare, model: "@cf/cloudflare/clef-flash" }
+  # 투자 판단에 직결되는 기준은 두 모델 평균으로 편향을 줄입니다.
+  panel: { type: panel, combine: mean, judges: [{ type: ref, ref: jev }, { type: ref, ref: clef }] }
+
+defaultJudge: { type: ref, ref: jev }
+
+checks:
+  - id: is_ir_deck
+    question: 이 자료는 스타트업의 투자유치용 IR 자료(피치덱, 투자제안서, IR 발표 스크립트 포함)인가?
+    criteria: { true: 회사·제품·시장·팀·투자조건 등을 투자자에게 설명하는 자료, false: 무관한 문서, 빈 템플릿, 단순 회사소개서·보도자료 }
+    action: abort
+    message: IR 자료가 아님
+
+criteria:
+  - id: problem
+    name: 문제 정의와 고객
+    group: 사업
+    weight: 10
+    anchors:
+      "1": 해결하려는 문제나 대상 고객이 불분명함
+      "3": 문제와 고객은 있으나 문제의 크기·긴급성이 수치나 사례로 뒷받침되지 않음
+      "5": 특정 고객군의 문제가 비용·빈도 등 수치와 고객 근거로 구체적으로 입증됨
+
+  - id: solution
+    name: 솔루션과 제품 완성도
+    group: 사업
+    weight: 10
+    anchors:
+      "1": 제품이 아이디어 단계이거나 무엇을 하는지 불분명함
+      "3": 제품이 설명되나 문제 해결 방식이나 현재 개발 단계가 모호함
+      "5": 문제를 어떻게 해결하는지 명확하고, 출시·운영 중인 제품과 핵심 기능이 구체적으로 제시됨
+
+  - id: market
+    name: 시장 규모와 근거
+    group: 시장
+    weight: 10
+    anchors:
+      "1": 시장 규모 제시가 없음
+      "3": TAM 등 큰 숫자를 제시하나 산출 근거나 출처가 약하거나 탑다운뿐임
+      "5": TAM·SAM·SOM이 출처와 바텀업 산식으로 제시되고 회사가 노리는 시장과 일치함
+
+  - id: competition
+    name: 경쟁 구도와 차별성
+    group: 시장
+    weight: 10
+    anchors:
+      "1": 경쟁사가 없다고 하거나 비교가 없음
+      "3": 경쟁사를 나열하나 차별점이 기능 나열 수준이고 지속 가능성이 불분명함
+      "5": 실제 대안 대비 고객 관점의 차별점과 쉽게 따라 할 수 없는 우위(데이터·네트워크·기술 등)가 근거와 함께 제시됨
+
+  - id: business_model
+    name: 비즈니스 모델과 유닛 이코노믹스
+    group: 수익성
+    weight: 10
+    anchors:
+      "1": 누가 무엇에 돈을 내는지 불분명함
+      "3": 과금 방식과 가격은 있으나 CAC·LTV·마진 등 단위 경제성이 없음
+      "5": 과금 구조와 함께 CAC·LTV·공헌이익 등 단위 경제성이 실제 데이터로 제시됨
+
+  - id: traction
+    name: 트랙션
+    group: 실적
+    weight: 15
+    judge: { type: ref, ref: panel }
+    anchors:
+      "1": 실적이 없음
+      "2": 대기자·MOU·무료 PoC 등 약한 신호뿐임
+      "3": 초기 유료 고객이나 사용자 지표가 있으나 성장 추이가 보이지 않음
+      "4": 매출·사용자가 성장 추이(월별·분기별)와 함께 제시됨
+      "5": 매출·성장률·리텐션 등 핵심 지표가 기간별 추이와 함께 견고하게 입증됨
+
+  - id: gtm
+    name: 시장 진입(GTM) 전략
+    group: 실적
+    weight: 5
+    anchors:
+      "1": 고객 확보 방법이 없음
+      "3": 채널을 나열하나 우선순위·비용·검증 결과가 없음
+      "5": 검증된 주력 채널과 확장 계획이 획득 비용·전환율 등 수치와 함께 제시됨
+
+  - id: team
+    name: 팀 역량
+    group: 팀
+    weight: 15
+    judge: { type: ref, ref: panel }
+    anchors:
+      "1": 팀 구성이나 경력이 서술되지 않음
+      "3": 핵심 인력과 역할은 있으나 이 사업과 직결된 경험이 불명확함
+      "5": 창업팀이 사업 영역에서 검증된 경험·전문성을 갖췄고 핵심 역할(제품·기술·영업)이 채워져 있음
+
+  - id: financials
+    name: 투자 조건과 자금 계획
+    group: 투자
+    weight: 10
+    anchors:
+      "1": 투자 금액이나 자금 사용 계획이 없음
+      "3": 투자 금액은 있으나 자금 용도·런웨이·마일스톤이 불명확함
+      "5": 투자 금액, 자금 용도별 배분, 런웨이, 다음 라운드까지의 마일스톤이 구체적으로 제시됨
+
+  - id: why_now
+    name: 왜 지금인가
+    group: 투자
+    weight: 5
+    anchors:
+      "1": 타이밍에 대한 설명이 없음
+      "3": 시장 트렌드를 언급하나 이 회사에 기회가 열린 이유와 연결이 약함
+      "5": 기술·규제·고객 행동 변화 등 지금 기회가 열린 구체적 이유가 근거와 함께 제시됨
+
+  # 가중치 0: 총점에는 들어가지 않고 경고용으로만 보고됩니다.
+  - id: numbers_consistent
+    name: 수치 일관성
+    group: 신뢰도
+    weight: 0
+    scale: { type: binary, labels: [불일치, 일관됨] }
+    anchors:
+      일관됨: 매출·고객 수·성장률 등 수치가 슬라이드 간에 서로 맞고 출처나 기준 시점이 표시됨
+      불일치: 같은 지표가 슬라이드마다 다르거나, 근거 없는 큰 숫자·기준 시점 없는 수치가 있음
+
+  - id: deck_length
+    name: 분량 적정성
+    group: 신뢰도
+    weight: 0
+    optional: true
+    judge: { type: benchmark, method: length, unit: words, min: 300, max: 4000 }
+
+aggregation:
+  method: weighted_mean
+  normalize: [0, 100]
+  gates:
+    - { criterion: problem, min: 2, message: 문제 정의가 최소한 성립해야 함 }
+    - { criterion: team, min: 2, message: 팀 정보가 최소한 있어야 함 }
+  grades:
+    - { label: 후속 미팅, min: 75 }
+    - { label: 보류, min: 55 }
+    - { label: 드롭, min: 0 }
+  passThreshold: 55
