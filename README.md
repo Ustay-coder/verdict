@@ -111,7 +111,7 @@ The default npm scope is `@verdict`. If unavailable, use the fallback `@verdicth
 
 ### Maintainer release
 
-From a clean tree, run `scripts/release.sh 0.1.0 --dry-run` to bump only publishable package versions temporarily, build, test, preview publication, and inspect each tarball. The preview restores manifests on exit. `scripts/verify-packages.sh` also checks file allowlists and inspects manifests packed by pnpm to verify that `workspace:*` becomes a concrete version.
+From a clean tree, run `scripts/release.sh 0.1.0 --dry-run` to bump only publishable package versions temporarily, build, test, preview publication, and inspect each tarball. The preview restores manifests on exit. With the manifests, the script writes the version into `packages/api/src/version.ts` (a Worker has no `package.json` to read) and into the `GET /` example of `website/reference/rest.md`; tests hold both to the package's version. `scripts/verify-packages.sh` also checks file allowlists and inspects manifests packed by pnpm to verify that `workspace:*` becomes a concrete version.
 
 Run `scripts/release.sh 0.1.0 --tag-only` to bump the publishable package versions, build, test, and push a `Release v0.1.0` commit to `main`. The release workflow publishes every package whose version is not on npm yet with provenance (`NPM_TOKEN` secret) and then creates the `v0.1.0` tag. It leaves the private root, examples, and website versions untouched. `scripts/release.sh 0.1.0` without a flag publishes from the local machine instead and pushes the tag itself; a locally published version does not gain provenance retroactively, so prefer the workflow path.
 

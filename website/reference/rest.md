@@ -29,7 +29,7 @@ Response examples below are abbreviated projections of JSON documents; omitted f
 
 ### GET `/`
 
-Service discovery.
+Service discovery. `version` is the version of `@verdict-ai/api` the server runs.
 
 ```http
 GET /
@@ -40,7 +40,7 @@ Response: HTTP 200
 ```json
 {
   "name": "verdict",
-  "version": "0.1.0",
+  "version": "0.3.1",
   "docs": "/v1/openapi.json"
 }
 ```

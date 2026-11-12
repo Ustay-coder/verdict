@@ -14,12 +14,16 @@ git rev-parse "v$version" >/dev/null 2>&1 && { echo "Tag v$version already exist
 backup=$(mktemp -d)
 # The API runs on Workers and cannot read its package.json, so its version is also a constant in the source.
 api_version=packages/api/src/version.ts
+# The REST reference shows the answer of GET /, version included; it moves with the release like the constant does.
+rest_reference=website/reference/rest.md
 for package in packages/*; do cp "$package/package.json" "$backup/$(basename "$package").json"; done
 cp "$api_version" "$backup/api-version.ts"
+cp "$rest_reference" "$backup/rest.md"
 cp CHANGELOG.md "$backup/CHANGELOG.md"
 restore() {
   for package in packages/*; do cp "$backup/$(basename "$package").json" "$package/package.json"; done
   cp "$backup/api-version.ts" "$api_version"
+  cp "$backup/rest.md" "$rest_reference"
   cp "$backup/CHANGELOG.md" CHANGELOG.md
   rm -rf "$backup"
 }
@@ -33,6 +37,8 @@ for (const dir of readdirSync('packages')) {
 }
 const constant = 'packages/api/src/version.ts';
 writeFileSync(constant, readFileSync(constant, 'utf8').replace(/VERSION = "[^"]*"/, `VERSION = "${process.argv[2]}"`));
+const reference = 'website/reference/rest.md';
+writeFileSync(reference, readFileSync(reference, 'utf8').replace(/("name": "verdict",\n\s*"version": ")[^"]*"/, `$1${process.argv[2]}"`));
 // What was written under "Unreleased" is what this release carries.
 writeFileSync('CHANGELOG.md', readFileSync('CHANGELOG.md', 'utf8').replace(/^## Unreleased$/m, `## ${process.argv[2]}`));
 JS
@@ -42,7 +48,7 @@ if [[ $mode == --dry-run ]]; then
   pnpm -r publish --dry-run --no-git-checks
   scripts/verify-packages.sh
 elif [[ $mode == --tag-only ]]; then
-  git add packages/*/package.json "$api_version" CHANGELOG.md
+  git add packages/*/package.json "$api_version" "$rest_reference" CHANGELOG.md
   git commit -m "Release v$version"
   # Tags are created by the release workflow after publishing: a push of main with an
   # unpublished version is the trigger, so this also works where tag pushes are refused.
@@ -52,7 +58,7 @@ elif [[ $mode == --tag-only ]]; then
 else
   pnpm -r --filter './packages/*' publish --access public --no-git-checks
   # The local release owns publication; the tag workflow detects already-published versions.
-  git add packages/*/package.json "$api_version" CHANGELOG.md
+  git add packages/*/package.json "$api_version" "$rest_reference" CHANGELOG.md
   git commit -m "Release v$version"
   git tag "v$version"
   git push origin "v$version"
