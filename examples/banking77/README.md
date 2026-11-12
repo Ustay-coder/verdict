@@ -30,7 +30,8 @@ Transfer intent × cases.jsonl: 80 case(s), 6 model(s), the same questions to ea
 the models gave one answer on 70 of 80 question(s) they all answered; they differ on 10:
 ```
 
-Three of the ten, shortened (the number is the model's probability for its answer):
+Three of the ten, shortened. The number is the confidence the model reported with its answer. It is not the
+probability of the answer, and the services do not mean the same thing by it (see below):
 
 | Message | Labelled | Jev | Clef | Clef-flash | OpenRouter (Jev 1.13) | OpenAI | Gemini |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -46,7 +47,13 @@ Three of the ten, shortened (the number is the model's probability for its answe
   first row above is labelled "not received by recipient", and five of six models read it as a question about
   timing. A case every model gets "wrong" is often a label, or a line of the rubric, to look at again.
 - **The ten cases where the models differ are the ones worth reading.** They sit on the border between two intents,
-  and the probabilities often show it: 0.28, 0.45, 0.47.
+  and the numbers often show it: 0.28, 0.45, 0.47.
+- **The number in parentheses is each service's own "confidence", and they define it three ways.** With eight
+  options and `p` the probability of the answer: Gemini reports `p` itself; Jev and OpenAI report
+  `(p - 1/8) / (1 - 1/8)`; Clef and Clef-flash report `(sum of p² - 1/8) / (1 - 1/8)`. For "Why is my transfer not done
+  yet?" the probabilities of the answers were 0.70, 0.48, 0.68, 0.61, 0.60 and 0.62, which the table shows as 0.66,
+  0.28, 0.45, 0.55, 0.54 and 0.62. Compare a model's numbers with its own, not with another model's. The
+  probabilities themselves are kept in every stored evaluation.
 - **The rubric is part of the result.** The one-line descriptions in `intent.yaml` are ours. Change one, run again,
   and `verdict diff --base run_… --head run_…` shows which cases moved.
 
