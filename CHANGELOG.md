@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- **Node 22 or newer is required** (22.12 for the CLI). The packages said Node 20, but that had stopped being true: the PDF reader they depended on (`unpdf` 2.1) declared Node 24, so every install on Node 20 or 22 printed an `EBADENGINE` warning, and on Node 20 reading a PDF failed with "Iterator is not defined". Node 20 itself reached end of life in April 2026. `unpdf` is now 1.9, which runs on Node 22, so an install on Node 22 or 24 is quiet. On an older Node the CLI and the MCP server say so in one sentence and stop, instead of failing later inside a dependency.
 - A workflow lists the MCP server in the official MCP registry after a release (`.github/workflows/mcp-registry.yml`, run by hand).
 
 ## 0.3.2

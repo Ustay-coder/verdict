@@ -22,4 +22,4 @@ Add this to `claude_desktop_config.json`:
 }
 ```
 
-Requires Node 20 or newer. [Documentation](https://docs.verdict-ai.dev/reference/mcp). MIT licensed.
+Requires Node 22 or newer. [Documentation](https://docs.verdict-ai.dev/reference/mcp). MIT licensed.

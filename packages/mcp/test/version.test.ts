@@ -3,6 +3,7 @@ import { expect, it } from "vitest";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { createMcpServer } from "../src/index.js";
+import { MINIMUM_NODE, nodeTooOld } from "../src/package-version.js";
 
 it("tells a client the version it was published as", async () => {
   const server = createMcpServer({ mode: "local" });
@@ -26,4 +27,11 @@ it("describes itself to the MCP registry with the name and version npm has", () 
   expect(server.packages).toEqual([expect.objectContaining({ registryType: "npm", identifier: pkg.name, version: pkg.version, transport: { type: "stdio" } })]);
   // The registry's schema refuses a longer description.
   expect(server.description.length).toBeLessThanOrEqual(100);
+});
+
+it("refuses an older Node with one sentence, and takes the minimum from package.json", () => {
+  const pkg = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8")) as { engines: { node: string } };
+  expect(`>=${MINIMUM_NODE}`).toBe(pkg.engines.node);
+  expect(nodeTooOld("20.20.2")).toBe(`Verdict needs Node ${MINIMUM_NODE} or newer, and this is Node 20.20.2. Install a newer Node (https://nodejs.org) and run the command again.`);
+  expect(nodeTooOld(process.versions.node)).toBeUndefined();
 });

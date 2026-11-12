@@ -19,4 +19,4 @@ npx @verdict-ai/cli --help
 npx @verdict-ai/cli eval --help
 ```
 
-Requires Node 20 or newer. [Documentation](https://docs.verdict-ai.dev/reference/cli). MIT licensed.
+Requires Node 22 or newer. [Documentation](https://docs.verdict-ai.dev/reference/cli). MIT licensed.
