@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.3.1
 
 - OpenAI's Decisions API works: the adapter now sends what the live endpoint takes (`input`, an array of named questions, `levels` for a score, `choices` for a choice, a predicate with instructions only) and reads its array of answers. Before, it sent the System One shape and every request was refused (`Missing required parameter: 'input'`). Checked live with `gpt-6-luna`; `verdict run --models openai,jev,clef` puts it beside the others.
 - OpenRouter's decisions endpoint is checked live (`openrouter:typesafe/jev-1.13`); nothing had to change.
