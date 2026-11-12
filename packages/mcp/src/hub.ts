@@ -8,6 +8,7 @@ import { forkDraft, parseHubRef, questionAgreement, ValidationError, verifyPubli
 import { Verdict } from "@verdict-ai/sdk";
 import { z } from "zod";
 
+import { COPIES_FROM_A_HUB, READS_A_HUB } from "./annotations.js";
 import { text, toolResult } from "./result.js";
 
 export interface HubToolOptions {
@@ -37,10 +38,15 @@ export function registerHub(server: McpServer, opts: HubToolOptions) {
     title: "Search the hub",
     description: "Search published single-question judgment cards (rubrics with public test cases). Returns one result per card at its newest version, with a `hub:owner/slug@rv_…` ref for hub_get or fork_rubric.",
     inputSchema: {
-      q: z.string().optional().describe("matches title, author, slug and domain"), domain: z.string().optional(), locale: z.string().optional(),
-      type: z.enum(["score", "noul", "choice"]).optional().describe("noul = yes/no"), owner: z.string().optional(), limit: z.number().int().min(1).max(50).optional(),
-      hub: z.string().url().optional(),
+      q: z.string().optional().describe("matches title, author, slug and domain"),
+      domain: z.string().optional().describe("Only cards filed under this domain."),
+      locale: z.string().optional().describe("Only cards written for this locale, for example `ko` or `en`."),
+      type: z.enum(["score", "noul", "choice"]).optional().describe("noul = yes/no"),
+      owner: z.string().optional().describe("Only cards published by this account."),
+      limit: z.number().int().min(1).max(50).optional().describe("The most results to return, 1 to 50."),
+      hub: z.string().url().optional().describe('Address of the hub to ask. Default: the hub this server was started with (VERDICT_HUB_URL).'),
     },
+    annotations: READS_A_HUB,
   }, async ({ hub, ...q }) => toolResult(async () => {
     const { data } = await hubFor(hub).client.hub.search(q);
     return text(data.map((d) => ({ ref: `hub:${d.ref}@${d.latest.versionId}`, title: d.title, description: d.description, judgmentType: d.judgmentType, domain: d.domain, locale: d.locale, license: d.license, cases: d.cases, runs: d.runs })));
@@ -49,7 +55,8 @@ export function registerHub(server: McpServer, opts: HubToolOptions) {
   server.registerTool("hub_get", {
     title: "Read a hub card",
     description: "Read a published card: its question and answers, threshold, licence, lineage, author-reported agreement numbers, versions and some public cases. `ref` is hub:owner/slug or hub:owner/slug@rv_….",
-    inputSchema: { ref: z.string(), hub: z.string().url().optional() },
+    inputSchema: { ref: z.string().describe('`hub:owner/slug` for the newest version of a card, or `hub:owner/slug@rv_…` for one version, as `hub_search` returns it.'), hub: z.string().url().optional().describe('Address of the hub to ask. Default: the hub this server was started with (VERDICT_HUB_URL).') },
+    annotations: READS_A_HUB,
   }, async ({ ref, hub }) => toolResult(async () => {
     const card = await load(ref, hub);
     return text({ ref: `hub:${card.publication.ref}@${card.version.id}`, hub: card.hub, ...describe(card.publication), versions: card.versions, rubric: card.version.rubric });
@@ -58,7 +65,8 @@ export function registerHub(server: McpServer, opts: HubToolOptions) {
   server.registerTool("fork_rubric", {
     title: "Fork a hub card",
     description: "Copy a published card into this server's rubrics (a new rubric id; the card is not changed) so `evaluate` can use it. The rubric's metadata records where it came from and its licence.",
-    inputSchema: { ref: z.string(), hub: z.string().url().optional(), name: z.string().optional().describe("name for the copy (default: the card's)") },
+    inputSchema: { ref: z.string().describe('`hub:owner/slug` for the newest version of a card, or `hub:owner/slug@rv_…` for one version, as `hub_search` returns it.'), hub: z.string().url().optional().describe('Address of the hub to ask. Default: the hub this server was started with (VERDICT_HUB_URL).'), name: z.string().optional().describe("name for the copy (default: the card's)") },
+    annotations: COPIES_FROM_A_HUB,
   }, async ({ ref, hub, name }) => toolResult(async () => {
     const card = await load(ref, hub);
     const forkedFrom = { hub: card.hub, ref: `hub:${card.publication.ref}@${card.version.id}`, versionId: card.version.id, license: card.publication.license };

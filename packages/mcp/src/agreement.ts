@@ -6,6 +6,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { checkAgainstHumans, loadRubricText, parseGoldSet, parseRubric, ValidationError, type AgreementReport, type Engine } from "@verdict-ai/core";
 import { z } from "zod";
+import { JUDGES } from "./annotations.js";
 import { text, toolResult } from "./result.js";
 
 /** File access stays injectable so the tool can be exercised in memory. */
@@ -42,6 +43,8 @@ export function registerAgreement(server: McpServer, deps: AgreementDependencies
       rubric: z.union([z.string(), z.record(z.string(), z.unknown())]).optional().describe("Stored rubric id or inline rubric, instead of rubricPath"),
       gold: z.string().describe("Local gold-set file: JSON array or JSON lines"),
     },
+    // Every subject of the gold set is judged and stored, as `evaluate` would.
+    annotations: JUDGES,
   }, async ({ rubricPath, rubric, gold }) => toolResult(async () => {
     // Gold files and rubric paths are local; a remote API has no access to them.
     if (!deps.engine) throw new ValidationError("check_against_humans needs the local engine (unset VERDICT_API_URL)");
