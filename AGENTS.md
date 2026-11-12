@@ -27,7 +27,7 @@ Read `docs/ARCHITECTURE.md` before changing the engine and `docs/RUBRICS.md` bef
 - Documents (rubric / evaluation) are stored as JSON `doc` columns; add indexed columns only for fields that are queried. Every store read is tenant-scoped — the one deliberate exception is public hub reads, which read only the `publications` collection: copies authors chose to make public (`packages/core/src/hub/`). Never add a public read path to any other collection.
 - Formulas go through `packages/core/src/expr.ts` (no `eval`, no `Function`).
 - The API must keep running on Cloudflare Workers: no Node-only imports in `packages/api/src/app.ts` or anything it pulls from `core` at module top level (Node-only modules like `node:fs` are imported lazily inside functions).
-- Public API shape is documented in `README.md` (REST table) and mirrored by `packages/sdk`; change all three together.
+- Public API shape is documented in `website/reference/rest.md` and mirrored by `packages/sdk`; change all three together. Environment variables are listed in `website/reference/configuration.md`.
 
 ## Style
 - Small, typed modules; zod schemas are the source of truth for request/rubric shapes.

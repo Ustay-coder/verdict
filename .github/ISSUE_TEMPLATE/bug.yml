@@ -1,0 +1,39 @@
+name: Something does not work
+description: A command or a call did something other than what the documentation says.
+labels: [bug]
+body:
+  - type: textarea
+    id: ran
+    attributes:
+      label: What you ran
+      description: The command or the request. Leave keys out.
+      render: bash
+    validations:
+      required: true
+  - type: textarea
+    id: got
+    attributes:
+      label: What it printed
+      description: The output or the error, as it came.
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: What `verdict --version` prints, and your Node version.
+      placeholder: "verdict 0.3.1, Node 22"
+    validations:
+      required: true
+  - type: input
+    id: model
+    attributes:
+      label: Model, if a model was asked
+      placeholder: "jev, clef, openai:gpt-6-luna …"
