@@ -1,0 +1,65 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.Ustay-coder/verdict",
+  "title": "Verdict",
+  "description": "Score text, files and pages against a rubric with decision models; compare models on your cases.",
+  "version": "0.3.1",
+  "websiteUrl": "https://docs.verdict-ai.dev/reference/mcp",
+  "repository": {
+    "url": "https://github.com/Ustay-coder/verdict",
+    "source": "github",
+    "subfolder": "packages/mcp"
+  },
+  "packages": [
+    {
+      "registryType": "npm",
+      "identifier": "@verdict-ai/mcp",
+      "version": "0.3.1",
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+        {
+          "name": "TYPESAFE_API_KEY",
+          "description": "Key for Jev, the default decision model, when judging runs in this process.",
+          "isRequired": false,
+          "isSecret": true
+        },
+        {
+          "name": "CLOUDFLARE_ACCOUNT_ID",
+          "description": "Cloudflare account for Clef and Clef-flash on Workers AI.",
+          "isRequired": false
+        },
+        {
+          "name": "CLOUDFLARE_API_TOKEN",
+          "description": "Cloudflare token (Workers AI: Read) for Clef and Clef-flash.",
+          "isRequired": false,
+          "isSecret": true
+        },
+        {
+          "name": "OPENAI_API_KEY",
+          "description": "Key for OpenAI's Decisions API.",
+          "isRequired": false,
+          "isSecret": true
+        },
+        {
+          "name": "VERDICT_DATA_DIR",
+          "description": "Folder to keep rubrics and evaluations in between runs. Without it they are kept in memory.",
+          "isRequired": false,
+          "format": "filepath"
+        },
+        {
+          "name": "VERDICT_API_URL",
+          "description": "Address of a Verdict API to use instead of judging in this process.",
+          "isRequired": false
+        },
+        {
+          "name": "VERDICT_API_KEY",
+          "description": "Key for that Verdict API.",
+          "isRequired": false,
+          "isSecret": true
+        }
+      ]
+    }
+  ]
+}

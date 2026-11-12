@@ -14,3 +14,16 @@ it("tells a client the version it was published as", async () => {
     expect(client.getServerVersion()).toMatchObject({ name: "verdict", version: published });
   } finally { await client.close(); await server.close(); }
 });
+
+it("describes itself to the MCP registry with the name and version npm has", () => {
+  const read = (name: string) => JSON.parse(readFileSync(new URL(`../${name}`, import.meta.url), "utf8")) as Record<string, unknown>;
+  const pkg = read("package.json") as { name: string; version: string; mcpName: string };
+  const server = read("server.json") as { name: string; version: string; description: string; packages: { registryType: string; identifier: string; version: string; transport: { type: string } }[] };
+  // The registry checks that the published package names this server, and that npm has the version it is told.
+  expect(server.name).toBe(pkg.mcpName);
+  expect(server.name).toMatch(/^io\.github\.[A-Za-z0-9-]+\/[A-Za-z0-9._-]+$/);
+  expect(server.version).toBe(pkg.version);
+  expect(server.packages).toEqual([expect.objectContaining({ registryType: "npm", identifier: pkg.name, version: pkg.version, transport: { type: "stdio" } })]);
+  // The registry's schema refuses a longer description.
+  expect(server.description.length).toBeLessThanOrEqual(100);
+});
