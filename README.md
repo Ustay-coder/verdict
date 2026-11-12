@@ -1,27 +1,28 @@
 # Verdict — one rubric, every decision model
 
-**Write the rubric once. Run it on Jev, Clef, OpenAI's Decisions API and any other decision model, and see where they disagree on your own cases.**
+**Write the rubric once. Run it on Jev, Clef, OpenAI's Decisions API, Gemini's and any other decision model, and see where they disagree on your own cases.**
 
 Decision models answer typed questions (yes or no, one of these, a level on a scale) with probabilities instead of prose, in a fraction of a second. Every vendor publishes benchmarks; none of them is about your cases, and each vendor wants its questions in its own shape. Verdict turns a rubric — criteria, scales, levels — into the questions each model takes, sends the same questions to all of them, and puts the answers side by side.
 
 ```bash
 npm install -g @verdict-ai/cli
-verdict run -r examples/banking77/intent.yaml -d examples/banking77/cases.jsonl --models jev,clef,clef-flash,openrouter,openai
+verdict run -r examples/banking77/intent.yaml -d examples/banking77/cases.jsonl --models jev,clef,clef-flash,openrouter,openai,gemini
 ```
 
 ```text
-Transfer intent × cases.jsonl: 80 case(s), 5 model(s), the same questions to each
+Transfer intent × cases.jsonl: 80 case(s), 6 model(s), the same questions to each
   model        answered by                             agreed with labels   failed   asked a human   input tokens   calls   time
-  jev          typesafe/jev-1.14.0                     66/80 (83%)          0        0               44,560         80      2.3 s
-  clef         cloudflare/clef                         70/80 (88%)          0        0               31,259         80      7.1 s
-  clef-flash   cloudflare/clef-flash                   73/80 (91%)          0        0               31,259         80      3.8 s
-  openrouter   openrouter/typesafe/jev-1.13-20260917   67/80 (84%)          0        0               44,560         80      4.1 s
-  openai       openai/gpt-6-luna                       69/80 (86%)          0        0               25,254         80      6.6 s
+  jev          typesafe/jev-1.14.0                     66/80 (83%)          0        0               44,560         80      2.1 s
+  clef         cloudflare/clef                         70/80 (88%)          0        0               31,259         80      6.9 s
+  clef-flash   cloudflare/clef-flash                   73/80 (91%)          0        0               31,259         80      4.5 s
+  openrouter   openrouter/typesafe/jev-1.13-20260917   67/80 (84%)          0        0               44,560         80      3.9 s
+  openai       openai/gpt-6-luna                       69/80 (86%)          0        0               25,254         80      7.1 s
+  gemini       gemini/gemini-decision-1                68/80 (85%)          0        0               25,364         80      7.1 s
 the models gave one answer on 70 of 80 question(s) they all answered; they differ on 10:
   …
 ```
 
-A real run (2026-11-12) of eighty customer messages from a public dataset, on five models: [examples/banking77](examples/banking77) has the rubric, the cases, the whole output and how to read it. It is not a ranking: eighty cases separate the models by a handful of answers. The ten cases where they differ are the ones worth reading, and on your cases they will be different ones.
+A real run (2026-11-12) of eighty customer messages from a public dataset, on six models: [examples/banking77](examples/banking77) has the rubric, the cases, the whole output and how to read it. It is not a ranking: eighty cases separate the models by a handful of answers. The ten cases where they differ are the ones worth reading, and on your cases they will be different ones.
 
 ## Try it
 
@@ -54,7 +55,7 @@ The rubric file is not edited: `--models` re-points its decision judges, one run
 | `clef-flash` | Clef-flash | Cloudflare Workers AI | Yes | Up to 4 |
 | `openrouter:<model>` | For example `typesafe/jev-1.13` | OpenRouter | Yes | No |
 | `openai:<model>` | OpenAI's Decisions API, for example `gpt-6-luna` | OpenAI | Yes | No |
-| `gemini` | Gemini Decision 1 | Google (Gemini API) | Not yet | No |
+| `gemini` | Gemini Decision 1 | Google (Gemini API) | Yes | No |
 | `systemone:<model>` | Any endpoint that takes the same request | Yours | You check it | No |
 
 | Input | With `verdict eval -i` | What the judge receives |

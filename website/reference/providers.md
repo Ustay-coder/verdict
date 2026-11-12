@@ -69,6 +69,18 @@ export OPENAI_API_KEY="your-openai-key"
 defaultJudge: { type: decision, provider: openai }
 ```
 
+## Gemini
+
+Checked against the live service on 2026-11-12 with `gemini-decision-1`. Google's Decisions API takes the same three kinds of question with a few fields renamed, and Verdict translates them; [docs/PROVIDERS.md](https://github.com/Ustay-coder/verdict/blob/main/docs/PROVIDERS.md#gemini-decisions-request-and-response) shows what is sent and what comes back. Gemini is sent text only for now. The response does not name the model that answered, so a rating records the model that was asked for.
+
+```bash
+export GEMINI_API_KEY="your-gemini-key"
+```
+
+```yaml
+defaultJudge: { type: decision, provider: gemini }
+```
+
 ## Mock: offline integration
 
 No environment variables or network access are required:

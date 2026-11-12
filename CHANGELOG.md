@@ -2,7 +2,8 @@
 
 ## Unreleased
 
-- **Gemini's decision model can be named**: `--models gemini`, or `provider: gemini` in a rubric, asks `gemini-decision-1` through Google's Decisions API with `GEMINI_API_KEY` (or `GOOGLE_API_KEY`). It is **not yet checked against the live service**: the request is written from what Google's guide is reported to say, and the tables say "Not yet" until a request has been answered. Text only for now.
+- **Gemini's decision model is a sixth provider**: `--models gemini`, or `provider: gemini` in a rubric, asks `gemini-decision-1` through Google's Decisions API with `GEMINI_API_KEY` (or `GOOGLE_API_KEY`). Checked against the live service on 2026-11-12; `docs/PROVIDERS.md` shows the request and a verbatim answer. Text only for now.
+- `examples/banking77` is run on six models. The five from before agree with the labels on the same number of cases; Gemini agrees on 68 of 80, and the models still differ on the same ten cases.
 
 ## 0.3.4
 

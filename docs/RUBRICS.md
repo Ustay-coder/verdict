@@ -116,7 +116,7 @@ Providers and their env vars:
 | `cloudflare` | `…/accounts/{CLOUDFLARE_ACCOUNT_ID}/ai/run/{model}` (or `baseUrl` = AI Gateway) | `CLOUDFLARE_API_TOKEN` | `@cf/cloudflare/clef` (`clef-flash`, `typesafe/jev`) |
 | `openrouter` | `https://openrouter.ai/api/alpha/decisions` | `OPENROUTER_API_KEY` | `typesafe/jev-1.13` |
 | `openai` | `https://api.openai.com/v1/decisions` (its own request shape; Verdict translates the questions) | `OPENAI_API_KEY` | `gpt-6-luna` |
-| `gemini` | `https://generativelanguage.googleapis.com/v1beta/decisions` (not yet checked against the live service) | `GEMINI_API_KEY`, else `GOOGLE_API_KEY` | `gemini-decision-1` (`VERDICT_GEMINI_MODEL`) |
+| `gemini` | `https://generativelanguage.googleapis.com/v1beta/decisions` (System One with a few fields renamed; Verdict translates) | `GEMINI_API_KEY`, else `GOOGLE_API_KEY` | `gemini-decision-1` (`VERDICT_GEMINI_MODEL`) |
 | `systemone` | `baseUrl` + `/systemone` | `SYSTEMONE_API_KEY` | `jev-latest` |
 | `mock` | in-process | — | options: `level`, `normalized`, `probabilities`, `noul` |
 

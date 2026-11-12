@@ -138,11 +138,11 @@ const openaiDecisionsProvider: DecisionProviderAdapter = {
 };
 
 /**
- * Gemini Decisions: POST /v1beta/decisions with the key in `x-goog-api-key`. NOT YET CHECKED AGAINST THE LIVE API:
- * the route exists (it asks for a key), and the shape below is what Google's guide is reported to say (2026-11-12).
- * It is the System One shape with three differences: the text goes in `input`, a noul's two descriptions are
- * `true_description` / `false_description`, and every choice option carries a string. Answers come back keyed like
- * the questions, a score's probabilities keyed by level index, and the response does not name the model.
+ * Gemini Decisions: POST /v1beta/decisions with the key in `x-goog-api-key`. Shape checked against the live API on
+ * 2026-11-12 with gemini-decision-1. It is the System One shape with three differences, and the endpoint refuses
+ * the System One spelling of each: the text goes in `input`, a noul's two descriptions are `true_description` /
+ * `false_description`, and usage is `total_input_tokens`. Answers come back keyed like the questions, a score's
+ * probabilities keyed by level index in no particular order, and the response does not name the model.
  */
 const GeminiResponseSchema = z.object({
   answers: z.record(z.string(), SystemOneAnswerSchema),

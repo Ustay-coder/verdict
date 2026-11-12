@@ -34,12 +34,10 @@ describe("the tables of models and inputs", () => {
 
   it("say a provider was checked against the live service only where the record of contracts does", () => {
     const live = (provider: string) => new RegExp(`^\\| \`${provider}\`[^\\n]*\\*\\*Live\\*\\*`, "m").test(record);
-    expect([live("typesafe"), live("cloudflare"), live("openrouter"), live("openai")]).toEqual([true, true, true, true]);
+    expect([live("typesafe"), live("cloudflare"), live("openrouter"), live("openai"), live("gemini")]).toEqual([true, true, true, true, true]);
     for (const text of [page, home, readme]) {
       const row = (name: string) => text.split("\n").find((line) => line.startsWith(`| \`${name}\` |`)) ?? "";
-      for (const name of ["jev", "clef", "clef-flash", "openrouter:<model>", "openai:<model>"]) expect(row(name), name).toMatch(/\| Yes/);
-      // Gemini's adapter was written from reports of the guide: "Yes" appears only once the record says Live.
-      expect(row("gemini"), "gemini").toMatch(live("gemini") ? /\| Yes/ : /\| Not yet/);
+      for (const name of ["jev", "clef", "clef-flash", "openrouter:<model>", "openai:<model>", "gemini"]) expect(row(name), name).toMatch(/\| Yes/);
       // An endpoint of your own is never claimed as checked.
       expect(row("systemone:<model>")).toMatch(/\| You check it/);
     }

@@ -8,7 +8,7 @@ Everything Verdict reads from the environment: model keys, where it stores thing
 | `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_API_TOKEN` | `decision` / `cloudflare` — Clef, Clef-flash, `typesafe/jev` on Workers AI. `VERDICT_CLOUDFLARE_MODEL` (default `@cf/cloudflare/clef`) |
 | `OPENROUTER_API_KEY` | `decision` / `openrouter` — `typesafe/jev-1.13`, `inception/mercury-decide`, … |
 | `OPENAI_API_KEY` | `decision` / `openai` — Decisions API (`gpt-6-luna`); also the `llm` / `openai` generative judge |
-| `GEMINI_API_KEY` (or `GOOGLE_API_KEY`) | `decision` / `gemini` — Gemini Decisions API. `VERDICT_GEMINI_MODEL` (default `gemini-decision-1`). Not yet checked against the live service |
+| `GEMINI_API_KEY` (or `GOOGLE_API_KEY`) | `decision` / `gemini` — Gemini Decisions API. `VERDICT_GEMINI_MODEL` (default `gemini-decision-1`) |
 | `SYSTEMONE_BASE_URL`, `SYSTEMONE_API_KEY` | `decision` / `systemone` — any endpoint speaking the `/v1/systemone` shape (self-hosted Clef, DigitalOcean, gateways) |
 | `ANTHROPIC_API_KEY` | `llm` / `anthropic` generative judge (rationales). `VERDICT_ANTHROPIC_MODEL` (default `claude-opus-5-5`) |
 | `VERDICT_HTTP_JUDGE_URL`, `VERDICT_HTTP_JUDGE_KEY` | `llm` / `http` — a prompted judge behind your own URL |
