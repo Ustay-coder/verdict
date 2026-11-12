@@ -1,6 +1,8 @@
 /**
  * The side-by-side table of `verdict run --models`: one row per model, then every case the models split on. Rates are
- * printed with their denominators, and what was not measured is a dash rather than a zero.
+ * printed with their denominators, and what was not measured is a dash rather than a zero. The number beside an
+ * answer is the probability the model gave it. It is not the provider's `confidence`: providers compute that three
+ * different ways, so side by side it would compare nothing (`--json` has both).
  */
 import type { ModelComparison, ModelRow, ModelSplit } from "@verdict-ai/core";
 
@@ -16,8 +18,8 @@ function table(rows: string[][]): string[] {
 }
 
 function splitLine(split: ModelSplit, many: boolean): string {
-  const confidence = (c: number | null) => (c === null ? "" : ` (${c.toFixed(2)})`);
-  const given = split.answers.map((a) => `${a.label} ${a.shown}${confidence(a.confidence)}`).join(" | ");
+  const probability = (p: number | null) => (p === null ? "" : ` (${p.toFixed(2)})`);
+  const given = split.answers.map((a) => `${a.label} ${a.shown}${probability(a.probability)}`).join(" | ");
   return `  ${split.name}${many ? ` · ${split.criterionId}` : ""}   ${split.expected ? `expected ${split.expected.shown}   ` : ""}${given}`;
 }
 

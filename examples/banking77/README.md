@@ -14,7 +14,8 @@ Leave out the ones you have no key for; `--models mock` runs the whole thing wit
 
 ## The run
 
-A real run, 2026-11-12. The whole output is in [run-2026-11-12-six-models.txt](run-2026-11-12-six-models.txt). An
+A real run, 2026-11-12. The whole output is in [run-2026-11-12-six-models.txt](run-2026-11-12-six-models.txt) (the
+stored run, printed by 0.3.6). An
 earlier run the same day, before Gemini was added, is in [run-2026-11-12.txt](run-2026-11-12.txt): the five models
 agreed with the labels on the same number of cases both times, and their probabilities moved a little.
 
@@ -30,13 +31,13 @@ Transfer intent × cases.jsonl: 80 case(s), 6 model(s), the same questions to ea
 the models gave one answer on 70 of 80 question(s) they all answered; they differ on 10:
 ```
 
-Three of the ten, shortened (the number is the model's probability for its answer):
+Three of the ten, shortened. The number is the probability the model gave its answer:
 
 | Message | Labelled | Jev | Clef | Clef-flash | OpenRouter (Jev 1.13) | OpenAI | Gemini |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| "How long does it take for a transfer to get to a recipient?" | not received by recipient | timing (1.00) | not received (0.43) | timing (0.56) | timing (1.00) | timing (0.94) | timing (1.00) |
-| "Why is my transfer not done yet?" | pending | timing (0.66) | pending (0.28) | pending (0.45) | pending (0.55) | pending (0.54) | pending (0.62) |
-| "I didn't get the money I transferred" | balance not updated | not received (0.81) | not received (0.66) | balance not updated (0.76) | not received (0.59) | balance not updated (0.75) | not received (0.47) |
+| "How long does it take for a transfer to get to a recipient?" | not received by recipient | timing (1.00) | not received (0.61) | timing (0.75) | timing (1.00) | timing (0.95) | timing (1.00) |
+| "Why is my transfer not done yet?" | pending | timing (0.70) | pending (0.48) | pending (0.68) | pending (0.61) | pending (0.60) | pending (0.62) |
+| "I didn't get the money I transferred" | balance not updated | not received (0.83) | not received (0.83) | balance not updated (0.89) | not received (0.64) | balance not updated (0.78) | not received (0.47) |
 
 ## How to read it
 
@@ -46,7 +47,12 @@ Three of the ten, shortened (the number is the model's probability for its answe
   first row above is labelled "not received by recipient", and five of six models read it as a question about
   timing. A case every model gets "wrong" is often a label, or a line of the rubric, to look at again.
 - **The ten cases where the models differ are the ones worth reading.** They sit on the border between two intents,
-  and the probabilities often show it: 0.28, 0.45, 0.47.
+  and the probabilities often show it: 0.48, 0.60, 0.47.
+- **The number is a probability, not the service's "confidence".** Every service also reports a confidence, and
+  they compute it three ways: for an answer of probability `p` among eight options, Gemini reports `p`, Jev and
+  OpenAI `(p - 1/8) / (1 - 1/8)`, Clef and Clef-flash `(sum of p² - 1/8) / (1 - 1/8)`. Side by side those compare
+  nothing, so the table shows `p`. Until 0.3.5 it showed the confidence, which is what the numbers in
+  `run-2026-11-12.txt` are; `verdict run --json` has both.
 - **The rubric is part of the result.** The one-line descriptions in `intent.yaml` are ours. Change one, run again,
   and `verdict diff --base run_… --head run_…` shows which cases moved.
 
