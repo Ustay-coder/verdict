@@ -1,0 +1,17 @@
+# Eighty customer messages about bank transfers, from BANKING77 (PolyAI, CC BY 4.0): eight intents that are easy to
+# confuse with one another. The rubric names no model, so `verdict run --models` decides who answers.
+name: Transfer intent
+context: Messages customers sent to a bank's support chat about money transfers. Decide which one of the eight intents the message is.
+criteria:
+  - id: intent
+    name: Intent
+    description: What the customer is asking about.
+    choices:
+      pending_transfer: A transfer the customer made still shows as pending.
+      transfer_not_received_by_recipient: The person or account the customer sent money to has not received it.
+      failed_transfer: A transfer the customer tried to make failed or would not go through.
+      declined_transfer: A transfer was declined or rejected.
+      transfer_timing: How long a transfer takes to arrive; nothing has gone wrong yet.
+      balance_not_updated_after_bank_transfer: The customer transferred money into this account and the balance does not show it.
+      cancel_transfer: The customer wants to cancel or reverse a transfer they made.
+      transfer_fee_charged: A fee was charged for a transfer, or the customer asks about transfer fees.
