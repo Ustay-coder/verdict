@@ -1,5 +1,8 @@
 # Changelog
 
+## Unreleased
+
+- MCP server: every tool now says enough for a host and its model to choose and call it. All 38 parameters are described (7 were), the short descriptions say what comes back and which tool to use instead, every tool carries hints (read-only, idempotent, reaches outside), and the server's instructions give the usual order of calls. Behaviour is unchanged.
 ## 0.3.3
 
 - **Node 22 or newer is required** (22.12 for the CLI). The packages said Node 20, but that had stopped being true: the PDF reader they depended on (`unpdf` 2.1) declared Node 24, so every install on Node 20 or 22 printed an `EBADENGINE` warning, and on Node 20 reading a PDF failed with "Iterator is not defined". Node 20 itself reached end of life in April 2026. `unpdf` is now 1.9, which runs on Node 22, so an install on Node 22 or 24 is quiet. On an older Node the CLI and the MCP server say so in one sentence and stop, instead of failing later inside a dependency.
