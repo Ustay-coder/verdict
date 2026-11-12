@@ -1,6 +1,6 @@
 {
   "name": "@verdict-ai/sdk",
-  "version": "0.3.5",
+  "version": "0.3.6",
   "description": "Verdict TypeScript SDK — a Resend-style client for the evaluation API.",
   "type": "module",
   "main": "./dist/index.js",
