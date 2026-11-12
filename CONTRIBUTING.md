@@ -112,6 +112,8 @@ Build docs with `pnpm --filter verdict-website build`. `scripts/deploy-docs.sh` 
 
 The default npm scope is `@verdict`. If unavailable, use the fallback `@verdicthq`: run `scripts/set-scope.sh @verdicthq` before release. It updates manifests, internal imports/tests, lockfile references, README examples, and website text, printing changed files. It is idempotent and can switch back with `scripts/set-scope.sh @verdict`.
 
+After a release, when npm shows the new version, run the `mcp registry` workflow from the Actions tab: it lists `packages/mcp/server.json` in the official MCP registry, signing in as this repository.
+
 ## Working on this repository with Codex CLI
 
 Implementation work on this repo is meant to run through [OpenAI Codex CLI](https://github.com/openai/codex) authenticated with your ChatGPT plan rather than an API key:

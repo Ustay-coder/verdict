@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- A workflow lists the MCP server in the official MCP registry after a release (`.github/workflows/mcp-registry.yml`, run by hand).
+
 ## 0.3.2
 
 - The MCP server can be listed in the official MCP registry: `packages/mcp/server.json` describes it, `@verdict-ai/mcp` names it (`mcpName`), and the release script keeps the version in step.
