@@ -1,6 +1,6 @@
 {
   "name": "@verdict-ai/cli",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "description": "verdict CLI — evaluate anything from the terminal.",
   "type": "module",
   "bin": {
