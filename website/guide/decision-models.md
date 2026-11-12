@@ -45,14 +45,15 @@ verdict run -r intent.yaml -d cases.jsonl --models jev,clef,clef-flash
 ```text
 Wants a human × cases.jsonl: 4 case(s), 3 model(s), the same questions to each
   model        answered by             agreed with labels   failed   asked a human   input tokens   calls   time
-  jev          typesafe/jev-1.14.0     7/8 (88%)            0        0               2,041          4       0.5 s
-  clef         cloudflare/clef         7/8 (88%)            0        0               1,547          4       0.9 s
-  clef-flash   cloudflare/clef-flash   8/8 (100%)           0        0               1,547          4       0.4 s
+  jev          typesafe/jev-1.14.0     7/8 (88%)            0        0               2,041          4       0.4 s
+  clef         cloudflare/clef         7/8 (88%)            0        0               1,547          4       1.4 s
+  clef-flash   cloudflare/clef-flash   8/8 (100%)           0        0               1,547          4       3.6 s
 the models gave one answer on 7 of 8 question(s) they all answered; they differ on 1:
-  explicit · urgency   expected medium   jev low (0.67) | clef low (0.53) | clef-flash medium (0.11)
+  explicit · urgency   expected medium   jev low (0.79) | clef low (0.81) | clef-flash medium (0.43)
 ```
 
 - **Agreed with labels** counts every labelled criterion the model decided itself, over all cases. Unlabelled cases still show up below the table when the models differ on them — those are the cases worth labelling next.
+- **The number beside an answer is the probability the model gave it**: 0.79 means Jev put 79% on "low". It means the same for every model. It is not the `confidence` a provider reports, which each computes its own way: for an answer of probability `p` among `n` options Gemini reports `p`, Jev and OpenAI `(p − 1/n) / (1 − 1/n)`, and Clef `(Σp² − 1/n) / (1 − 1/n)`. `--json` has both. A score that falls between two levels has no number, because the model put no probability on it.
 - **The same questions to each** is read from the runs: every run records the questions it sent. If the line says otherwise, the rows are not comparable.
 - A model is `jev`, `jev-preview`, `clef`, `clef-flash`, `gemini`, or `provider:model`: `typesafe:jev-1.14.0`, `cloudflare:@cf/cloudflare/clef`, `openrouter:typesafe/jev-1.13`, `openai:<model>`, `systemone:<model>` (with `SYSTEMONE_BASE_URL`). Keys come from the environment, as for any run.
 - Only decision judges are re-pointed. Criteria judged by rules, people or prompted models answer as the rubric says, and a rubric with no decision judge is refused.

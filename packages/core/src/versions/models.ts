@@ -8,7 +8,8 @@
  */
 import { criterionScale } from "../aggregate/index.js";
 import { criterionAnswer, type AgreementReport } from "../agreement.js";
-import type { Evaluation } from "../schema/evaluation.js";
+import { criterionLevels } from "../judges/decision/questions.js";
+import type { CriterionResult, Evaluation, Rating } from "../schema/evaluation.js";
 import type { Criterion, Rubric } from "../schema/rubric.js";
 import type { DatasetVersion } from "./dataset.js";
 import type { RubricVersion } from "./rubric-version.js";
@@ -30,8 +31,13 @@ export interface ModelRow {
   error?: string;
 }
 
-/** `shown` is the answer in the rubric's own words: a level's label where the scale names its levels. */
-export interface ModelAnswer { label: string; answer: number | string | null; shown: string; confidence: number | null }
+/**
+ * `shown` is the answer in the rubric's own words: a level's label where the scale names its levels. `probability`
+ * is what the model put on that answer, the one number that means the same for every model; it is null where the
+ * answer is not an option the model weighed (a score between two levels) or no model answered. `confidence` is the
+ * provider's own summary, and providers do not compute it alike, so it is not for comparing one model with another.
+ */
+export interface ModelAnswer { label: string; answer: number | string | null; shown: string; probability: number | null; confidence: number | null }
 
 /** A case and criterion the models did not all answer alike. `expected` is the label, where the case has one. */
 export interface ModelSplit { caseId: string; name: string; criterionId: string; expected?: { answer: number | string; shown: string }; answers: ModelAnswer[] }
@@ -72,12 +78,31 @@ export function answerLabel(rubric: Rubric, criterion: Criterion, answer: number
   return String(answer);
 }
 
+// An escalated criterion keeps the model's rating inside the pending human rating.
+function modelRating(ratings: Rating[]): Rating | undefined {
+  for (const r of ratings) {
+    if (r.judgeType !== "human") return r;
+    const original = r.raw && "escalatedFrom" in r.raw ? r.raw.escalatedFrom : undefined;
+    if (original) return original;
+  }
+  return undefined;
+}
+
+/** The probability the model gave the answer: an option id for a choice, the label of the level the answer is otherwise. */
+function answerProbability(rubric: Rubric, criterion: Criterion, result: CriterionResult | undefined, answer: number | string | null): number | null {
+  const probabilities = modelRating(result?.ratings ?? [])?.probabilities;
+  if (!probabilities || answer === null) return null;
+  const option = typeof answer === "string" ? answer : criterionLevels(rubric, criterion, criterionScale(rubric, criterion)).find((level) => level.value === answer)?.label;
+  return option !== undefined && Object.hasOwn(probabilities, option) ? probabilities[option]! : null;
+}
+
 /** Each side's answer to one criterion of one case. */
 function answers(sides: ModelSide[], byId: Array<Map<string, Evaluation>>, index: number, criterion: Criterion): ModelAnswer[] {
   return sides.map((side, s) => {
     const evaluation = byId[s]!.get(side.run.cases[index]?.evaluationId ?? "");
-    const given = criterionAnswer(side.version.rubric, criterion, evaluation?.criteria.find((r) => r.criterionId === criterion.id));
-    return { label: side.label, ...given, shown: answerLabel(side.version.rubric, criterion, given.answer) };
+    const result = evaluation?.criteria.find((r) => r.criterionId === criterion.id);
+    const given = criterionAnswer(side.version.rubric, criterion, result);
+    return { label: side.label, answer: given.answer, shown: answerLabel(side.version.rubric, criterion, given.answer), probability: answerProbability(side.version.rubric, criterion, result, given.answer), confidence: given.confidence };
   });
 }
 

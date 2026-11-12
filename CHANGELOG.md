@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- **`verdict run --models` shows the probability each model gave its answer** beside the answer, where it showed the provider's `confidence`. The confidences were not comparable: for an answer of probability `p` among `n` options Gemini reports `p`, Jev and OpenAI report `(p − 1/n) / (1 − 1/n)`, and Clef reports `(Σp² − 1/n) / (1 − 1/n)`, so one message read 0.62, 0.54 and 0.28 for probabilities of 0.62, 0.60 and 0.48. `--json` now carries `probability` next to `confidence` for every answer. A score that falls between two levels has no probability and shows no number.
+- The banking example called that number a probability when it was a confidence. Its table and saved output now show probabilities, from the same stored run.
+
 ## 0.3.5
 
 - **Gemini's decision model is a sixth provider**: `--models gemini`, or `provider: gemini` in a rubric, asks `gemini-decision-1` through Google's Decisions API with `GEMINI_API_KEY` (or `GOOGLE_API_KEY`). Checked against the live service on 2026-11-12; `docs/PROVIDERS.md` shows the request and a verbatim answer. Text only for now.

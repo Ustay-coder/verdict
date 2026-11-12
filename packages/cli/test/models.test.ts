@@ -26,9 +26,9 @@ interface Sent { url: string; body: { model: string; state: string; questions: R
  * Two providers that answer over HTTP as the real ones do. "Jev" hears a request for a person in "agent" and
  * "human"; "Clef" only in "agent"; "Clef-flash" is refused. What each was sent is kept.
  */
-function setup(files: Array<[string, string]> = [["intent.yaml", rubric], ["rules.yaml", rules], ["cases.jsonl", cases]]) {
+function setup(files: Array<[string, string]> = [["intent.yaml", rubric], ["rules.yaml", rules], ["cases.jsonl", cases]], reply?: (who: "jev" | "clef") => Record<string, unknown>) {
   const sent: Sent[] = [];
-  const answer = (body: Sent["body"], words: string[]) => ({ model: body.model === "jev-latest" ? "jev-1.14.0" : body.model, answers: Object.fromEntries(Object.keys(body.questions).map((id) => [id, { type: "noul", noul: words.some((w) => body.state.includes(w)) ? 0.9 : 0.1 }])), usage: { input_tokens: 100, output_tokens: 0 } });
+  const answer = (body: Sent["body"], words: string[]) => ({ model: body.model === "jev-latest" ? "jev-1.14.0" : body.model, answers: reply ? reply(words.length > 1 ? "jev" : "clef") : Object.fromEntries(Object.keys(body.questions).map((id) => [id, { type: "noul", noul: words.some((w) => body.state.includes(w)) ? 0.9 : 0.1 }])), usage: { input_tokens: 100, output_tokens: 0 } });
   const net = (async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = String(input), body = JSON.parse(String(init?.body)) as Sent["body"];
     sent.push({ url, body });
@@ -66,7 +66,8 @@ describe("verdict run --models", () => {
     expect(cells(out[3]!).slice(0, 7)).toEqual(["clef", "cloudflare/clef", "2/3 (67%)", "0", "0", "300", "3"]);
     expect(out.slice(4)).toEqual([
       "the models gave one answer on 2 of 3 question(s) they all answered; they differ on 1:",
-      "  human   expected yes   jev yes (0.80) | clef no (0.80)",
+      // The number is the probability each model gave its answer (0.9 for yes, and 1 − 0.1 for no), not its confidence.
+      "  human   expected yes   jev yes (0.90) | clef no (0.90)",
     ]);
     expect(warn[0]).toMatch(/^runs: jev run_\w+, clef run_\w+; two of them case by case: verdict diff --base run_\w+ --head run_\w+$/);
 
@@ -85,13 +86,55 @@ describe("verdict run --models", () => {
     expect(new Set(runs.map((r) => r.fingerprint.bindingHash)).size).toBe(2);
   });
 
+  it("puts beside each answer the probability the model gave it, whatever the provider calls its confidence", async () => {
+    // Three kinds of answer, and two providers that report a confidence of their own that is not that probability.
+    const triage = `name: Triage
+scale: { type: numeric, min: 0, max: 3 }
+criteria:
+  - id: team
+    name: Team
+    choices: { support: "How-to questions.", engineering: "Something is broken." }
+  - id: urgency
+    name: Urgency
+    scale: { type: ordinal, labels: [low, medium, high] }
+  - id: severity
+    name: Severity
+    levels: [{ value: 0, label: none, description: "Nothing broken." }, { value: 1, label: minor, description: "A workaround exists." }, { value: 2, label: major, description: "A feature is down." }, { value: 3, label: outage, description: "Everything is down." }]
+`;
+    const answers = {
+      jev: {
+        team: { type: "choice", choice: "engineering", confidence: 0.2, probabilities: { support: 0.4, engineering: 0.6 } },
+        urgency: { type: "score", score: 0.2, confidence: 0.7, probabilities: [0.8, 0.2, 0] },
+        severity: { type: "score", score: 2.5, confidence: 0.33, probabilities: [0, 0, 0.5, 0.5] },
+      },
+      clef: {
+        team: { type: "choice", choice: "support", confidence: 0.01, probabilities: { support: 0.55, engineering: 0.45 } },
+        urgency: { type: "score", score: 1, confidence: 0.51, probabilities: [0.1, 0.8, 0.1] },
+        severity: { type: "score", score: 3, confidence: 1, probabilities: [0, 0, 0, 1] },
+      },
+    };
+    const t = setup([["triage.yaml", triage], ["one.jsonl", JSON.stringify({ id: "down", name: "down", inputs: [{ type: "text", text: "checkout is down" }], expected: { team: "engineering" } })]], (who) => answers[who]);
+    const { out } = await t.run("-r", "triage.yaml", "-d", "one.jsonl", "--models", "jev,clef");
+    expect(out.slice(4)).toEqual([
+      "the models gave one answer on 0 of 3 question(s) they all answered; they differ on 3:",
+      "  down · team   expected engineering   jev engineering (0.60) | clef support (0.55)",
+      "  down · urgency   jev low (0.80) | clef medium (0.80)",
+      // 2.5 lies between two levels: the model put no probability on it, so no number is shown.
+      "  down · severity   jev 2.5 | clef 3 (1.00)",
+    ]);
+    const json = JSON.parse((await t.run("-r", "triage.yaml", "-d", "one.jsonl", "--models", "jev,clef", "--json")).out[0]!) as { splits: Array<{ answers: Array<{ probability: number | null; confidence: number | null }> }> };
+    // --json keeps both, so nothing a provider said is lost.
+    expect(json.splits[0]!.answers).toMatchObject([{ probability: 0.6, confidence: 0.2 }, { probability: 0.55, confidence: 0.01 }]);
+    expect(json.splits[2]!.answers).toMatchObject([{ probability: null, confidence: 0.33 }, { probability: 1, confidence: 1 }]);
+  });
+
   it("prints the same comparison as JSON", async () => {
     const t = setup();
     const { out } = await t.run("-r", "intent.yaml", "-d", "cases.jsonl", "--models", "jev,clef", "--json");
     expect(JSON.parse(out[0]!)).toMatchObject({
       rubric: "Wants a person", cases: 3, sameQuestions: true, answered: 3, unanimous: 2,
       models: [{ label: "jev", labelled: { n: 3, agreed: 3, agreement: 1 } }, { label: "clef", labelled: { n: 3, agreed: 2 } }],
-      splits: [{ caseId: "human", criterionId: "wants", expected: { answer: 1, shown: "yes" }, answers: [{ label: "jev", answer: 1, shown: "yes" }, { label: "clef", answer: 0, shown: "no" }] }],
+      splits: [{ caseId: "human", criterionId: "wants", expected: { answer: 1, shown: "yes" }, answers: [{ label: "jev", answer: 1, shown: "yes", probability: 0.9, confidence: 0.8 }, { label: "clef", answer: 0, shown: "no", probability: 0.9, confidence: 0.8 }] }],
     });
   });
 
