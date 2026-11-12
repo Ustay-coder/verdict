@@ -19,8 +19,29 @@ function requestExtras(options?: Record<string, unknown>): Record<string, unknow
   return extra && typeof extra === "object" && !Array.isArray(extra) ? (extra as Record<string, unknown>) : {};
 }
 
+/**
+ * A provider that answers 429 has not refused the request, only its timing: a free tier allows so many tokens a
+ * minute, and a run of pictures passes that at once. Where the context brings a way to wait (`ctx.wait`), it is asked
+ * again after the wait it names, a few times, before the case is given up as failed. Without one the 429 is the
+ * answer: a queued evaluation is retried whole by its queue, and a server must not hold a request open for minutes.
+ */
+const RATE_LIMIT = { retries: 4, defaultWaitMs: 20_000, maxWaitMs: 90_000, marginMs: 1_000 };
+
+/** How long a 429 asks to wait: its `Retry-After` header, else a "retry in 35s" in its body, else a default. */
+function retryDelayMs(res: Response, body: string): number {
+  const header = Number(res.headers.get("retry-after"));
+  const said = Number(/retry in (\d+(?:\.\d+)?) ?s/i.exec(body)?.[1]);
+  const asked = header > 0 ? header * 1000 : said > 0 ? said * 1000 : RATE_LIMIT.defaultWaitMs;
+  return Math.min(RATE_LIMIT.maxWaitMs, asked + RATE_LIMIT.marginMs);
+}
+
 async function postJson(provider: string, ctx: JudgeContext, url: string, body: unknown, headers: Record<string, string>) {
-  const res = await fetchProvider(provider, ctx.fetch, url, { method: "POST", signal: ctx.signal, headers: { "content-type": "application/json", ...headers }, body: JSON.stringify(body) });
+  const init = { method: "POST", signal: ctx.signal, headers: { "content-type": "application/json", ...headers }, body: JSON.stringify(body) };
+  let res = await fetchProvider(provider, ctx.fetch, url, init);
+  for (let attempt = 0; ctx.wait && res.status === 429 && attempt < RATE_LIMIT.retries && !ctx.signal?.aborted; attempt++) {
+    await ctx.wait(retryDelayMs(res, await res.text()));
+    res = await fetchProvider(provider, ctx.fetch, url, init);
+  }
   return parseProvider(provider, z.record(z.string(), z.unknown()), await readProviderJson(provider, res));
 }
 

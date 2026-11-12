@@ -31,6 +31,7 @@ export class EngineBase {
   protected fetchImpl: typeof fetch;
   protected ingestOptions: IngestOptions;
   protected concurrency: number;
+  protected rateLimitWait?: (ms: number) => Promise<void>;
   protected webhookSecret?: string;
   protected onEvent?: (e: EngineEvent) => void;
 
@@ -47,6 +48,7 @@ export class EngineBase {
     this.fetchImpl = opts.fetch ?? ((input, init) => globalThis.fetch(input, init));
     this.ingestOptions = { fetch: this.fetchImpl, ...opts.ingest };
     this.concurrency = opts.concurrency ?? 8;
+    this.rateLimitWait = opts.rateLimitWait;
     this.webhookSecret = opts.webhookSecret ?? this.env("VERDICT_WEBHOOK_SECRET");
     this.onEvent = opts.onEvent;
   }

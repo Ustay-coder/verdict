@@ -19,6 +19,8 @@ export interface JudgeContext {
   env: (name: string) => string | undefined;
   fetch: typeof fetch;
   signal?: AbortSignal;
+  /** How to wait before asking a rate-limited provider again. Absent: a 429 is not retried here (see `postJson`). */
+  wait?: (ms: number) => Promise<void>;
   usage: { decisionCalls: number; llmCalls: number; inputTokens: number; outputTokens: number };
 }
 

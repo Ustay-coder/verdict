@@ -13,7 +13,8 @@ export const dataDir = (env = process.env, cwd = process.cwd()) => env.VERDICT_D
 
 /** Creates a local engine with file persistence; filesystem failures surface when operations run. Playwright loads only if a URL asks for a screenshot. */
 export function localEngine(directory = dataDir()) {
-  return new Engine({ store: new FileStore(directory), ingest: { allowLocalFiles: true, screenshot: lazyPlaywrightScreenshot() } });
+  // A run from the command line waits out a provider's rate limit: the person asked for every case, and is there to wait.
+  return new Engine({ store: new FileStore(directory), ingest: { allowLocalFiles: true, screenshot: lazyPlaywrightScreenshot() }, rateLimitWait: (ms) => new Promise((resolve) => setTimeout(resolve, ms)) });
 }
 /** Returns a configured API client, or undefined when no remote URL is set. */
 export function remote(env = process.env): Verdict | undefined {

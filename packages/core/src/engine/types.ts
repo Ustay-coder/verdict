@@ -25,6 +25,12 @@ export interface EngineOptions {
   ingest?: IngestOptions;
   /** Max criteria scored concurrently per evaluation. */
   concurrency?: number;
+  /**
+   * How to wait when a decision provider answers 429. Given, an evaluation run directly asks the provider again
+   * after the wait it names, up to four more times. Not given, the 429 fails the case at once. Queued evaluations
+   * never wait this way: their queue retries them.
+   */
+  rateLimitWait?: (ms: number) => Promise<void>;
   /** Secret used to sign webhook deliveries (header `verdict-signature`). */
   webhookSecret?: string;
   onEvent?: (event: EngineEvent) => void;
