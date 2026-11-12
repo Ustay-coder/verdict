@@ -1,6 +1,6 @@
 {
   "name": "@verdict-ai/mcp",
-  "version": "0.3.4",
+  "version": "0.3.5",
   "description": "Verdict MCP server — expose the evaluation engine to any agent.",
   "mcpName": "io.github.Ustay-coder/verdict",
   "type": "module",
