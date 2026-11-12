@@ -15,8 +15,6 @@ judges:
   # 결정모델: 같은 판정자 + 같은 근거를 쓰는 기준은 한 번의 요청으로 함께 채점됩니다.
   jev:  { type: decision, provider: typesafe, model: jev-latest, minConfidence: 0.35, onLowConfidence: accept }
   clef: { type: decision, provider: cloudflare, model: "@cf/cloudflare/clef-flash" }
-  # 투자 판단에 직결되는 기준은 두 모델 평균으로 편향을 줄입니다.
-  panel: { type: panel, combine: mean, judges: [{ type: ref, ref: jev }, { type: ref, ref: clef }] }
 
 defaultJudge: { type: ref, ref: jev }
 
@@ -77,7 +75,7 @@ criteria:
     name: 트랙션
     group: 실적
     weight: 15
-    judge: { type: ref, ref: panel }
+    judge: [{ type: ref, ref: jev }, { type: ref, ref: clef }]   # 두 모델 평균 (aggregation.rater)
     anchors:
       "1": 실적이 없음
       "2": 대기자·MOU·무료 PoC 등 약한 신호뿐임
@@ -98,7 +96,7 @@ criteria:
     name: 팀 역량
     group: 팀
     weight: 15
-    judge: { type: ref, ref: panel }
+    judge: [{ type: ref, ref: jev }, { type: ref, ref: clef }]   # 두 모델 평균 (aggregation.rater)
     anchors:
       "1": 팀 구성이나 경력이 서술되지 않음
       "3": 핵심 인력과 역할은 있으나 이 사업과 직결된 경험이 불명확함
@@ -141,6 +139,7 @@ criteria:
 
 aggregation:
   method: weighted_mean
+  rater: mean
   normalize: [0, 100]
   gates:
     - { criterion: problem, min: 2, message: 문제 정의가 최소한 성립해야 함 }

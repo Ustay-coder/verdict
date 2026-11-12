@@ -1,0 +1,183 @@
+# 시드 단계 B2B SaaS 투자유치 IR 덱 평가 (한국어) — ko-ir-deck.yaml의 SaaS 변형.
+# 차이: 비즈니스 모델·트랙션 기준을 SaaS 지표(MRR/ARR, ACV, CAC 회수기간, 매출총이익률)로 바꾸고,
+# 리텐션·확장 매출 기준을 추가했으며, 모든 기준을 Jev·Clef 두 모델의 평균으로 채점합니다.
+# 패널(type: panel) 대신 judge 목록을 쓰는 이유: 목록이면 모델별로 모든 기준이 한 요청에 묶여 나갑니다(호출 3회).
+# 패널은 기준마다 따로 호출되어(호출 24회) 느리고, 질문을 하나씩 받은 모델의 점수가 묶음 요청과 달라집니다.
+# 결정모델은 텍스트만 읽습니다: 차트·이미지 속 수치는 텍스트 요약을 함께 넣으세요 (-i script=./요약.md).
+name: 시드 SaaS IR 덱 평가
+version: "1"
+language: ko
+description: 시드 단계 B2B SaaS 스타트업의 투자유치용 IR 덱을 투자심사 관점에서 평가합니다.
+context: |
+  벤처캐피털 투자심사역이 시드 단계 B2B SaaS 스타트업의 IR 덱을 1차 검토합니다.
+  근거는 덱(및 함께 제출된 자료)에 적힌 내용에 한정하고, 수치·출처 없는 주장이나 회사 자체 가정은 낮게 평가합니다.
+  대부분의 덱은 중간 점수에 분포해야 하며, 최고점은 구체적 수치와 근거가 갖춰진 경우에만 줍니다.
+scale: { type: numeric, min: 1, max: 5 }
+
+judges:
+  jev:  { type: decision, provider: typesafe, model: jev-latest }
+  clef: { type: decision, provider: cloudflare, model: "@cf/cloudflare/clef-flash" }
+
+defaultJudge: { type: ref, ref: jev }
+checksJudge: { type: ref, ref: jev }
+
+checks:
+  - id: is_ir_deck
+    question: 이 자료는 스타트업의 투자유치용 IR 자료(피치덱, 투자제안서, IR 발표 스크립트 포함)인가?
+    criteria: { true: 회사·제품·시장·팀·투자조건 등을 투자자에게 설명하는 자료, false: 무관한 문서, 빈 템플릿, 단순 회사소개서·보도자료 }
+    action: abort
+    message: IR 자료가 아님
+  - id: is_saas
+    question: 이 회사의 주력 제품은 구독·사용량 과금 등 반복 매출 구조의 소프트웨어(SaaS)인가?
+    criteria: { true: 소프트웨어를 구독·건당·사용량 기반으로 반복 판매함, false: 하드웨어·용역·일회성 판매가 주력임 }
+    action: flag
+    message: SaaS가 아닐 수 있음 — 기본 루브릭(ko-ir-deck.yaml)이 더 적합할 수 있음
+
+criteria:
+  - id: problem
+    name: 문제 정의와 고객
+    group: 사업
+    weight: 10
+    judge: [{ type: ref, ref: jev }, { type: ref, ref: clef }]
+    anchors:
+      "1": 해결하려는 문제나 대상 고객(구매 조직·담당자)이 불분명함
+      "3": 문제와 고객은 있으나 문제의 크기·빈도·비용이 수치나 고객 근거로 뒷받침되지 않음
+      "5": 구매 조직과 실사용자가 특정되고, 문제의 비용·빈도가 수치와 고객 인터뷰·사례로 입증됨
+
+  - id: solution
+    name: 제품과 완성도
+    group: 사업
+    weight: 10
+    judge: [{ type: ref, ref: jev }, { type: ref, ref: clef }]
+    anchors:
+      "1": 제품이 아이디어 단계이거나 무엇을 하는지 불분명함
+      "3": 제품 기능은 설명되나 출시 여부, 실제 사용 화면, 도입 효과 중 일부가 빠져 있음
+      "5": 출시되어 고객이 사용 중인 제품의 핵심 기능과 도입 전후 효과가 실제 화면·측정치로 제시됨
+
+  - id: market
+    name: 시장 규모와 근거
+    group: 시장
+    weight: 10
+    judge: [{ type: ref, ref: jev }, { type: ref, ref: clef }]
+    anchors:
+      "1": 시장 규모 제시가 없음
+      "3": TAM·SAM·SOM을 제시하나 고객 수·건수·단가 등 핵심 가정이 회사 추정뿐이고 외부 출처가 없음
+      "5": 고객 수 × 단가 바텀업 산식의 각 가정이 외부 출처나 실제 판매 데이터로 뒷받침되고, 시장이 시드 이후 성장을 감당할 만큼 큼
+
+  - id: competition
+    name: 경쟁 구도와 차별성
+    group: 시장
+    weight: 5
+    judge: [{ type: ref, ref: jev }, { type: ref, ref: clef }]
+    anchors:
+      "1": 경쟁 대안(엑셀·수작업 포함)이나 경쟁사 비교가 없음
+      "3": 대안을 언급하나 차별점이 기능 나열 수준이고 전환 이유·지속성이 불분명함
+      "5": 기존 대안·경쟁 SaaS 대비 고객이 전환할 이유와 쉽게 따라 할 수 없는 우위(데이터·워크플로 고착·채널 등)가 근거와 함께 제시됨
+
+  - id: business_model
+    name: 과금 모델과 유닛 이코노믹스
+    group: 수익성
+    weight: 10
+    judge: [{ type: ref, ref: jev }, { type: ref, ref: clef }]
+    anchors:
+      "1": 누가 무엇에 얼마를 내는지 불분명함
+      "2": 가격은 있으나 고객 1곳당 연간 매출(ACV)을 추정할 수 없음
+      "3": 가격과 고객당 연간 매출(ACV)은 추정 가능하나 CAC·매출총이익률 등 단위 경제성이 없음
+      "4": ACV와 함께 CAC 또는 매출총이익률 중 일부가 실제 데이터로 제시됨
+      "5": ACV·CAC·CAC 회수기간·매출총이익률이 실제 데이터로 제시되고 단위 경제성이 성립함
+
+  - id: traction
+    name: 트랙션 (매출·고객)
+    group: 실적
+    weight: 15
+    judge: [{ type: ref, ref: jev }, { type: ref, ref: clef }]
+    anchors:
+      "1": 유료 고객이나 매출이 없음
+      "2": 무료 사용·PoC·MOU 등 약한 신호뿐이거나 유료 고객이 극소수이고 매출액이 없음
+      "3": 유료 고객 수는 제시되나 MRR·ARR 등 매출액이나 기간별 추이가 없음
+      "4": MRR·ARR과 유료 고객 수가 월별·분기별 성장 추이와 함께 제시됨
+      "5": MRR·ARR이 높은 월간 성장률로 꾸준히 증가하고 파이프라인까지 수치로 입증됨
+
+  - id: retention
+    name: 리텐션과 확장 매출
+    group: 실적
+    weight: 10
+    judge: [{ type: ref, ref: jev }, { type: ref, ref: clef }]
+    anchors:
+      "1": 재사용·갱신·이탈에 대한 언급이 없음
+      "3": 재사용 사례나 갱신 의향을 정성적으로 언급하나 수치가 없음
+      "5": 고객 유지율·갱신율·NRR(확장 매출 포함) 등 리텐션 지표가 기간별 수치로 제시됨
+
+  - id: gtm
+    name: 영업·마케팅(GTM) 전략
+    group: 실적
+    weight: 5
+    judge: [{ type: ref, ref: jev }, { type: ref, ref: clef }]
+    anchors:
+      "1": 고객 확보 방법이 없음
+      "3": 채널·목표 고객 수는 있으나 채널별 전환율·획득 비용·영업 주기 등 검증 결과가 없음
+      "5": 검증된 주력 채널(영업·소개·인바운드 등)과 전환율·획득 비용·영업 주기가 수치로 제시되고 확장 계획과 연결됨
+
+  - id: team
+    name: 팀 역량
+    group: 팀
+    weight: 15
+    judge: [{ type: ref, ref: jev }, { type: ref, ref: clef }]
+    anchors:
+      "1": 팀 구성이나 경력이 서술되지 않음
+      "3": 대표 이력은 있으나 공동창업자·핵심 인력이 이름·역할로 특정되지 않거나 사업 영역 경험이 약함
+      "5": 제품·기술·영업 핵심 역할을 맡은 창업팀이 이름과 함께 제시되고, 사업 영역에서 검증된 경험을 갖춤
+
+  - id: financials
+    name: 투자 조건과 자금 계획
+    group: 투자
+    weight: 5
+    judge: [{ type: ref, ref: jev }, { type: ref, ref: clef }]
+    anchors:
+      "1": 투자 금액이나 자금 사용 계획이 없음
+      "3": 투자 금액과 용도는 있으나 런웨이·다음 라운드까지의 마일스톤·투자자 회수 경로 중 일부가 없음
+      "5": 투자 금액·밸류에이션·용도별 배분·런웨이·다음 라운드 마일스톤과 투자자 회수 경로가 구체적으로 제시됨
+
+  - id: why_now
+    name: 왜 지금인가
+    group: 투자
+    weight: 5
+    judge: [{ type: ref, ref: jev }, { type: ref, ref: clef }]
+    anchors:
+      "1": 타이밍에 대한 설명이 없음
+      "3": 기술·시장 트렌드를 언급하나 이 회사에 기회가 열린 이유와 연결이 약함
+      "5": 기술·규제·고객 행동 변화 등 지금 기회가 열린 구체적 이유가 근거와 함께 제시됨
+
+  # 가중치 0: 총점에는 들어가지 않고 경고용으로만 보고됩니다.
+  - id: numbers_consistent
+    name: 수치 일관성
+    group: 신뢰도
+    weight: 0
+    judge: { type: ref, ref: jev }
+    scale: { type: binary, labels: [불일치, 일관됨] }
+    anchors:
+      일관됨: 매출·고객 수·성장률 등 수치가 슬라이드 간에 서로 맞고 출처나 기준 시점이 표시됨
+      불일치: 같은 지표가 슬라이드마다 다르거나, 근거 없는 큰 숫자·기준 시점 없는 수치가 있음
+
+  - id: vc_return_path
+    name: VC 회수 구조 적합성
+    group: 신뢰도
+    weight: 0
+    judge: { type: ref, ref: jev }
+    scale: { type: binary, labels: [부적합, 적합] }
+    anchors:
+      적합: 후속 투자·M&A·IPO 등 지분 가치 상승을 통한 회수 경로를 전제로 함
+      부적합: 회수 경로가 없거나 배당·이자 등 지분 매각이 아닌 방식만 제시함
+
+aggregation:
+  method: weighted_mean
+  rater: mean          # Jev·Clef 두 평가의 평균
+  normalize: [0, 100]
+  gates:
+    - { criterion: problem, min: 2, message: 문제 정의가 최소한 성립해야 함 }
+    - { criterion: team, min: 2, message: 팀 정보가 최소한 있어야 함 }
+  grades:
+    - { label: 후속 미팅, min: 75 }
+    - { label: 보류, min: 55 }
+    - { label: 드롭, min: 0 }
+  passThreshold: 55
