@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.4.0
 
 - **Pictures reach every model that takes them**: OpenAI and Gemini as well as Clef. Until now only Clef was sent a picture, and the other models judged one line saying a picture was there.
 - **A PDF is sent as the file to a model that reads PDFs** (Gemini). The text it is sent names the file instead of repeating its text layer; every other model is given the text layer as before. Checked live with a PDF that has a text layer and with a scan that has none.
