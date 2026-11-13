@@ -8,7 +8,7 @@ import { canonicalJson } from "../../idempotency.js";
 import { parseProvider, ProviderError, readProviderJson, fetchProvider, SystemOneAnswerSchema, SystemOneResponseSchema } from "../../provider-error.js";
 import type { JudgeContext } from "../types.js";
 import { CLEF_LIMITS, clefImages } from "./images.js";
-import { registerDecisionProvider, type DecisionProviderAdapter, type DecisionRequest, type SystemOneAnswer, type SystemOneQuestion } from "./contracts.js";
+import type { DecisionProviderAdapter, DecisionRequest, SystemOneAnswer, SystemOneQuestion } from "./contracts.js";
 
 /**
  * Judge `options` are Verdict-level knobs (stateCharLimit, accountId, selector, mock knobs such as level/noul/choice).
@@ -245,32 +245,24 @@ const mockDecisionProvider: DecisionProviderAdapter = {
   },
 };
 
-let builtInsRegistered = false;
-
-/**
- * Registers the built-in adapters once. Called by `decision.ts` rather than run on import: packages are marked
- * `"sideEffects": false`, so bundlers (esbuild in `wrangler`) drop side-effect-only imports and Workers would start
- * with no providers at all. Later registrations of the same name (e.g. the Workers AI binding) still win.
- */
-export function registerBuiltInDecisionProviders(): void {
-  if (builtInsRegistered) return;
-  builtInsRegistered = true;
-  // Give configuration, transport and mapping failures a consistent provider/operation boundary.
-  for (const provider of [typesafeProvider, systemOneProvider, openrouterProvider, cloudflareDecisionProvider, openaiDecisionsProvider, geminiDecisionsProvider, mockDecisionProvider]) {
-    registerDecisionProvider({
-      // The wrapper only adds error context; it must keep what the adapter can accept.
-      name: provider.name, acceptsImages: provider.acceptsImages, maxImages: provider.maxImages, acceptsDocuments: provider.acceptsDocuments,
-      async decide(request, context) {
-        try { return await provider.decide(request, context); }
-        catch (cause) {
-          const status = cause instanceof ProviderError ? cause.status : undefined;
-          const detail = cause instanceof ProviderError ? cause.message.slice(cause.provider.length + 2) : cause instanceof Error ? cause.message : String(cause);
-          throw new ProviderError(provider.name, `decide: ${detail}`, status, { cause });
-        }
-      },
-    });
-  }
+/** Gives configuration, transport and mapping failures a consistent provider/operation boundary. */
+function withErrorContext(provider: DecisionProviderAdapter): DecisionProviderAdapter {
+  return {
+    // The wrapper only adds error context; it must keep what the adapter can accept.
+    name: provider.name, acceptsImages: provider.acceptsImages, maxImages: provider.maxImages, acceptsDocuments: provider.acceptsDocuments,
+    async decide(request, context) {
+      try { return await provider.decide(request, context); }
+      catch (cause) {
+        const status = cause instanceof ProviderError ? cause.status : undefined;
+        const detail = cause instanceof ProviderError ? cause.message.slice(cause.provider.length + 2) : cause instanceof Error ? cause.message : String(cause);
+        throw new ProviderError(provider.name, `decide: ${detail}`, status, { cause });
+      }
+    },
+  };
 }
+
+/** The built-in adapters. The registry (`registry.ts`) starts from this list; nothing is registered by importing this module. */
+export const builtInDecisionProviders: DecisionProviderAdapter[] = [typesafeProvider, systemOneProvider, openrouterProvider, cloudflareDecisionProvider, openaiDecisionsProvider, geminiDecisionsProvider, mockDecisionProvider].map(withErrorContext);
 
 function mockAnswer(req: DecisionRequest, q: SystemOneQuestion, o: Record<string, unknown>): SystemOneAnswer {
   if (q.type === "choice") return mockChoice(req, q, o);

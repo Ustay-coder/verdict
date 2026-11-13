@@ -1,5 +1,5 @@
 /**
- * Defines System One adapter contracts and name-based provider registration.
+ * Defines System One adapter contracts; adapters are registered and looked up by name in `registry.ts`.
  * Provider names are replaceable extension points; malformed responses are rejected at the judge boundary.
  */
 import { z } from "zod";
@@ -56,14 +56,4 @@ export interface DecisionProviderAdapter {
   /** Reads PDFs itself: requests may carry `documents`, and the state names each file instead of repeating its text. */
   acceptsDocuments?: boolean;
   decide(req: DecisionRequest, ctx: JudgeContext): Promise<DecisionResponse>;
-}
-
-const providers = new Map<string, DecisionProviderAdapter>();
-/** Registers or replaces a decision adapter by name; does not call the provider. */
-export function registerDecisionProvider(p: DecisionProviderAdapter) { providers.set(p.name, p); }
-/** Returns a registered decision adapter or throws for an unknown provider name. */
-export function getDecisionProvider(name: string): DecisionProviderAdapter {
-  const p = providers.get(name);
-  if (!p) throw new Error(`unknown decision provider "${name}" (registered: ${[...providers.keys()].join(", ")})`);
-  return p;
 }

@@ -7,22 +7,33 @@
  */
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { join } from "node:path";
-import { build, type Message } from "esbuild";
+import { build, type BuildOptions, type Message } from "esbuild";
 import { Miniflare } from "miniflare";
 
 const root = join(__dirname, "../../..");
 let warnings: Message[] = [];
 let mf: Miniflare | undefined;
 
+/** A Worker that uses the provider registry and nothing else of the engine: no judge, so nothing that might fill it. */
+const LOOKUP = `import { getDecisionProvider } from "@verdict-ai/core";
+export default { fetch() { return new Response(getDecisionProvider("mock").name); } };`;
+
+/** One file, under the options wrangler passes to esbuild for a module Worker with `nodejs_compat`. */
+async function bundle(entry: Pick<BuildOptions, "entryPoints" | "stdin">) {
+  const result = await build({ ...entry, absWorkingDir: root, bundle: true, write: false, format: "esm", target: "es2024", platform: "browser", conditions: ["workerd", "worker", "browser"], external: ["node:*"], logLevel: "silent" });
+  return { warnings: result.warnings, code: result.outputFiles[0]!.text };
+}
+
 beforeAll(async () => {
-  // The options wrangler passes to esbuild for a module Worker with `nodejs_compat`.
-  const result = await build({
-    entryPoints: [join(root, "packages/api/src/worker.ts")], absWorkingDir: root, bundle: true, write: false, format: "esm", target: "es2024",
-    platform: "browser", conditions: ["workerd", "worker", "browser"], external: ["node:*"], logLevel: "silent",
-  });
-  warnings = result.warnings;
+  const api = await bundle({ entryPoints: [join(root, "packages/api/src/worker.ts")] });
+  const lookup = await bundle({ stdin: { contents: LOOKUP, resolveDir: join(root, "packages/api"), sourcefile: "lookup.js" } });
+  warnings = [...api.warnings, ...lookup.warnings];
   // The date is one the pinned runtime knows; `wrangler.toml` may name a later one.
-  mf = new Miniflare({ modules: [{ type: "ESModule", path: "worker.js", contents: result.outputFiles[0]!.text }], compatibilityDate: "2026-07-01", compatibilityFlags: ["nodejs_compat"] });
+  const runtime = { compatibilityDate: "2026-07-01", compatibilityFlags: ["nodejs_compat"] };
+  mf = new Miniflare({ workers: [
+    { name: "api", modules: [{ type: "ESModule", path: "worker.js", contents: api.code }], ...runtime },
+    { name: "lookup", modules: [{ type: "ESModule", path: "lookup.js", contents: lookup.code }], ...runtime },
+  ] });
   await mf.ready;
 }, 60_000);
 
@@ -41,5 +52,11 @@ describe("the bundled Worker", () => {
     expect(evaluation.criteria[0]?.ratings.map((r) => r.error)).toEqual([undefined]);
     expect(res.status).toBe(201);
     expect(evaluation).toMatchObject({ status: "completed", criteria: [{ status: "scored" }] });
+  });
+
+  it("hands the built-in providers to a bundle that only looks one up", async () => {
+    const worker = await mf!.getWorker("lookup");
+    const res = await worker.fetch("http://verdict.test/");
+    expect(await res.text()).toBe("mock");
   });
 });

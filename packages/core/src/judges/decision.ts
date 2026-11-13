@@ -4,10 +4,11 @@
  */
 import { parseProvider, ProviderError, SystemOneAnswerSchema } from "../provider-error.js";
 import { z } from "zod";
-import { getDecisionProvider, type DecisionProviderAdapter, type DecisionResponse, type SystemOneQuestion } from "./decision/contracts.js";
+import type { DecisionProviderAdapter, DecisionResponse, SystemOneQuestion } from "./decision/contracts.js";
+import { getDecisionProvider } from "./decision/registry.js";
 export * from "./decision/contracts.js";
+export { getDecisionProvider, registerDecisionProvider } from "./decision/registry.js";
 export { checkClefImages, CLEF_LIMITS } from "./decision/images.js";
-import { registerBuiltInDecisionProviders } from "./decision/providers.js";
 import type { DecisionJudgeSpec as DecisionSpecSchema } from "../schema/rubric.js";
 import type { Rating } from "../schema/evaluation.js";
 import { escalateDecision } from "./decision/escalation.js";
@@ -19,8 +20,6 @@ import { type Judge, type JudgeContext, ratingBase, renderEvidence } from "./typ
 import { evidenceImages } from "../ingest/images.js";
 import { describeDocuments, evidenceDocuments, evidencePdfPageCount, evidencePdfPages } from "../ingest/documents.js";
 import type { Evidence } from "../schema/subject.js";
-
-registerBuiltInDecisionProviders();
 
 type Spec = z.infer<typeof DecisionSpecSchema>;
 
