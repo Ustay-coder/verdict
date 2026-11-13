@@ -147,7 +147,10 @@ export class EngineRun extends EngineBase {
   }
 
   private contextFor(ev: Evaluation, criterion: Criterion, req: EvaluateRequest, evidence = ev.evidence): JudgeContext {
-    return { now: this.now, newId: this.makeId, rubric: ev.rubric, criterion, scale: criterionScale(ev.rubric, criterion), evidence, evaluationId: ev.id, env: this.env, fetch: this.fetchImpl, signal: req.signal, usage: ev.usage };
+    return { now: this.now, newId: this.makeId, rubric: ev.rubric, criterion, scale: criterionScale(ev.rubric, criterion), evidence, evaluationId: ev.id, env: this.env, fetch: this.fetchImpl, signal: req.signal, usage: ev.usage,
+      // A queued evaluation is retried whole by its queue, so it does not also wait inside the call.
+      ...(this.rateLimitWait && !ev.job ? { wait: this.rateLimitWait } : {}),
+      ...(this.ingestOptions.pdfPages ? { pdfPages: this.ingestOptions.pdfPages } : {}) };
   }
 
   private async finalizeEvaluation(ev: Evaluation, started: number, queued?: Evaluation): Promise<Evaluation> {

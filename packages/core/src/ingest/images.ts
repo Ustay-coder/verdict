@@ -71,7 +71,7 @@ function webpInfo(b: Uint8Array): ImageMeta | undefined {
 }
 
 // btoa/atob exist on Workers and in Node; Buffer is only a faster path where it exists.
-function toBase64(u8: Uint8Array): string {
+export function toBase64(u8: Uint8Array): string {
   if (typeof Buffer !== "undefined") return Buffer.from(u8).toString("base64");
   let s = "";
   for (let i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode(...u8.subarray(i, i + 0x8000));

@@ -73,8 +73,20 @@ export interface Evidence {
    * for the judges (`evidenceImages`) and are never persisted with the evaluation.
    */
   images?: ImageMeta[];
+  /**
+   * Whole documents attached to this evidence (a PDF given as a `file` input or fetched from a `url`). Metadata only:
+   * the bytes stay in memory for judges that read the file itself (`evidenceDocuments`) and are never persisted.
+   */
+  documents?: DocumentMeta[];
   stats: { chars: number; words: number; lines: number };
   warnings?: string[];
+}
+
+/** What is kept about an attached document; the bytes themselves are not part of the evidence. */
+export interface DocumentMeta {
+  mimeType: "application/pdf";
+  bytes: number;
+  pages?: number;
 }
 
 /** What a judge is told about an attached image; the bytes themselves are not part of the evidence. */

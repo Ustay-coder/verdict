@@ -233,6 +233,37 @@ describe("decision judge", () => {
     expect(usage.outputTokens).toBe(0);
     expect(usage.decisionCalls).toBe(1);
   });
+  it("waits as long as a rate-limited provider asks and tries again, and gives up after a few tries", async () => {
+    // Verbatim from Gemini's free tier on 2026-11-12, when 100 pictures were sent in one run.
+    const limited = () => new Response(JSON.stringify({ error: { message: "Rate limit exceeded for model gemini-decision-1 (limit: 50000 input tokens per minute on Free Tier). Please retry in 35s or upgrade your tier." } }), { status: 429 });
+    const answered = () => new Response(JSON.stringify({ answers: { problem: { score: 1, probabilities: { "0": 0, "1": 1, "2": 0 } } } }));
+    const waits: number[] = [];
+    const judge = new DecisionJudge({ type: "decision", provider: "gemini", onLowConfidence: "accept", escalateTo: [] });
+    let calls = 0;
+    const twice: typeof fetch = async () => (++calls <= 2 ? limited() : answered());
+    const [r] = await judge.rate({ ...ctx("problem"), fetch: twice, env: () => "k", wait: async (ms) => { waits.push(ms); } });
+    expect(r!.status).toBe("scored");
+    expect(calls).toBe(3);
+    // 35 seconds as asked, and one more so the retry does not land on the edge of the window.
+    expect(waits).toEqual([36_000, 36_000]);
+
+    // A `Retry-After` header is believed over the text, and a provider that names no wait gets a default.
+    waits.length = 0; calls = 0;
+    const header: typeof fetch = async () => (++calls === 1 ? new Response("slow down", { status: 429, headers: { "retry-after": "7" } }) : ++calls === 3 ? new Response("slow down", { status: 429 }) : answered());
+    await judge.rate({ ...ctx("problem"), fetch: header, env: () => "k", wait: async (ms) => { waits.push(ms); } });
+    expect(waits).toEqual([8_000, 21_000]);
+
+    // Still limited after four more tries: the case fails with what the provider said, having asked five times.
+    waits.length = 0; calls = 0;
+    const always: typeof fetch = async () => { calls++; return limited(); };
+    const [failed] = await judge.rate({ ...ctx("problem"), fetch: always, env: () => "k", wait: async (ms) => { waits.push(ms); } });
+    expect(failed!.status).toBe("error");
+    expect(failed!.error).toContain("HTTP 429");
+    expect(failed!.error).toContain("Rate limit exceeded");
+    expect(calls).toBe(5);
+    expect(waits).toHaveLength(4);
+  });
+
   it("reports what Gemini said when it refuses a request", async () => {
     // Verbatim from the live API when the key is not one it knows, 2026-11-12 (details left out).
     const f: typeof fetch = async () => new Response(JSON.stringify({ error: { code: 400, message: "API key not valid. Please pass a valid API key.", status: "INVALID_ARGUMENT" } }), { status: 400 });
@@ -314,7 +345,9 @@ describe("decision judge", () => {
   it("turns provider failures into error ratings for every criterion", async () => {
     const j = new DecisionJudge({ type: "decision", provider: "typesafe", onLowConfidence: "accept", escalateTo: [] });
     const f: typeof fetch = async () => new Response("rate limited", { status: 429 });
-    const m = await j.rateMany([{ ...ctx("problem"), fetch: f }, { ...ctx("team"), fetch: f }]);
+    // A 429 is asked again a few times; the wait is skipped here.
+    const wait = async () => {};
+    const m = await j.rateMany([{ ...ctx("problem"), fetch: f, wait }, { ...ctx("team"), fetch: f, wait }]);
     expect(m.get("problem")![0]!.status).toBe("error");
     expect(m.get("team")![0]!.error).toMatch(/HTTP 429/);
   });

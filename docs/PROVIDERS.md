@@ -93,7 +93,8 @@ The answer (verbatim from a live call, `packages/core/test/fixtures/openai-decis
 
 - A score's `value` is the level's place in the request (0 first) and `score` is the expected place, so Verdict reads it as it reads a System One score. A predicate's `probability` is P(yes).
 - The same request asked twice gave `0.97` and `0.98` for the predicate: answers are close to, but not exactly, repeatable.
-- Not checked: images (Verdict sends this provider text only), limits on the number of questions and on the length of a name.
+- Pictures (checked live 2026-11-12): with a picture, `input` is a list holding one user message whose `content` has an `input_text` part and an `input_image` part per picture, `{ "type": "input_image", "image_url": "data:image/png;base64,…" }`. It refuses a file part: `Invalid value: 'input_file'. Supported values are: 'input_text', 'input_image', and 'input_json'.` So a PDF reaches it as its text layer and, where pages can be drawn, a picture of each page as an `input_image` part (six pages in one request were taken, 2026-11-12).
+- Not checked: how many pictures and how large, limits on the number of questions and on the length of a name.
 
 ## Gemini Decisions request and response
 
@@ -152,8 +153,13 @@ Notes that matter for the engine:
 - A choice option's description may be an empty string or `null`; Verdict sends an empty string.
 - A model the service does not have answers 404, `Requested model not found`. A key it does not know answers 400,
   `API key not valid. Please pass a valid API key.`
-- Not checked: images, audio, video and PDF as input (Verdict sends text only), the limits (reported as 1 to 1,000
-  questions and a 262,144-token context), and what a blocked input looks like.
+- Pictures and PDFs (checked live 2026-11-12): with either, `input` is a list of parts, the text first:
+  `[{ "type": "text", "text": "…" }, { "type": "image", "mime_type": "image/png", "data": "<base64>" }, { "type": "document", "mime_type": "application/pdf", "data": "<base64>" }]`.
+  It read a one-page PDF with a text layer and the same page as a scan with none. `usage.input_tokens_by_modality`
+  counts them apart: 131 text and 522 image tokens for the scanned page. When the file is sent, Verdict's text names
+  the file and does not repeat its text layer.
+- Not checked: audio and video, several pages and large files, the limits (reported as 1 to 1,000 questions and a
+  262,144-token context), and what a blocked input looks like.
 
 ## Clef-flash response (verbatim from a live call, `packages/core/test/fixtures/cloudflare-clef-flash-response.json`)
 

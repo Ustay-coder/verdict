@@ -22,6 +22,8 @@ export interface DecisionRequest {
   options?: Record<string, unknown>;
   /** Embedded images (data URIs) from the evidence; only adapters with `acceptsImages` receive them. */
   images?: string[];
+  /** Whole documents (PDF data URIs) from the evidence; only adapters with `acceptsDocuments` receive them. */
+  documents?: string[];
 }
 export interface DecisionResponse {
   answers: Record<string, SystemOneAnswer>;
@@ -35,6 +37,14 @@ export interface DecisionResponse {
   raw?: unknown;
   /** Images in the evidence vs. images actually sent (text-only providers drop them; Clef takes at most 4). */
   images?: { attached: number; sent: number };
+  /** Documents in the evidence vs. documents sent as files (other providers are given the text layer instead). */
+  documents?: { attached: number; sent: number };
+  /**
+   * Pages of the evidence's PDFs vs. pages sent as pictures, for a provider that takes pictures and does not read
+   * PDFs. Fewer sent than there are means the document was cut at what the provider takes, or that nothing here can
+   * draw a page.
+   */
+  pages?: { attached: number; sent: number };
 }
 
 export interface DecisionProviderAdapter {
@@ -43,6 +53,8 @@ export interface DecisionProviderAdapter {
   acceptsImages?: boolean;
   /** Most images one request may carry; extra images are dropped and the drop is recorded on the rating. */
   maxImages?: number;
+  /** Reads PDFs itself: requests may carry `documents`, and the state names each file instead of repeating its text. */
+  acceptsDocuments?: boolean;
   decide(req: DecisionRequest, ctx: JudgeContext): Promise<DecisionResponse>;
 }
 

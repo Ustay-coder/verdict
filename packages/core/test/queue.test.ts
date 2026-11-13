@@ -76,3 +76,36 @@ it("uses the configured backoff delay before the next attempt", async () => {
     expect((await engine.store.getEvaluation(ev.id))?.status).toBe("completed");
   } finally { vi.useRealTimers(); }
 });
+
+describe("a rate-limited provider and the two ways an evaluation runs", () => {
+  const limitedOnce = () => { let calls = 0; const f: typeof fetch = async () => (++calls === 1 ? new Response("busy", { status: 429, headers: { "retry-after": "3" } }) : Response.json({ answers: { a: { score: 1 } } })); return { f, calls: () => calls }; };
+
+  it("waits and asks again inside a direct evaluation when the engine was given a way to wait", async () => {
+    const waits: number[] = [], net = limitedOnce();
+    const engine = new Engine({ fetch: net.f, env: () => "k", rateLimitWait: async (ms) => { waits.push(ms); } });
+    const ev = await engine.evaluate({ rubric, subject });
+    expect(ev.status).toBe("completed");
+    expect(waits).toEqual([4000]);
+    expect(net.calls()).toBe(2);
+  });
+
+  it("fails the case at once when the engine was given none", async () => {
+    const net = limitedOnce();
+    const ev = await new Engine({ fetch: net.f, env: () => "k" }).evaluate({ rubric, subject });
+    expect(ev.status).toBe("failed");
+    expect(net.calls()).toBe(1);
+  });
+
+  it("leaves a queued evaluation to its queue: the call does not wait, the job is retried", async () => {
+    const waits: number[] = [], net = limitedOnce();
+    const queue = new MemoryQueue({ concurrency: 1 });
+    const engine = new Engine({ queue, fetch: net.f, env: () => "k", retry: { maxAttempts: 3, backoffMs: () => 1 }, rateLimitWait: async (ms) => { waits.push(ms); } });
+    queue.engine = engine;
+    const ev = await engine.enqueueEvaluation({ rubric, subject });
+    await queue.drain();
+    const done = (await engine.store.getEvaluation(ev.id))!;
+    expect(done.status).toBe("completed");
+    expect(done.job?.attempts).toBe(2);
+    expect(waits).toEqual([]);
+  });
+});

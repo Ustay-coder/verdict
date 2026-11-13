@@ -29,7 +29,17 @@ export interface ModelRow {
   durationMs: number;
   /** Why nothing came back, when a case failed: the first reason given. */
   error?: string;
+  /**
+   * Pictures and PDFs the cases carried, and how many of them this model was sent as such. A model that takes no
+   * pictures is sent none, and one that does not read PDFs is given their text instead. `pages` is for a model that
+   * takes pictures and does not read PDFs: the pages the PDFs have, and how many it was sent as pictures. Absent when
+   * no case had any.
+   */
+  media?: { pictures?: MediaCount; pdfs?: MediaCount; pages?: MediaCount };
 }
+
+/** How many were in the cases, and how many the model was sent. */
+export interface MediaCount { attached: number; sent: number }
 
 /**
  * `shown` is the answer in the rubric's own words: a level's label where the scale names its levels. `probability`
@@ -55,16 +65,37 @@ export interface ModelComparison {
   splits: ModelSplit[];
 }
 
+/** What one evaluation's request carried: every criterion of a request records the same counts, so the first is enough. */
+function requestMedia(evaluation: Evaluation): { images?: MediaCount; documents?: MediaCount; pages?: MediaCount } {
+  for (const rating of evaluation.criteria.flatMap((c) => c.ratings)) {
+    const raw = modelRating([rating])?.raw;
+    if (raw && ("images" in raw || "documents" in raw)) return { images: raw.images, documents: raw.documents, pages: raw.pages };
+  }
+  return {};
+}
+
+function media(evaluations: Evaluation[]): ModelRow["media"] {
+  const total = (counts: Array<MediaCount | undefined>) => {
+    const seen = counts.filter((c): c is MediaCount => c !== undefined);
+    return seen.length ? { attached: seen.reduce((sum, c) => sum + c.attached, 0), sent: seen.reduce((sum, c) => sum + c.sent, 0) } : undefined;
+  };
+  const each = evaluations.map(requestMedia);
+  const pictures = total(each.map((m) => m.images)), pdfs = total(each.map((m) => m.documents)), pages = total(each.map((m) => m.pages));
+  return pictures || pdfs ? { ...(pictures ? { pictures } : {}), ...(pdfs ? { pdfs } : {}), ...(pages ? { pages } : {}) } : undefined;
+}
+
 function row(side: ModelSide): ModelRow {
   const tallies = Object.values(side.report.criteria);
   const n = tallies.reduce((sum, t) => sum + t.n, 0), agreed = tallies.reduce((sum, t) => sum + t.agreed, 0);
   // What the provider said comes before the engine's summary of it ("every criterion failed to score").
   const failure = side.evaluations.map((e) => e.criteria.flatMap((c) => c.ratings).find((r) => r.status === "error")?.error ?? e.error).find(Boolean);
+  const carried = media(side.evaluations);
   return {
     label: side.label, runId: side.run.id, versionId: side.version.id, status: side.run.status, models: side.run.fingerprint.models, counts: side.run.counts,
     labelled: { n, agreed, agreement: n ? agreed / n : null }, usage: side.run.usage,
     durationMs: Date.parse(side.run.finishedAt) - Date.parse(side.run.startedAt),
     ...(failure ? { error: failure } : {}),
+    ...(carried ? { media: carried } : {}),
   };
 }
 

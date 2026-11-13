@@ -19,8 +19,29 @@ function requestExtras(options?: Record<string, unknown>): Record<string, unknow
   return extra && typeof extra === "object" && !Array.isArray(extra) ? (extra as Record<string, unknown>) : {};
 }
 
+/**
+ * A provider that answers 429 has not refused the request, only its timing: a free tier allows so many tokens a
+ * minute, and a run of pictures passes that at once. Where the context brings a way to wait (`ctx.wait`), it is asked
+ * again after the wait it names, a few times, before the case is given up as failed. Without one the 429 is the
+ * answer: a queued evaluation is retried whole by its queue, and a server must not hold a request open for minutes.
+ */
+const RATE_LIMIT = { retries: 4, defaultWaitMs: 20_000, maxWaitMs: 90_000, marginMs: 1_000 };
+
+/** How long a 429 asks to wait: its `Retry-After` header, else a "retry in 35s" in its body, else a default. */
+function retryDelayMs(res: Response, body: string): number {
+  const header = Number(res.headers.get("retry-after"));
+  const said = Number(/retry in (\d+(?:\.\d+)?) ?s/i.exec(body)?.[1]);
+  const asked = header > 0 ? header * 1000 : said > 0 ? said * 1000 : RATE_LIMIT.defaultWaitMs;
+  return Math.min(RATE_LIMIT.maxWaitMs, asked + RATE_LIMIT.marginMs);
+}
+
 async function postJson(provider: string, ctx: JudgeContext, url: string, body: unknown, headers: Record<string, string>) {
-  const res = await fetchProvider(provider, ctx.fetch, url, { method: "POST", signal: ctx.signal, headers: { "content-type": "application/json", ...headers }, body: JSON.stringify(body) });
+  const init = { method: "POST", signal: ctx.signal, headers: { "content-type": "application/json", ...headers }, body: JSON.stringify(body) };
+  let res = await fetchProvider(provider, ctx.fetch, url, init);
+  for (let attempt = 0; ctx.wait && res.status === 429 && attempt < RATE_LIMIT.retries && !ctx.signal?.aborted; attempt++) {
+    await ctx.wait(retryDelayMs(res, await res.text()));
+    res = await fetchProvider(provider, ctx.fetch, url, init);
+  }
   return parseProvider(provider, z.record(z.string(), z.unknown()), await readProviderJson(provider, res));
 }
 
@@ -121,13 +142,17 @@ function openaiAnswer(a: OpenAiAnswer): SystemOneAnswer {
 
 const openaiDecisionsProvider: DecisionProviderAdapter = {
   name: "openai",
+  // Checked live 2026-11-12: a user message may carry `input_image` parts beside its text. It refuses files
+  // ("Supported values are: 'input_text', 'input_image', and 'input_json'"), so a PDF reaches it as text.
+  acceptsImages: true,
   async decide(req, ctx) {
     const base = (req.baseUrl ?? ctx.env("OPENAI_BASE_URL") ?? "https://api.openai.com/v1").replace(/\/$/, "");
     const key = req.apiKey ?? ctx.env("OPENAI_API_KEY");
     const model = req.model ?? ctx.env("VERDICT_OPENAI_DECISIONS_MODEL") ?? "gpt-6-luna";
     const ids = Object.keys(req.questions);
     const questions = ids.map((id) => openaiQuestion(id, req.questions[id]!));
-    const data = await postJson("openai", ctx, `${base}/decisions`, { model, input: req.state, questions, ...requestExtras(req.options) }, key ? { authorization: `Bearer ${key}` } : {});
+    const input = req.images?.length ? [{ role: "user", content: [{ type: "input_text", text: req.state }, ...req.images.map((image_url) => ({ type: "input_image", image_url }))] }] : req.state;
+    const data = await postJson("openai", ctx, `${base}/decisions`, { model, input, questions, ...requestExtras(req.options) }, key ? { authorization: `Bearer ${key}` } : {});
     const validated = parseProvider("openai", OpenAiResponseSchema, data);
     const answers: Record<string, SystemOneAnswer> = {};
     // why: an answer names its question; one that does not is taken by its place in the array.
@@ -162,14 +187,24 @@ function geminiAnswer(a: SystemOneAnswer): SystemOneAnswer {
   return { ...a, probabilities: Object.keys(p).sort((x, y) => Number(x) - Number(y)).map((index) => p[index]!) };
 }
 
+/** A `data:` URI as the two fields Gemini takes a file in. */
+function geminiPart(type: "image" | "document", uri: string) {
+  return { type, mime_type: uri.slice("data:".length, uri.indexOf(";")), data: uri.slice(uri.indexOf(",") + 1) };
+}
+
 const geminiDecisionsProvider: DecisionProviderAdapter = {
   name: "gemini",
+  // Checked live 2026-11-12: `input` may be a list of parts, and it read a picture and a PDF, a scanned one included.
+  acceptsImages: true,
+  acceptsDocuments: true,
   async decide(req, ctx) {
     const base = (req.baseUrl ?? ctx.env("GEMINI_BASE_URL") ?? "https://generativelanguage.googleapis.com/v1beta").replace(/\/$/, "");
     const key = req.apiKey ?? ctx.env("GEMINI_API_KEY") ?? ctx.env("GOOGLE_API_KEY");
     const model = req.model ?? ctx.env("VERDICT_GEMINI_MODEL") ?? "gemini-decision-1";
     const questions = Object.fromEntries(Object.entries(req.questions).map(([id, q]) => [id, geminiQuestion(q)]));
-    const data = await postJson("gemini", ctx, `${base}/decisions`, { model, input: req.state, questions, ...requestExtras(req.options) }, key ? { "x-goog-api-key": key } : {});
+    const media = [...(req.images ?? []).map((uri) => geminiPart("image", uri)), ...(req.documents ?? []).map((uri) => geminiPart("document", uri))];
+    const input = media.length ? [{ type: "text", text: req.state }, ...media] : req.state;
+    const data = await postJson("gemini", ctx, `${base}/decisions`, { model, input, questions, ...requestExtras(req.options) }, key ? { "x-goog-api-key": key } : {});
     const validated = parseProvider("gemini", GeminiResponseSchema, data);
     const answers = Object.fromEntries(Object.entries(validated.answers).map(([id, a]) => [id, geminiAnswer(a)]));
     const usage = validated.usage;
@@ -224,7 +259,7 @@ export function registerBuiltInDecisionProviders(): void {
   for (const provider of [typesafeProvider, systemOneProvider, openrouterProvider, cloudflareDecisionProvider, openaiDecisionsProvider, geminiDecisionsProvider, mockDecisionProvider]) {
     registerDecisionProvider({
       // The wrapper only adds error context; it must keep what the adapter can accept.
-      name: provider.name, acceptsImages: provider.acceptsImages, maxImages: provider.maxImages,
+      name: provider.name, acceptsImages: provider.acceptsImages, maxImages: provider.maxImages, acceptsDocuments: provider.acceptsDocuments,
       async decide(request, context) {
         try { return await provider.decide(request, context); }
         catch (cause) {

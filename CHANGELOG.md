@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased
+
+- **Pictures reach every model that takes them**: OpenAI and Gemini as well as Clef. Until now only Clef was sent a picture, and the other models judged one line saying a picture was there.
+- **A PDF is sent as the file to a model that reads PDFs** (Gemini). The text it is sent names the file instead of repeating its text layer; every other model is given the text layer as before. Checked live with a PDF that has a text layer and with a scan that has none.
+- **A scanned PDF is no longer refused** as empty evidence. A model that reads PDFs reads it; any other model is told there was no text to show.
+- `verdict run --models` says what each model was sent: a **pictures sent** and a **PDFs sent** column appear when the cases carry them (`1/1`, or `0/2` for a model given text instead), and `--json` has the counts as `media`. Ratings record `raw.documents` beside `raw.images`.
+- **A run from the command line waits out a provider's rate limit.** On HTTP 429 a decision provider is asked again after the wait it names (its `Retry-After` header, or a "retry in 35s" in its answer), up to four more times, before the case fails. A run of 100 pictures on Gemini's free tier, which allows 50,000 input tokens a minute, lost 57 cases without this and none with it. The engine does it only when given `rateLimitWait`, which the CLI gives; a server does not hold a request open, and a queued evaluation is still retried by its queue.
+- `examples/receipts`: a hundred receipt photos from a public dataset put to the four models that take pictures, with the question about the number of items written three times and the run of each.
+- **A model that takes pictures and not PDFs is shown the PDF's pages as pictures** (OpenAI, Clef), beside the text layer. A scan, which has no text, is now readable by every model that takes pictures. Drawing pages needs `@napi-rs/canvas` where Verdict runs (`npm install -g @napi-rs/canvas`); it is optional and never runs on Workers, and without it such a model is given the text alone.
+- **A document longer than a model takes is cut, and the cut is recorded.** Clef takes 4 pictures, so it is sent the first 4 pages of a 12-page PDF: the table's **PDF pages sent as pictures** column reads `4/12`, and the rating has `raw.pages`. A judge sends at most 20 pages (`options.maxPdfPages`), and `options.cutDocuments: refuse` makes a document that would be cut an error for that model.
+
 ## 0.3.6
 
 - **`verdict run --models` shows the probability each model gave its answer** beside the answer, where it showed the provider's `confidence`. The confidences were not comparable: for an answer of probability `p` among `n` options Gemini reports `p`, Jev and OpenAI report `(p − 1/n) / (1 − 1/n)`, and Clef reports `(Σp² − 1/n) / (1 − 1/n)`, so one message read 0.62, 0.54 and 0.28 for probabilities of 0.62, 0.60 and 0.48. `--json` now carries `probability` next to `confidence` for every answer. A score that falls between two levels has no probability and shows no number.

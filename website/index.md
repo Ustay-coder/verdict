@@ -25,14 +25,14 @@ features:
 
 ## Models you can use
 
-| Name it | Model | Service | Checked against the live service | Images |
+| Name it | Model | Service | Checked against the live service | Pictures and PDFs |
 | --- | --- | --- | --- | --- |
 | `jev` | Jev | TypeSafe | Yes | No, text only |
-| `clef` | Clef | Cloudflare Workers AI | Yes | Up to 4 |
-| `clef-flash` | Clef-flash | Cloudflare Workers AI | Yes | Up to 4 |
+| `clef` | Clef | Cloudflare Workers AI | Yes | Pictures, up to 4 |
+| `clef-flash` | Clef-flash | Cloudflare Workers AI | Yes | Pictures, up to 4 |
 | `openrouter:<model>` | For example `typesafe/jev-1.13` | OpenRouter | Yes | No |
-| `openai:<model>` | OpenAI's Decisions API, for example `gpt-6-luna` | OpenAI | Yes | No |
-| `gemini` | Gemini Decision 1 | Google (Gemini API) | Yes | No |
+| `openai:<model>` | OpenAI's Decisions API, for example `gpt-6-luna` | OpenAI | Yes | Pictures |
+| `gemini` | Gemini Decision 1 | Google (Gemini API) | Yes | Pictures and PDFs |
 | `systemone:<model>` | Any endpoint that takes the same request | Yours | You check it | No |
 
 One command runs a rubric on several of them and shows the answers side by side:
@@ -48,11 +48,11 @@ Rules, people and prompted models can judge a criterion too. Keys, context sizes
 | Input | With `verdict eval -i` | What the judge receives |
 | --- | --- | --- |
 | Text | `text:…`, a text file, or `-` | the text |
-| File | a `.pdf`, `.html`, `.md`, `.txt` or `.json` path | its text |
+| File | a `.pdf`, `.html`, `.md`, `.txt` or `.json` path | its text; a PDF itself for a model that reads PDFs, pictures of its pages for one that takes pictures |
 | JSON | `json:{…}` | the document, checkable against a schema |
 | Web page | a URL | the page's visible text; with `--screenshot`, a picture too |
 | YouTube | a YouTube URL | the transcript |
-| Image | a `.png`, `.jpg` or `.webp` path | the picture, for models that take images |
+| Image | a `.png`, `.jpg` or `.webp` path | the picture, for models that take pictures |
 
 ## Evaluate without a provider key
 
