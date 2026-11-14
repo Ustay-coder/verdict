@@ -96,6 +96,20 @@ let message = readFileSync(resolve(here, "prompt.md"), "utf8");
 for (let round = 0; round < maxRounds; round++) {
   const dir = join(out, `r${String(round).padStart(2, "0")}`);
   mkdirSync(dir, { recursive: true });
+  if (existsSync(join(dir, "eval.json"))) {
+    // A finished round is read back, not scored again: its record stays what Claude was sent and what Verdict said.
+    const evaluation = JSON.parse(readFileSync(join(dir, "eval.json"), "utf8"));
+    session = JSON.parse(readFileSync(join(dir, "claude.json"), "utf8")).session_id;
+    copyFileSync(join(dir, "index.html"), join(work, "index.html"));
+    const row = { round, score: evaluation.aggregate.score, passed: evaluation.aggregate.passed, criteria: {} };
+    for (const c of evaluation.criteria) row.criteria[c.criterionId] = c.score;
+    summary.push(row);
+    if (row.passed) break;
+    message = readFileSync(resolve(here, "feedback.md"), "utf8")
+      .replace("{{score}}", String(row.score))
+      .replace("{{failures}}", failures(evaluation).join("\n"));
+    continue;
+  }
   writeFileSync(join(dir, "message.md"), message);
 
   if (existsSync(join(dir, "claude.json")) && existsSync(join(dir, "index.html"))) {

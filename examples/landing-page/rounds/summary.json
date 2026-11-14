@@ -100,5 +100,22 @@
       "proof": 2,
       "first_run": 3
     }
+  },
+  {
+    "round": 6,
+    "score": 80,
+    "passed": true,
+    "criteria": {
+      "says_what": 1,
+      "cta_visible": 1,
+      "cta_real": 1,
+      "no_fabrication": 1,
+      "no_placeholder": 1,
+      "mobile_ok": 1,
+      "value_prop": 2,
+      "audience": 3,
+      "proof": 2,
+      "first_run": 3
+    }
   }
 ]
