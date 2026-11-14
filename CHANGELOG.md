@@ -3,6 +3,7 @@
 ## Unreleased
 
 - `examples/landing-page`: Claude Code builds a landing page for Verdict and Verdict scores it before it ships, round by round, with a rubric frozen before the first page: six gates (screenshots judged by Clef, two rules) and four scored criteria. The run went 0, 0, 73, 73, 73, 73, 80. The README tells why: a rule blocked a logo's `href="#"`, a failed rule did not say what it matched, and the script sent three empty lists of failures.
+- `examples/landing-page/trap`: the page that passed at 80, with one known defect planted at a time, put to the same frozen rubric on Clef and Clef-flash. Clef blocked seven of eight defects and passed an empty `[Insert demo GIF here]` box at 90; Clef-flash blocked every page, the clean one included.
 
 ## 0.4.0
 
