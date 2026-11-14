@@ -1,0 +1,467 @@
+{
+  "_meta": {
+    "id": "round-01",
+    "title": "코드 품질 개선 중간 기록",
+    "period": [
+      "2026-11-07",
+      "2026-11-14"
+    ],
+    "anonymized": true,
+    "note": "경로·PR·커밋은 제거됨. 앱은 평가 앱/웹 앱/인증 앱 라벨 사용."
+  },
+  "summary": {
+    "file_rubric_mean": {
+      "baseline": 84.23,
+      "current": 85.52,
+      "delta": 1.29
+    },
+    "file_rubric_median": {
+      "baseline": 85.06,
+      "current": 86.54
+    },
+    "file_rubric_line_weighted_mean": {
+      "baseline": 78.77,
+      "current": 81.12,
+      "delta": 2.35
+    },
+    "grade_a_files": {
+      "baseline": 699,
+      "current": 927,
+      "delta": 228
+    },
+    "grade_d_files": {
+      "baseline": 108,
+      "current": 72,
+      "delta": -36
+    },
+    "files_below_85_baseline": 1249,
+    "repo_rubric_score": {
+      "baseline": 44.1,
+      "current": 49.2,
+      "delta": 5.1,
+      "grade": "D"
+    },
+    "files_over_400_lines": {
+      "baseline": 69,
+      "current": 41,
+      "delta": -28,
+      "target_phase1": 45
+    },
+    "coverage_line_pct": {
+      "baseline": 60.2,
+      "current": 65.6,
+      "delta": 5.4
+    },
+    "coverage_branch_pct": {
+      "baseline": 53.7,
+      "current": 59.2,
+      "delta": 5.6
+    },
+    "duplication_pct": {
+      "baseline": 4.73,
+      "current": 3.81,
+      "delta": -0.92
+    },
+    "measured_files": {
+      "baseline": 2515,
+      "current": 3138
+    },
+    "grade_d_threshold": 70,
+    "long_file_threshold_lines": 400
+  },
+  "file_rubric": {
+    "rubric_version": "v3",
+    "judge": "Clef",
+    "criteria_scale": "0-5",
+    "weakest_baseline": {
+      "comments": 3.91,
+      "testability": 4.14,
+      "analysability": 4.19
+    },
+    "criteria_mean": {
+      "testability": {
+        "baseline": 4.135,
+        "current": 4.244,
+        "delta": 0.109
+      },
+      "analysability": {
+        "baseline": 4.192,
+        "current": 4.283,
+        "delta": 0.091
+      },
+      "dead_code": {
+        "baseline": 4.31,
+        "current": 4.369,
+        "delta": 0.059
+      },
+      "error_handling": {
+        "baseline": 4.321,
+        "current": 4.371,
+        "delta": 0.05
+      },
+      "file_length": {
+        "baseline": 4.916,
+        "current": 4.959,
+        "delta": 0.044
+      },
+      "cohesion": {
+        "baseline": 4.296,
+        "current": 4.333,
+        "delta": 0.037
+      },
+      "types": {
+        "baseline": 4.532,
+        "current": 4.565,
+        "delta": 0.033
+      },
+      "naming": {
+        "baseline": 4.548,
+        "current": 4.569,
+        "delta": 0.021
+      },
+      "comments": {
+        "baseline": 3.909,
+        "current": 3.917,
+        "delta": 0.008
+      },
+      "unchecked_casts": {
+        "baseline": 4.978,
+        "current": 4.982,
+        "delta": 0.004
+      }
+    },
+    "low_score_types": [
+      "API route: 인증·입력 검증·DB 접근·응답 조립이 함수 하나에 섞임 (62~69점)",
+      "클라이언트 훅: 상태·API 호출·업무 규칙이 한 파일에 섞임 (69.8점 등)",
+      "거대 서비스·repository·스키마: 800~1,500줄, analysability와 testability 감점"
+    ],
+    "existing_files_refactored": {
+      "count": 99,
+      "mean_before": 73.92,
+      "mean_after": 87.39,
+      "improved": 92,
+      "worsened": 7,
+      "worst_drop": -3.86
+    },
+    "new_files": {
+      "count": 624,
+      "mean": 88.56,
+      "below_85": 13,
+      "below_85_from_batch6": 12,
+      "logic_file_bar": 85
+    },
+    "workspace_mean": {
+      "평가 앱": {
+        "baseline": 83.41,
+        "current": 85.51
+      },
+      "웹 앱": {
+        "baseline": 84.72,
+        "current": 85.42
+      },
+      "인증 앱": {
+        "baseline": 82.36,
+        "current": 88.01
+      }
+    },
+    "criteria_count": 10,
+    "file_score_range": "0-100 (기준 0~5점을 환산)"
+  },
+  "bundles": [
+    {
+      "id": "B01",
+      "name": "파일럿",
+      "prs": 1,
+      "existing": {
+        "n": 3,
+        "before": 69.36,
+        "after": 87.99
+      },
+      "new": {
+        "n": 10,
+        "mean": 88.08
+      },
+      "what": "루브릭 기준으로 route와 훅을 나누는 패턴을 정함"
+    },
+    {
+      "id": "B02",
+      "name": "웹 앱 route 핸들러 분리",
+      "prs": 3,
+      "existing": {
+        "n": 14,
+        "before": 65.04,
+        "after": 91.41
+      },
+      "new": {
+        "n": 49,
+        "mean": 89.25
+      },
+      "what": "form-builder·submit·admin route를 주입 가능한 핸들러로 분리, 쓰기를 프로젝트·조직 범위로 제한"
+    },
+    {
+      "id": "B03",
+      "name": "평가 앱 route 핸들러 분리",
+      "prs": 3,
+      "existing": {
+        "n": 7,
+        "before": 74.15,
+        "after": 87.64
+      },
+      "new": {
+        "n": 28,
+        "mean": 89.32
+      },
+      "what": "links·forms·results·signatures route를 핸들러로 분리"
+    },
+    {
+      "id": "B04",
+      "name": "훅·서비스 규칙 분리",
+      "prs": 6,
+      "existing": {
+        "n": 13,
+        "before": 72.38,
+        "after": 87.55
+      },
+      "new": {
+        "n": 75,
+        "mean": 89.78
+      },
+      "what": "규칙과 I/O를 분리, 훅을 API·규칙·상태로 3분할, 제출 값은 로그에 남기지 않음"
+    },
+    {
+      "id": "B05",
+      "name": "서비스·repository·스키마 분할",
+      "prs": 10,
+      "what": "800~1,500줄 파일을 규칙·협력 객체·전이 repository로 분할",
+      "existing": {
+        "n": 47,
+        "before": 75.54,
+        "after": 87.64
+      },
+      "new": {
+        "n": 451,
+        "mean": 88.27
+      }
+    }
+  ],
+  "bundle_note": "B01~B05의 existing/new는 원문 PR별 표를 파일 개수로 가중 평균한 값(스크립트 계산, B05는 batch 6 포함). 표 합계(기존 84, 새 613)는 전체 집계(기존 99, 새 624)와 다르며 원인은 확인되지 않았다. 따라서 묶음 값은 '해당 PR 표 기준'이라고 밝히고, 전체 수치는 file_rubric 항목만 쓴다.",
+  "top_improved_files": [
+    {
+      "role": "워커 런타임 모듈",
+      "before": 60.65,
+      "after": 93.93,
+      "lines_before": 786,
+      "lines_after": 31
+    },
+    {
+      "role": "평가 repository",
+      "before": 60.44,
+      "after": 87.64,
+      "lines_before": 1515,
+      "lines_after": 225
+    },
+    {
+      "role": "결과 클라이언트 모듈",
+      "before": 67.16,
+      "after": 93.84,
+      "lines_before": 579,
+      "lines_after": 16
+    },
+    {
+      "role": "링크 repository",
+      "before": 63.17,
+      "after": 89.27,
+      "lines_before": 1269,
+      "lines_after": 154
+    },
+    {
+      "role": "지원자 제출 repository",
+      "before": 62.97,
+      "after": 88.84,
+      "lines_before": 877,
+      "lines_after": 145
+    },
+    {
+      "role": "집계 캐시 서비스",
+      "before": 65.65,
+      "after": 90.54,
+      "lines_before": 770,
+      "lines_after": 93
+    },
+    {
+      "role": "최종 검토 서비스",
+      "before": 67.16,
+      "after": 90.14,
+      "lines_before": 845,
+      "lines_after": 140
+    }
+  ],
+  "regression_batch6": {
+    "kind": "organization·account repository 분할",
+    "existing": {
+      "n": 8,
+      "before": 83.18,
+      "after": 85.84
+    },
+    "new": {
+      "n": 14,
+      "mean": 81.5
+    },
+    "new_files_below_85": 12,
+    "repository_files_below_85": 11,
+    "testability_range": [
+      2.7,
+      3.1
+    ],
+    "lowest_file_score": 72.35,
+    "why_merged": "파일 품질 게이트가 report-only 단계라 병합을 막지 못함",
+    "next_action": "repository 11개 testability 보강"
+  },
+  "repo_rubric": {
+    "total_lines": {
+      "baseline": "272.7k",
+      "current": "290.5k"
+    },
+    "evaluation_app_lines": {
+      "baseline": "127.2k",
+      "current": "144.0k",
+      "delta": "+16.8k"
+    },
+    "criteria": {
+      "coverage_lines": {
+        "weight": 3,
+        "value_before": 60.2,
+        "value_after": 65.6,
+        "score_before": 0.26,
+        "score_after": 0.39
+      },
+      "coverage_branches": {
+        "weight": 1,
+        "value_before": 53.7,
+        "value_after": 59.2,
+        "score_before": 0.3,
+        "score_after": 0.43
+      },
+      "duplication": {
+        "weight": 2,
+        "value_before": 4.73,
+        "value_after": 3.81,
+        "score_before": 0.21,
+        "score_after": 0.37
+      },
+      "complexity": {
+        "weight": 3,
+        "value_before": 0.98,
+        "value_after": 0.63,
+        "score_before": 0.88,
+        "score_after": 0.92
+      },
+      "unit_size": {
+        "weight": 2,
+        "score_before": 0,
+        "score_after": 0,
+        "functions_over_60_lines": {
+          "before": 913,
+          "after": 785
+        },
+        "depth_over_4": {
+          "before": 29,
+          "after": 10
+        }
+      },
+      "lint": {
+        "weight": 2,
+        "errors": {
+          "before": 14,
+          "after": 14
+        },
+        "score_before": 0.94,
+        "score_after": 0.94
+      },
+      "typing": {
+        "weight": 2,
+        "score_before": 0.47,
+        "score_after": 0.45
+      },
+      "typecheck": {
+        "weight": 1,
+        "score_before": 1,
+        "score_after": 1
+      },
+      "security": {
+        "weight": 2,
+        "critical": 13,
+        "high": 144,
+        "score_before": 0,
+        "score_after": 0
+      }
+    },
+    "coverage_by_app": {
+      "평가 앱": {
+        "before": 79.8,
+        "after": 85.4
+      },
+      "웹 앱": {
+        "before": 33.5,
+        "after": 39.0
+      },
+      "인증 앱": {
+        "before": 59.8,
+        "after": 72.8
+      }
+    },
+    "files_split_below_400": 28,
+    "metric_count": 9,
+    "score_range": "0-100",
+    "grade_before": "D",
+    "grade_after": "D"
+  },
+  "measurement_caveats": {
+    "files_rejudged": 723,
+    "judged_once_per_file": true,
+    "judge_variance": "판정 모델 점수는 실행마다 조금 달라질 수 있음",
+    "rubric_unchanged_since_baseline": true,
+    "coverage_incident": {
+      "env_leak": "측정 컨테이너에 클라우드 자격 증명 환경 변수가 있어 스크립트 테스트 2개가 실패 → 변수를 빼고 재측정",
+      "load_flakes": 3,
+      "flakes_pass_in_pr_ci": true,
+      "collector_patched_temporarily": true,
+      "patch_committed": false,
+      "effect": "실패한 3개 파일만큼 커버리지가 실제보다 조금 낮을 수 있음"
+    }
+  },
+  "next_steps": [
+    "batch 6 repository 11개 testability 보강",
+    "웹 앱의 큰 repository와 제출 폼 컴포넌트 분할",
+    "평가 앱에 noUncheckedIndexedAccess 켜기",
+    "의존성 보안 업그레이드",
+    "unit_size 수식 개선"
+  ],
+  "remaining_hotspots": [
+    {
+      "role": "제출 repository",
+      "score": 58.25,
+      "lines": 1230
+    },
+    {
+      "role": "DB 스키마 파일",
+      "score": 77.06,
+      "lines": 2378
+    },
+    {
+      "role": "팀 repository",
+      "score": 63.57,
+      "lines": 877
+    },
+    {
+      "role": "제출 폼 컴포넌트",
+      "score": 59.91,
+      "lines": 713
+    },
+    {
+      "role": "약관 페이지",
+      "score": 72.63,
+      "lines": 1168
+    }
+  ]
+}

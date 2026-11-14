@@ -1,0 +1,75 @@
+# Velog 시리즈 초안 품질. Verdict가 Verdict 글을 채점한다 (dogfooding).
+# 입력 태그: `post`(초안), `facts`(근거 JSON), `previous`(직전 편 요약, 중복 판단용).
+# 실행: node packages/cli/dist/bin.js eval -r blog/rubrics/post-quality.yaml -i post=blog/episodes/00-intro/draft.md -i facts=blog/data/round-01.json
+name: Velog 시리즈 글 품질
+version: "1"
+language: ko
+context: |
+  사내 코드 품질 개선 과정을 다루는 한국어 기술 블로그 시리즈의 한 편입니다. 독자는 코드 품질 지표나 리팩터링에 관심이 있는
+  백엔드·프론트엔드 개발자입니다. `post`만 평가하고, `facts`는 수치의 근거를 확인할 때만 참고하세요.
+scale: { type: numeric, min: 1, max: 5 }
+defaultJudge: { type: decision, provider: typesafe, model: jev-latest }
+criteria:
+  - id: grounded
+    name: 수치가 근거를 가짐
+    weight: 3
+    inputs: [post, facts]
+    anchors:
+      "1": 근거 자료에 없는 수치나 단정이 여러 개 있다
+      "3": 대부분 근거가 있으나 일부 수치가 모호하거나 전후 비교 없이 '개선'이라 쓴다
+      "5": 모든 수치가 근거 자료와 일치하고 개선 주장에는 전·후 값이 함께 있다
+  - id: promise
+    name: 한 줄 약속의 이행
+    weight: 2
+    inputs: [post]
+    anchors:
+      "1": 서두의 약속과 본문이 다르거나 약속이 없다
+      "3": 약속은 있으나 본문 일부가 곁가지로 흐른다
+      "5": 서두가 약속한 한 가지를 본문이 끝까지 증명한다
+  - id: honesty
+    name: 한계와 실패의 서술
+    weight: 3
+    inputs: [post]
+    anchors:
+      "1": 성과만 나열하고 남은 문제나 측정 한계를 숨긴다
+      "3": 한계를 언급하나 짧거나 뒤쪽에 묻혀 있다
+      "5": 해결하지 못한 문제와 측정의 한계를 구체적으로 밝히고 다음 행동과 연결한다
+  - id: anonymity
+    name: 내부 정보 비노출
+    weight: 3
+    inputs: [post]
+    anchors:
+      "1": 파일 경로, PR 번호, 제품·조직 이름 등이 노출된다
+      "3": 직접 식별 정보는 없으나 역할 이름이 지나치게 구체적이다
+      "5": 일반화된 역할 이름만 쓰고 식별 가능한 정보가 전혀 없다
+  - id: structure
+    name: 읽기 쉬운 구조
+    weight: 2
+    inputs: [post]
+    anchors:
+      "1": 제목이 내용과 맞지 않고 문단이 길다
+      "3": 구성은 있으나 표·목록 없이 수치가 문장에 흩어져 있다
+      "5": 문제→개입→결과→남은 문제 순서이며 표로 비교하고 한 문단에 한 가지 생각만 담는다
+  - id: reproducible
+    name: 재현 가능성
+    weight: 2
+    inputs: [post]
+    anchors:
+      "1": 어떻게 측정하고 개선했는지 알 수 없다
+      "3": 방법은 설명되나 독자가 따라 하려면 추측이 필요하다
+      "5": 명령, 기준, 척도가 충분히 제시되어 독자가 자기 프로젝트에 적용할 수 있다
+  - id: slop_words
+    name: 과장 표현 수 (benchmark)
+    weight: 1
+    inputs: [post]
+    judge: { type: benchmark, method: regex, pattern: "(획기적|혁신적|압도적|놀라운|완벽한|엄청난|최고의|알아보겠습니다|살펴보겠습니다)", perMatch: 0.25, negate: true }
+  - id: length
+    name: 분량 (benchmark)
+    weight: 1
+    inputs: [post]
+    judge: { type: benchmark, method: length, unit: chars, min: 1800, max: 6000, tolerance: 0.5 }
+aggregation:
+  method: weighted_mean
+  normalize: [0, 100]
+  grades: [{ label: publish, min: 80 }, { label: revise, min: 65 }, { label: rewrite, min: 0 }]
+  passThreshold: 80

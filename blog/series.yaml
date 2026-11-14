@@ -1,0 +1,48 @@
+series:
+  title: "Verdict로 코드 품질을 점수로 관리하기"
+  velog_series_name: "코드 품질을 점수로 재다"
+  language: ko
+  cadence: "측정 라운드(약 1주)마다 1~2편"
+  format: "문제 → 가설 → 개입 → 측정 → 남은 문제"
+  scoreboard: "매 편 끝에 같은 형식의 '스코어보드' 표를 둔다"
+
+episodes:
+  - id: "00-intro"
+    title: "왜 코드 품질을 점수로 재는가"
+    round: round-01
+    status: drafted
+    covers: [두 루브릭 소개, 기준선 요약, 시리즈 로드맵]
+  - id: "01-baseline"
+    title: "기준선: 2,515개 파일을 채점해 보니"
+    round: round-01
+    status: planned
+    covers: [D등급 108개, 약한 기준 3개, 줄 수 가중 평균의 함정]
+  - id: "02-pilot"
+    title: "파일럿: 루브릭으로 API route와 훅을 나누는 패턴"
+    round: round-01
+    status: planned
+    covers: [B01]
+  - id: "03-routes"
+    title: "점수 낮은 API route를 핸들러로 분리하기"
+    round: round-01
+    status: planned
+    covers: [B02, B03]
+  - id: "04-split"
+    title: "거대 서비스와 repository 쪼개기, 그리고 파일이 늘어나는 대가"
+    round: round-01
+    status: planned
+    covers: [B04, B05]
+  - id: "05-regression"
+    title: "실패 기록: 한 배치가 점수를 깎은 이유"
+    round: round-01
+    status: planned
+    covers: [B05.batch6, 게이트 report-only의 한계]
+  - id: "06-measurement"
+    title: "측정을 믿을 수 있는가: 판정 분산과 커버리지 예외"
+    round: round-01
+    status: planned
+    covers: [측정 방법과 주의점]
+  - id: "07-next"
+    title: "라운드 2: testability 보강부터 보안 업그레이드까지"
+    round: round-02
+    status: planned

@@ -1,0 +1,32 @@
+# 익명화 규칙. 이 파일은 금지어 자체를 담으므로 비공개 저장소에서만 보관한다.
+# redactor 에이전트는 글(draft/final)에서 아래 패턴을 찾아 치환하거나 삭제하도록 지적한다.
+
+remove:                       # 글에 절대 나오면 안 됨
+  - { name: pr_number,   regex: "#\\d{3,5}\\b" }
+  - { name: commit_hash, regex: "\\b[0-9a-f]{7,40}\\b" }
+  - { name: file_path,   regex: "[\\w@.\\-\\[\\]()]+/[\\w@.\\-\\[\\]()/]+\\.(ts|tsx|mjs|json|yaml|md)" }
+  - { name: baseline_file, regex: "quality/[\\w.\\-/]+" }
+  - { name: aws_env,     regex: "AWS_[A-Z_]+" }
+  - { name: error_const, regex: "AMBIENT_CONFIGURATION_REJECTED" }
+
+rename:                       # 쓰려면 이 라벨로만
+  "apps/evaluation":      "평가 앱"
+  "apps/web":             "웹 앱"
+  "apps/evaluation-auth": "인증 앱"
+  "develop":              "개발 브랜치"
+  "worker-runtime":       "워커 런타임 모듈"
+  "auth-worker":          "인증 워커 모듈"
+  "link.repository":      "링크 repository"
+  "leaderboard cache":    "집계 캐시 서비스"
+  "final-review.service": "최종 검토 서비스"
+
+generalize:                   # 구체적 이름 대신 역할로 설명
+  - "함수/훅 이름(useAuth, useShareLink 등) → '인증 훅', '공유 링크 훅'"
+  - "route 경로 → 'form-builder API', 'submit API' 같은 기능명"
+  - "제품·고객·조직 도메인 용어는 일반 명사로"
+
+keep:                         # 쓰도 되는 것
+  - Verdict, Clef (도구 이름)
+  - 점수, 줄 수, 파일 개수, 커버리지 등 집계 수치
+  - 일반 기술 용어 (repository, route, hook, testability 등)
+  - 측정 날짜 (2026-11-07, 2026-11-14)

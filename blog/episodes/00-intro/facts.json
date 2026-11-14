@@ -1,0 +1,117 @@
+{
+  "_meta": {
+    "id": "round-01",
+    "title": "코드 품질 개선 중간 기록",
+    "period": [
+      "2026-11-07",
+      "2026-11-14"
+    ],
+    "anonymized": true,
+    "note": "경로·PR·커밋은 제거됨. 앱은 평가 앱/웹 앱/인증 앱 라벨 사용."
+  },
+  "summary": {
+    "file_rubric_mean": {
+      "baseline": 84.23,
+      "current": 85.52,
+      "delta": 1.29
+    },
+    "file_rubric_median": {
+      "baseline": 85.06,
+      "current": 86.54
+    },
+    "file_rubric_line_weighted_mean": {
+      "baseline": 78.77,
+      "current": 81.12,
+      "delta": 2.35
+    },
+    "grade_a_files": {
+      "baseline": 699,
+      "current": 927,
+      "delta": 228
+    },
+    "grade_d_files": {
+      "baseline": 108,
+      "current": 72,
+      "delta": -36
+    },
+    "files_below_85_baseline": 1249,
+    "repo_rubric_score": {
+      "baseline": 44.1,
+      "current": 49.2,
+      "delta": 5.1,
+      "grade": "D"
+    },
+    "files_over_400_lines": {
+      "baseline": 69,
+      "current": 41,
+      "delta": -28,
+      "target_phase1": 45
+    },
+    "coverage_line_pct": {
+      "baseline": 60.2,
+      "current": 65.6,
+      "delta": 5.4
+    },
+    "coverage_branch_pct": {
+      "baseline": 53.7,
+      "current": 59.2,
+      "delta": 5.6
+    },
+    "duplication_pct": {
+      "baseline": 4.73,
+      "current": 3.81,
+      "delta": -0.92
+    },
+    "measured_files": {
+      "baseline": 2515,
+      "current": 3138
+    },
+    "grade_d_threshold": 70,
+    "long_file_threshold_lines": 400
+  },
+  "measurement_caveats": {
+    "files_rejudged": 723,
+    "judged_once_per_file": true,
+    "judge_variance": "판정 모델 점수는 실행마다 조금 달라질 수 있음",
+    "rubric_unchanged_since_baseline": true,
+    "coverage_incident": {
+      "env_leak": "측정 컨테이너에 클라우드 자격 증명 환경 변수가 있어 스크립트 테스트 2개가 실패 → 변수를 빼고 재측정",
+      "load_flakes": 3,
+      "flakes_pass_in_pr_ci": true,
+      "collector_patched_temporarily": true,
+      "patch_committed": false,
+      "effect": "실패한 3개 파일만큼 커버리지가 실제보다 조금 낮을 수 있음"
+    }
+  },
+  "next_steps": [
+    "batch 6 repository 11개 testability 보강",
+    "웹 앱의 큰 repository와 제출 폼 컴포넌트 분할",
+    "평가 앱에 noUncheckedIndexedAccess 켜기",
+    "의존성 보안 업그레이드",
+    "unit_size 수식 개선"
+  ],
+  "file_rubric": {
+    "rubric_version": "v3",
+    "judge": "Clef",
+    "criteria_scale": "0-5",
+    "criteria_count": 10,
+    "file_score_range": "0-100 (기준 0~5점을 환산)",
+    "weakest_baseline": {
+      "comments": 3.91,
+      "testability": 4.14,
+      "analysability": 4.19
+    },
+    "low_score_types": [
+      "API route: 인증·입력 검증·DB 접근·응답 조립이 함수 하나에 섞임 (62~69점)",
+      "클라이언트 훅: 상태·API 호출·업무 규칙이 한 파일에 섞임 (69.8점 등)",
+      "거대 서비스·repository·스키마: 800~1,500줄, analysability와 testability 감점"
+    ]
+  },
+  "repo_rubric": {
+    "metric_count": 9,
+    "score_range": "0-100",
+    "grade_before": "D",
+    "grade_after": "D"
+  },
+  "_source": "blog/data/round-01.json의 부분집합"
+}
