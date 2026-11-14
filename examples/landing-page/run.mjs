@@ -1,13 +1,14 @@
 #!/usr/bin/env node
 // Ask Claude Code for a landing page, score it with the frozen rubric, hand the failures back, repeat.
 //
-//   node run.mjs [--rounds 5] [--out rounds]
+//   node run.mjs [--rounds 5] [--out rounds] [--work <folder Claude works in>]
 //
 // Needs: the `claude` CLI signed in, `verdict` (or this repository built), Playwright with Chromium,
 // and CLOUDFLARE_ACCOUNT_ID + CLOUDFLARE_API_TOKEN for Clef. Each round is kept in <out>/rNN/:
 // index.html, desktop.png, mobile.png, full.png, eval.json, claude.json, and the message sent to Claude.
 import { spawnSync } from "node:child_process";
 import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -23,7 +24,9 @@ const repoCli = resolve(here, "../../packages/cli/dist/bin.js");
 const verdict = existsSync(repoCli) ? [process.execPath, repoCli] : ["verdict"];
 
 // Claude works in an empty folder outside the repository, with only the README, as someone starting a page would.
-const work = mkdtempSync(join(tmpdir(), "verdict-landing-"));
+// Claude Code keeps a session per folder, so a run picked up again passes the same one with --work.
+const work = arg("work") ? resolve(arg("work")) : mkdtempSync(join(tmpdir(), "verdict-landing-"));
+mkdirSync(work, { recursive: true });
 copyFileSync(resolve(here, "../../README.md"), join(work, "README.md"));
 
 const run = (cmd, args, opts = {}) => {
@@ -33,7 +36,8 @@ const run = (cmd, args, opts = {}) => {
 };
 
 async function screenshots(html, dir) {
-  const { chromium } = await import("playwright");
+  // require, not import: a global Playwright is found through NODE_PATH, which ESM imports ignore.
+  const { chromium } = createRequire(import.meta.url)("playwright");
   const browser = await chromium.launch();
   try {
     const shots = [
@@ -92,13 +96,18 @@ for (let round = 0; round < maxRounds; round++) {
   mkdirSync(dir, { recursive: true });
   writeFileSync(join(dir, "message.md"), message);
 
-  const args = ["-p", message, "--allowedTools", "Read,Write,Edit", "--output-format", "json"];
-  if (session) args.push("--resume", session);
-  const reply = JSON.parse(run("claude", args, { cwd: work }));
-  session = reply.session_id;
-  writeFileSync(join(dir, "claude.json"), JSON.stringify({ result: reply.result, session_id: reply.session_id, cost_usd: reply.total_cost_usd, duration_ms: reply.duration_ms, model: Object.keys(reply.modelUsage ?? {}) }, null, 2));
-
-  copyFileSync(join(work, "index.html"), join(dir, "index.html"));
+  if (existsSync(join(dir, "claude.json")) && existsSync(join(dir, "index.html"))) {
+    // A round Claude already answered is kept, never asked again: a second answer would be a choice between two.
+    session = JSON.parse(readFileSync(join(dir, "claude.json"), "utf8")).session_id;
+    copyFileSync(join(dir, "index.html"), join(work, "index.html"));
+  } else {
+    const args = ["-p", message, "--allowedTools", "Read,Write,Edit", "--output-format", "json"];
+    if (session) args.push("--resume", session);
+    const reply = JSON.parse(run("claude", args, { cwd: work }));
+    session = reply.session_id;
+    writeFileSync(join(dir, "claude.json"), JSON.stringify({ result: reply.result, session_id: reply.session_id, cost_usd: reply.total_cost_usd, duration_ms: reply.duration_ms, model: Object.keys(reply.modelUsage ?? {}) }, null, 2));
+    copyFileSync(join(work, "index.html"), join(dir, "index.html"));
+  }
   copyFileSync(join(work, "index.html"), join(dir, "source.txt"));
   await screenshots(join(dir, "index.html"), dir);
   const evaluation = score(dir);
