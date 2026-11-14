@@ -77,7 +77,9 @@ function failures(evaluation) {
     const def = rubric.criteria.find((d) => d.id === c.criterionId);
     const r = c.ratings?.[0] ?? {};
     const isGate = def.weight === 0;
-    if (isGate ? c.score >= 1 : c.score >= 2) continue;
+    // Rounds 3–5 of the first run listed only criteria below 2 of 3, so a page at 73 with nothing below 2 was sent
+    // an empty list. Every criterion short of full marks is listed since round 6.
+    if (isGate ? c.score >= 1 : c.score >= 3) continue;
     let level;
     if (isGate) level = def.anchors?.fail ?? "(rule) failed";
     else level = def.levels?.find((l) => l.value === c.score)?.description ?? `${c.score}/3`;
