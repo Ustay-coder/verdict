@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="680" viewBox="0 0 1200 680" font-family="WenQuanYi Zen Hei, sans-serif">
+<rect width="1200" height="680" fill="#ffffff"/>
+<text x="40" y="50" font-size="30" font-weight="700" fill="#1a1a1a">기준별 평균 점수 (기준선, 2026-11-07)</text>
+<text x="40" y="82" font-size="20" fill="#555">0~5점 척도, 낮은 순. 가장 약한 3개를 강조. 가로축은 3.5부터 시작합니다.</text>
+<line x1="230.0" x2="230.0" y1="102" y2="596" stroke="#e3e3e3"/>
+<text x="230.0" y="624" font-size="18" fill="#555" text-anchor="middle">3.5</text>
+<line x1="523.3333333333333" x2="523.3333333333333" y1="102" y2="596" stroke="#e3e3e3"/>
+<text x="523.3333333333333" y="624" font-size="18" fill="#555" text-anchor="middle">4.0</text>
+<line x1="816.6666666666666" x2="816.6666666666666" y1="102" y2="596" stroke="#e3e3e3"/>
+<text x="816.6666666666666" y="624" font-size="18" fill="#555" text-anchor="middle">4.5</text>
+<line x1="1110.0" x2="1110.0" y1="102" y2="596" stroke="#e3e3e3"/>
+<text x="1110.0" y="624" font-size="18" fill="#555" text-anchor="middle">5.0</text>
+<text x="216" y="139.76" font-size="21" fill="#1a1a1a" text-anchor="end" font-weight="700">comments</text>
+<rect x="230" y="116.0" width="239.9466666666666" height="34.0" rx="3" fill="#c2410c"/>
+<text x="479.9466666666666" y="139.76" font-size="20" fill="#1a1a1a">3.91</text>
+<text x="216" y="187.76" font-size="21" fill="#1a1a1a" text-anchor="end" font-weight="700">testability</text>
+<rect x="230" y="164.0" width="372.5333333333332" height="34.0" rx="3" fill="#c2410c"/>
+<text x="612.5333333333332" y="187.76" font-size="20" fill="#1a1a1a">4.14</text>
+<text x="216" y="235.76" font-size="21" fill="#1a1a1a" text-anchor="end" font-weight="700">analysability</text>
+<rect x="230" y="212.0" width="405.97333333333336" height="34.0" rx="3" fill="#c2410c"/>
+<text x="645.9733333333334" y="235.76" font-size="20" fill="#1a1a1a">4.19</text>
+<text x="216" y="283.76" font-size="21" fill="#1a1a1a" text-anchor="end" font-weight="400">cohesion</text>
+<rect x="230" y="260.0" width="466.9866666666668" height="34.0" rx="3" fill="#7b93b5"/>
+<text x="706.9866666666668" y="283.76" font-size="20" fill="#1a1a1a">4.30</text>
+<text x="216" y="331.76" font-size="21" fill="#1a1a1a" text-anchor="end" font-weight="400">dead_code</text>
+<rect x="230" y="308.0" width="475.1999999999998" height="34.0" rx="3" fill="#7b93b5"/>
+<text x="715.1999999999998" y="331.76" font-size="20" fill="#1a1a1a">4.31</text>
+<text x="216" y="379.76" font-size="21" fill="#1a1a1a" text-anchor="end" font-weight="400">error_handling</text>
+<rect x="230" y="356.0" width="481.6533333333332" height="34.0" rx="3" fill="#7b93b5"/>
+<text x="721.6533333333332" y="379.76" font-size="20" fill="#1a1a1a">4.32</text>
+<text x="216" y="427.76" font-size="21" fill="#1a1a1a" text-anchor="end" font-weight="400">types</text>
+<rect x="230" y="404.0" width="605.44" height="34.0" rx="3" fill="#7b93b5"/>
+<text x="845.44" y="427.76" font-size="20" fill="#1a1a1a">4.53</text>
+<text x="216" y="475.76" font-size="21" fill="#1a1a1a" text-anchor="end" font-weight="400">naming</text>
+<rect x="230" y="452.0" width="614.8266666666667" height="34.0" rx="3" fill="#7b93b5"/>
+<text x="854.8266666666667" y="475.76" font-size="20" fill="#1a1a1a">4.55</text>
+<text x="216" y="523.76" font-size="21" fill="#1a1a1a" text-anchor="end" font-weight="400">file_length</text>
+<rect x="230" y="500.0" width="830.7200000000003" height="34.0" rx="3" fill="#7b93b5"/>
+<text x="1070.7200000000003" y="523.76" font-size="20" fill="#1a1a1a">4.92</text>
+<text x="216" y="571.76" font-size="21" fill="#1a1a1a" text-anchor="end" font-weight="400">unchecked_casts</text>
+<rect x="230" y="548.0" width="867.0933333333332" height="34.0" rx="3" fill="#7b93b5"/>
+<text x="1107.0933333333332" y="571.76" font-size="20" fill="#1a1a1a">4.98</text>
+</svg>

@@ -67,7 +67,9 @@
       "current": 3138
     },
     "grade_d_threshold": 70,
-    "long_file_threshold_lines": 400
+    "long_file_threshold_lines": 400,
+    "below_threshold_85": 85,
+    "long_function_threshold_lines": 60
   },
   "file_rubric": {
     "rubric_version": "v3",

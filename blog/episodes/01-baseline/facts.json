@@ -148,5 +148,7 @@
     "A·D 외 등급(B, C)의 경계와 파일 수",
     "파일 점수 분포 히스토그램",
     "기준별 최저 파일 목록"
-  ]
+  ],
+  "below_threshold_85": 85,
+  "long_function_threshold_lines": 60
 }
