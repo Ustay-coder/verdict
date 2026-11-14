@@ -5,7 +5,7 @@
 //
 // Needs: the `claude` CLI signed in, `verdict` (or this repository built), Playwright with Chromium,
 // and CLOUDFLARE_ACCOUNT_ID + CLOUDFLARE_API_TOKEN for Clef. Each round is kept in <out>/rNN/:
-// index.html, desktop.png, mobile.png, full.png, eval.json, claude.json, and the message sent to Claude.
+// index.html, desktop.png, mobile.png, full.jpg, eval.json, claude.json, and the message sent to Claude.
 import { spawnSync } from "node:child_process";
 import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
@@ -43,13 +43,13 @@ async function screenshots(html, dir) {
     const shots = [
       ["desktop.png", { width: 1280, height: 800 }, false],
       ["mobile.png", { width: 390, height: 844 }, false],
-      ["full.png", { width: 1280, height: 800 }, true],
+      ["full.jpg", { width: 1280, height: 800 }, true], // for people to look at; never sent to a judge
     ];
     for (const [name, viewport, fullPage] of shots) {
-      const page = await browser.newPage({ viewport, deviceScaleFactor: 2 });
+      const page = await browser.newPage({ viewport, deviceScaleFactor: fullPage ? 1 : 2 });
       await page.goto(`file://${html}`, { waitUntil: "networkidle" }).catch(() => {});
       await page.waitForTimeout(800);
-      await page.screenshot({ path: join(dir, name), fullPage });
+      await page.screenshot({ path: join(dir, name), fullPage, ...(name.endsWith(".jpg") ? { type: "jpeg", quality: 80 } : {}) });
       await page.close();
     }
   } finally {

@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- `examples/landing-page`: Claude Code builds a landing page for Verdict and Verdict scores it before it ships, round by round, with a rubric frozen before the first page: six gates (screenshots judged by Clef, two rules) and four scored criteria. The run went 0, 0, 73, 73, 73, 73, 80. The README tells why: a rule blocked a logo's `href="#"`, a failed rule did not say what it matched, and the script sent three empty lists of failures.
+
 ## 0.4.0
 
 - **Pictures reach every model that takes them**: OpenAI and Gemini as well as Clef. Until now only Clef was sent a picture, and the other models judged one line saying a picture was there.
