@@ -25,5 +25,5 @@ export * from "./idempotency.js";
 export * from "./queue.js";
 
 export { ProviderError } from "./provider-error.js";
-export type { DecisionRaw, LlmRaw, HumanRaw, BenchmarkRaw, PanelRaw, RatingRawByJudge } from "./schema/rating-raw.js";
+export type { DecisionRaw, LlmRaw, HumanRaw, BenchmarkRaw, RegexMatch, PanelRaw, RatingRawByJudge } from "./schema/rating-raw.js";
 export { FileAccessError, type FileFailure } from "./file-error.js";

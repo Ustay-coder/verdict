@@ -19,6 +19,39 @@ describe("benchmark judge", () => {
     const [n] = await new BenchmarkJudge({ method: "regex", pattern: "lorem ipsum", flags: "i", negate: true }).rate(ctx("Lorem Ipsum dolor"));
     expect(n!.score).toBe(0);
   });
+  it("regex reports what matched and where, bounded", async () => {
+    const page = `<header>\n  <a class="logo" href="#">Acme</a>\n</header>\n<p>${"x".repeat(300)}</p>`;
+    const base = ctx("");
+    const evidence = [
+      { inputIndex: 0, kind: "text" as const, label: "styles.css", tags: ["css"], text: "body{}", stats: stats("body{}") },
+      { inputIndex: 1, kind: "text" as const, label: "index.html", tags: ["html", "page"], text: page, stats: stats(page) },
+    ];
+    const [r] = await new BenchmarkJudge({ method: "regex", pattern: 'href="#"|TODO', negate: true }).rate({ ...base, evidence });
+    expect(r!.status).toBe("scored");
+    expect(r!.normalized).toBe(0);
+    expect(r!.rationale).toBe('regex /href="#"|TODO/ matched 1 time(s) (negated); first: "href=\\"#\\"" in index.html line 2');
+    const raw = r!.raw as { count: number; matches: Array<Record<string, unknown>> };
+    expect(raw.count).toBe(1);
+    expect(raw.matches).toHaveLength(1);
+    expect(raw.matches[0]).toMatchObject({ match: 'href="#"', input: "index.html", tags: ["html", "page"], inputIndex: 1, line: 2 });
+    expect(raw.matches[0]!.snippet).toContain('<a class="logo" href="#">Acme</a>');
+
+    // at most five matches; long matches and snippets are truncated
+    const many = Array.from({ length: 8 }, (_, i) => `TODO ${i}`).join("\n");
+    const [m] = await new BenchmarkJudge({ method: "regex", pattern: "TODO \\d", perMatch: 0.1, negate: true }).rate(ctx(many));
+    expect((m!.raw as { count: number }).count).toBe(8);
+    expect(m!.normalized).toBeCloseTo(0.2);
+    expect((m!.raw as { matches: unknown[] }).matches).toHaveLength(5);
+    const [l] = await new BenchmarkJudge({ method: "regex", pattern: "x+", negate: false }).rate(ctx(page));
+    const lm = (l!.raw as { matches: Array<{ match: string; snippet: string }> }).matches[0]!;
+    expect(lm.match.length).toBeLessThanOrEqual(80);
+    expect(lm.snippet.length).toBeLessThanOrEqual(162);
+
+    // no match: no matches array, rationale unchanged
+    const [z] = await new BenchmarkJudge({ method: "regex", pattern: "lorem", negate: true }).rate(ctx("clean"));
+    expect(z!.raw).toEqual({ count: 0 });
+    expect(z!.rationale).toBe("regex /lorem/ matched 0 time(s) (negated)");
+  });
   it("keywords ratio", async () => {
     const [r] = await new BenchmarkJudge({ method: "keywords", keywords: ["revenue", "churn", "cac"], mode: "ratio", caseSensitive: false }).rate(ctx("Revenue grew; churn fell."));
     expect(r!.normalized).toBeCloseTo(2 / 3);

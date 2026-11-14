@@ -30,7 +30,20 @@ export interface LlmRaw {
   provider: string; model?: string; samples?: number[]; agreement?: number; latencyMs: number;
 }
 export interface HumanRaw { instructions?: string; allowedRaters?: string[]; escalatedFrom?: Rating }
+/** One regex match located in the evidence; text fields are truncated so ratings stay small. */
+export interface RegexMatch {
+  /** The matched text (at most 80 characters). */
+  match: string;
+  /** The match with up to 40 characters either side, whitespace collapsed. */
+  snippet: string;
+  /** Label of the input it came from, its tags, and its index among the subject's inputs. */
+  input: string; tags: string[]; inputIndex: number;
+  /** 1-based line within that input. */
+  line: number;
+}
 export interface BenchmarkRaw {
+  /** regex: the first 5 matches (present only when something matched). */
+  matches?: RegexMatch[];
   count?: number; hits?: string[]; total?: number; value?: unknown; scope?: Record<string, number>;
   similarity?: number; score?: number; normalized?: number; rationale?: string;
 }

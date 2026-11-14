@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- **A `regex` benchmark says what it matched and where.** The rationale names the first match, its input and line (`… matched 1 time(s) (negated); first: "href=\"#\"" in index.html line 2`), and `raw.matches` keeps the first five, each with the matched text, a short snippet around it and the input's label, tags and index. Text is cut (80 characters for a match, 40 either side for its snippet) so ratings stay small. Scores are unchanged. Before this, a failed "no placeholders" gate in `examples/landing-page` said only that something matched, and the agent fixing the page had to guess what.
+
 ## 0.4.0
 
 - **Pictures reach every model that takes them**: OpenAI and Gemini as well as Clef. Until now only Clef was sent a picture, and the other models judged one line saying a picture was there.

@@ -4,7 +4,7 @@
  */
 import { z } from "zod";
 import { parseProvider, readProviderJson } from "../provider-error.js";
-import type { BenchmarkRaw } from "../schema/rating-raw.js";
+import type { BenchmarkRaw, RegexMatch } from "../schema/rating-raw.js";
 import { clamp, denormalizeScore } from "../aggregate/index.js";
 import { evaluateExpression } from "../expr.js";
 import type { Rating } from "../schema/evaluation.js";
@@ -46,8 +46,49 @@ async function regex(s: Extract<BenchmarkMethod, { method: "regex" }>, ctx: Judg
   const count = s.perMatch ? (text.match(re) ?? []).length : re.test(text) ? 1 : 0;
   let n = s.perMatch ? Math.min(1, count * s.perMatch) : count;
   if (s.negate) n = 1 - n;
-  return { normalized: n, rationale: `regex /${s.pattern}/ matched ${count} time(s)${s.negate ? " (negated)" : ""}`, raw: { count } };
+  // why: a bare count tells the reader nothing to fix; the first few matches say what matched and in which input.
+  const matches = count ? findRegexMatches(ctx.evidence, s.pattern, s.flags ?? "") : [];
+  const first = matches[0];
+  const where = first ? `; first: ${JSON.stringify(first.match)} in ${first.input} line ${first.line}` : "";
+  return { normalized: n, rationale: `regex /${s.pattern}/ matched ${count} time(s)${s.negate ? " (negated)" : ""}${where}`, raw: matches.length ? { count, matches } : { count } };
 
+}
+
+const MAX_REGEX_MATCHES = 5, MAX_MATCH_CHARS = 80, SNIPPET_CONTEXT = 40;
+
+function cut(text: string, max: number): string {
+  return text.length > max ? `${text.slice(0, max - 1)}…` : text;
+}
+
+/** First matches of `pattern` over the same joined text the score uses, each located back to its evidence item. */
+function findRegexMatches(evidence: JudgeContext["evidence"], pattern: string, flags: string): RegexMatch[] {
+  const sep = "\n\n";
+  const starts: number[] = [];
+  let offset = 0;
+  for (const e of evidence) { starts.push(offset); offset += e.text.length + sep.length; }
+  const text = evidence.map(e => e.text).join(sep);
+  const re = new RegExp(pattern, flags.includes("g") ? flags : flags + "g");
+  const out: RegexMatch[] = [];
+  for (const m of text.matchAll(re)) {
+    if (out.length >= MAX_REGEX_MATCHES) break;
+    const at = m.index ?? 0;
+    let i = starts.length - 1;
+    while (i > 0 && starts[i]! > at) i--;
+    const ev = evidence[i];
+    if (!ev) break;
+    const local = at - starts[i]!;
+    const end = local + m[0].length;
+    const from = Math.max(0, local - SNIPPET_CONTEXT), to = Math.min(ev.text.length, end + SNIPPET_CONTEXT);
+    const match = cut(m[0], MAX_MATCH_CHARS);
+    // why: the snippet is built around the truncated match, so it stays under ~162 characters however long the match is.
+    const snippet = ((from > 0 ? "…" : "") + ev.text.slice(from, local) + match + ev.text.slice(end, to) + (to < ev.text.length ? "…" : "")).replace(/\s+/g, " ");
+    out.push({
+      match, snippet,
+      input: ev.label, tags: ev.tags, inputIndex: ev.inputIndex,
+      line: ev.text.slice(0, local).split("\n").length,
+    });
+  }
+  return out;
 }
 
 async function keywords(s: Extract<BenchmarkMethod, { method: "keywords" }>, ctx: JudgeContext): Promise<Result> {

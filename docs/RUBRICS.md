@@ -146,7 +146,7 @@ Limits to design around (Jev 1.13 public figures): 64k tokens per request, 32k f
 ### `benchmark` — deterministic
 | method | fields | score |
 | --- | --- | --- |
-| `regex` | `pattern`, `flags`, `perMatch`, `negate` | match → 1 (or `min(count*perMatch,1)`); `negate` inverts |
+| `regex` | `pattern`, `flags`, `perMatch`, `negate` | match → 1 (or `min(count*perMatch,1)`); `negate` inverts. `raw.matches` holds the first 5 matches (`match`, `snippet`, `input`, `tags`, `inputIndex`, `line`; match ≤ 80 chars, snippet ±40 chars around it) and the rationale names the first |
 | `keywords` | `keywords[]`, `mode: all\|any\|ratio`, `caseSensitive` | fraction of keywords present (ratio) or 0/1 |
 | `length` | `unit: words\|chars\|lines`, `min`, `max`, `tolerance` | 1 inside `[min,max]`, decays linearly to 0 at `tolerance × span` outside |
 | `jsonpath` | `path` (dotted), `input` (tag/label), `map {value: score}`, `range [lo,hi]` | numbers rescaled by `range`; booleans; or mapped values |
