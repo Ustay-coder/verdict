@@ -1,0 +1,121 @@
+[
+  {
+    "round": 0,
+    "score": 0,
+    "passed": false,
+    "criteria": {
+      "says_what": 1,
+      "cta_visible": 1,
+      "cta_real": 1,
+      "no_fabrication": 1,
+      "no_placeholder": 0,
+      "mobile_ok": 1,
+      "value_prop": 2,
+      "audience": 3,
+      "proof": 2,
+      "first_run": 3
+    }
+  },
+  {
+    "round": 1,
+    "score": 0,
+    "passed": false,
+    "criteria": {
+      "says_what": 1,
+      "cta_visible": 1,
+      "cta_real": 1,
+      "no_fabrication": 1,
+      "no_placeholder": 0,
+      "mobile_ok": 1,
+      "value_prop": 2,
+      "audience": 2,
+      "proof": 2,
+      "first_run": 3
+    }
+  },
+  {
+    "round": 2,
+    "score": 73,
+    "passed": false,
+    "criteria": {
+      "says_what": 1,
+      "cta_visible": 1,
+      "cta_real": 1,
+      "no_fabrication": 1,
+      "no_placeholder": 1,
+      "mobile_ok": 1,
+      "value_prop": 2,
+      "audience": 2,
+      "proof": 2,
+      "first_run": 3
+    }
+  },
+  {
+    "round": 3,
+    "score": 73,
+    "passed": false,
+    "criteria": {
+      "says_what": 1,
+      "cta_visible": 1,
+      "cta_real": 1,
+      "no_fabrication": 1,
+      "no_placeholder": 1,
+      "mobile_ok": 1,
+      "value_prop": 2,
+      "audience": 2,
+      "proof": 2,
+      "first_run": 3
+    }
+  },
+  {
+    "round": 4,
+    "score": 73,
+    "passed": false,
+    "criteria": {
+      "says_what": 1,
+      "cta_visible": 1,
+      "cta_real": 1,
+      "no_fabrication": 1,
+      "no_placeholder": 1,
+      "mobile_ok": 1,
+      "value_prop": 2,
+      "audience": 2,
+      "proof": 2,
+      "first_run": 3
+    }
+  },
+  {
+    "round": 5,
+    "score": 73,
+    "passed": false,
+    "criteria": {
+      "says_what": 1,
+      "cta_visible": 1,
+      "cta_real": 1,
+      "no_fabrication": 1,
+      "no_placeholder": 1,
+      "mobile_ok": 1,
+      "value_prop": 2,
+      "audience": 2,
+      "proof": 2,
+      "first_run": 3
+    }
+  },
+  {
+    "round": 6,
+    "score": 80,
+    "passed": true,
+    "criteria": {
+      "says_what": 1,
+      "cta_visible": 1,
+      "cta_real": 1,
+      "no_fabrication": 1,
+      "no_placeholder": 1,
+      "mobile_ok": 1,
+      "value_prop": 2,
+      "audience": 3,
+      "proof": 2,
+      "first_run": 3
+    }
+  }
+]
