@@ -19,6 +19,8 @@ rename:                       # 쓰려면 이 라벨로만
   "link.repository":      "링크 repository"
   "leaderboard cache":    "집계 캐시 서비스"
   "final-review.service": "최종 검토 서비스"
+  "평가 repository":      "핵심 도메인 repository"   # 도메인 암시 회피
+  "지원자 제출 repository": "제출 데이터 repository"    # 도메인 암시 회피
 
 generalize:                   # 구체적 이름 대신 역할로 설명
   - "함수/훅 이름(useAuth, useShareLink 등) → '인증 훅', '공유 링크 훅'"

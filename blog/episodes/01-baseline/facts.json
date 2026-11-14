@@ -42,43 +42,6 @@
     "웹 앱": 84.72,
     "인증 앱": 82.36
   },
-  "lowest_files_score_range_examples": [
-    {
-      "role": "워커 런타임 모듈",
-      "score": 60.65,
-      "lines": 786
-    },
-    {
-      "role": "평가 repository",
-      "score": 60.44,
-      "lines": 1515
-    },
-    {
-      "role": "결과 클라이언트 모듈",
-      "score": 67.16,
-      "lines": 579
-    },
-    {
-      "role": "링크 repository",
-      "score": 63.17,
-      "lines": 1269
-    },
-    {
-      "role": "지원자 제출 repository",
-      "score": 62.97,
-      "lines": 877
-    },
-    {
-      "role": "집계 캐시 서비스",
-      "score": 65.65,
-      "lines": 770
-    },
-    {
-      "role": "최종 검토 서비스",
-      "score": 67.16,
-      "lines": 845
-    }
-  ],
   "repo_rubric": {
     "metric_count": 9,
     "score": 44.1,
@@ -147,8 +110,48 @@
   "unknown": [
     "A·D 외 등급(B, C)의 경계와 파일 수",
     "파일 점수 분포 히스토그램",
-    "기준별 최저 파일 목록"
+    "기준별 최저 파일 목록",
+    "기준선 전체의 최저 점수 파일 순위"
   ],
   "below_threshold_85": 85,
-  "long_function_threshold_lines": 60
+  "long_function_threshold_lines": 60,
+  "low_score_file_examples": [
+    {
+      "role": "워커 런타임 모듈",
+      "score": 60.65,
+      "lines": 786
+    },
+    {
+      "role": "핵심 도메인 repository",
+      "score": 60.44,
+      "lines": 1515
+    },
+    {
+      "role": "결과 클라이언트 모듈",
+      "score": 67.16,
+      "lines": 579
+    },
+    {
+      "role": "링크 repository",
+      "score": 63.17,
+      "lines": 1269
+    },
+    {
+      "role": "제출 데이터 repository",
+      "score": 62.97,
+      "lines": 877
+    },
+    {
+      "role": "집계 캐시 서비스",
+      "score": 65.65,
+      "lines": 770
+    },
+    {
+      "role": "최종 검토 서비스",
+      "score": 67.16,
+      "lines": 845
+    }
+  ],
+  "low_score_file_examples_selection": "개선 후 점수가 가장 많이 오른 기존 파일 목록(원문 §2-2)에서 가져온 기준선 점수. 기준선 전체의 최저 순위가 아님.",
+  "chart_axis_start": 3.5
 }
