@@ -10,7 +10,7 @@ episodes:
   - id: "00-intro"
     title: "왜 코드 품질을 점수로 재는가"
     round: round-01
-    status: drafted
+    status: published
     covers: [두 루브릭 소개, 기준선 요약, 시리즈 로드맵]
   - id: "01-baseline"
     title: "기준선: 2,515개 파일을 채점해 보니"
