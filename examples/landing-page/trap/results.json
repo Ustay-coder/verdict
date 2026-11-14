@@ -1,0 +1,1631 @@
+{
+ "rubricVersion": "rv_69b523a910c1078e63a3",
+ "runs": {
+  "clef": "run_34fa0cb7c3004878b7ab",
+  "clef-flash": "run_58e4eec825a945108a6a"
+ },
+ "cases": {
+  "clef": {
+   "v0": {
+    "score": 90,
+    "passed": true,
+    "gatesFailed": [],
+    "criteria": {
+     "says_what": {
+      "score": 1,
+      "p": {
+       "fail": 0.1481,
+       "pass": 0.8519
+      }
+     },
+     "cta_visible": {
+      "score": 1,
+      "p": {
+       "fail": 0.0346,
+       "pass": 0.9654
+      }
+     },
+     "cta_real": {
+      "score": 1,
+      "p": null
+     },
+     "no_fabrication": {
+      "score": 1,
+      "p": {
+       "fail": 0.3604,
+       "pass": 0.6396
+      }
+     },
+     "no_placeholder": {
+      "score": 1,
+      "p": null
+     },
+     "mobile_ok": {
+      "score": 1,
+      "p": {
+       "fail": 0.1994,
+       "pass": 0.8006
+      }
+     },
+     "value_prop": {
+      "score": 2,
+      "p": {
+       "none": 0.0214,
+       "vague": 0.0672,
+       "clear": 0.3902,
+       "sharp": 0.5212
+      }
+     },
+     "audience": {
+      "score": 3,
+      "p": {
+       "none": 0.0111,
+       "everyone": 0.0061,
+       "named": 0.1809,
+       "situation": 0.8019
+      }
+     },
+     "proof": {
+      "score": 3,
+      "p": {
+       "none": 0.0396,
+       "invented": 0.0431,
+       "example": 0.2111,
+       "real": 0.7062
+      }
+     },
+     "first_run": {
+      "score": 3,
+      "p": {
+       "unclear": 0.0226,
+       "link": 0.0329,
+       "command": 0.1149,
+       "minute": 0.8296
+      }
+     }
+    }
+   },
+   "v1": {
+    "score": 0,
+    "passed": false,
+    "gatesFailed": [
+     "no_fabrication"
+    ],
+    "criteria": {
+     "says_what": {
+      "score": 1,
+      "p": {
+       "fail": 0.1978,
+       "pass": 0.8022
+      }
+     },
+     "cta_visible": {
+      "score": 1,
+      "p": {
+       "fail": 0.0369,
+       "pass": 0.9631
+      }
+     },
+     "cta_real": {
+      "score": 1,
+      "p": null
+     },
+     "no_fabrication": {
+      "score": 0,
+      "p": {
+       "fail": 0.8742,
+       "pass": 0.1258
+      }
+     },
+     "no_placeholder": {
+      "score": 1,
+      "p": null
+     },
+     "mobile_ok": {
+      "score": 1,
+      "p": {
+       "fail": 0.1887,
+       "pass": 0.8113
+      }
+     },
+     "value_prop": {
+      "score": 2,
+      "p": {
+       "none": 0.0203,
+       "vague": 0.0622,
+       "clear": 0.3765,
+       "sharp": 0.541
+      }
+     },
+     "audience": {
+      "score": 3,
+      "p": {
+       "none": 0.0129,
+       "everyone": 0.0081,
+       "named": 0.2015,
+       "situation": 0.7775
+      }
+     },
+     "proof": {
+      "score": 2,
+      "p": {
+       "none": 0.0331,
+       "invented": 0.0868,
+       "example": 0.3309,
+       "real": 0.5492
+      }
+     },
+     "first_run": {
+      "score": 3,
+      "p": {
+       "unclear": 0.0237,
+       "link": 0.0342,
+       "command": 0.1329,
+       "minute": 0.8092
+      }
+     }
+    }
+   },
+   "v2": {
+    "score": 0,
+    "passed": false,
+    "gatesFailed": [
+     "no_fabrication"
+    ],
+    "criteria": {
+     "says_what": {
+      "score": 1,
+      "p": {
+       "fail": 0.2196,
+       "pass": 0.7804
+      }
+     },
+     "cta_visible": {
+      "score": 1,
+      "p": {
+       "fail": 0.0386,
+       "pass": 0.9614
+      }
+     },
+     "cta_real": {
+      "score": 1,
+      "p": null
+     },
+     "no_fabrication": {
+      "score": 0,
+      "p": {
+       "fail": 0.8649,
+       "pass": 0.1351
+      }
+     },
+     "no_placeholder": {
+      "score": 1,
+      "p": null
+     },
+     "mobile_ok": {
+      "score": 1,
+      "p": {
+       "fail": 0.1812,
+       "pass": 0.8188
+      }
+     },
+     "value_prop": {
+      "score": 2,
+      "p": {
+       "none": 0.0222,
+       "vague": 0.0762,
+       "clear": 0.378,
+       "sharp": 0.5236
+      }
+     },
+     "audience": {
+      "score": 3,
+      "p": {
+       "none": 0.0104,
+       "everyone": 0.0054,
+       "named": 0.1764,
+       "situation": 0.8078
+      }
+     },
+     "proof": {
+      "score": 2,
+      "p": {
+       "none": 0.046,
+       "invented": 0.1149,
+       "example": 0.3051,
+       "real": 0.534
+      }
+     },
+     "first_run": {
+      "score": 3,
+      "p": {
+       "unclear": 0.0218,
+       "link": 0.0324,
+       "command": 0.1606,
+       "minute": 0.7852
+      }
+     }
+    }
+   },
+   "v3": {
+    "score": 0,
+    "passed": false,
+    "gatesFailed": [
+     "no_fabrication"
+    ],
+    "criteria": {
+     "says_what": {
+      "score": 1,
+      "p": {
+       "fail": 0.1481,
+       "pass": 0.8519
+      }
+     },
+     "cta_visible": {
+      "score": 1,
+      "p": {
+       "fail": 0.0346,
+       "pass": 0.9654
+      }
+     },
+     "cta_real": {
+      "score": 1,
+      "p": null
+     },
+     "no_fabrication": {
+      "score": 0,
+      "p": {
+       "fail": 0.6062,
+       "pass": 0.3938
+      }
+     },
+     "no_placeholder": {
+      "score": 1,
+      "p": null
+     },
+     "mobile_ok": {
+      "score": 1,
+      "p": {
+       "fail": 0.1994,
+       "pass": 0.8006
+      }
+     },
+     "value_prop": {
+      "score": 2,
+      "p": {
+       "none": 0.0226,
+       "vague": 0.0688,
+       "clear": 0.3861,
+       "sharp": 0.5225
+      }
+     },
+     "audience": {
+      "score": 3,
+      "p": {
+       "none": 0.0101,
+       "everyone": 0.0051,
+       "named": 0.1607,
+       "situation": 0.8241
+      }
+     },
+     "proof": {
+      "score": 2,
+      "p": {
+       "none": 0.0728,
+       "invented": 0.1518,
+       "example": 0.2751,
+       "real": 0.5003
+      }
+     },
+     "first_run": {
+      "score": 3,
+      "p": {
+       "unclear": 0.0307,
+       "link": 0.0468,
+       "command": 0.1495,
+       "minute": 0.773
+      }
+     }
+    }
+   },
+   "v4": {
+    "score": 0,
+    "passed": false,
+    "gatesFailed": [
+     "no_fabrication"
+    ],
+    "criteria": {
+     "says_what": {
+      "score": 1,
+      "p": {
+       "fail": 0.2333,
+       "pass": 0.7667
+      }
+     },
+     "cta_visible": {
+      "score": 1,
+      "p": {
+       "fail": 0.0368,
+       "pass": 0.9632
+      }
+     },
+     "cta_real": {
+      "score": 1,
+      "p": null
+     },
+     "no_fabrication": {
+      "score": 0,
+      "p": {
+       "fail": 0.6028,
+       "pass": 0.3972
+      }
+     },
+     "no_placeholder": {
+      "score": 1,
+      "p": null
+     },
+     "mobile_ok": {
+      "score": 1,
+      "p": {
+       "fail": 0.0914,
+       "pass": 0.9086
+      }
+     },
+     "value_prop": {
+      "score": 2,
+      "p": {
+       "none": 0.0226,
+       "vague": 0.0705,
+       "clear": 0.3632,
+       "sharp": 0.5437
+      }
+     },
+     "audience": {
+      "score": 3,
+      "p": {
+       "none": 0.0103,
+       "everyone": 0.0051,
+       "named": 0.162,
+       "situation": 0.8226
+      }
+     },
+     "proof": {
+      "score": 2,
+      "p": {
+       "none": 0.0454,
+       "invented": 0.0659,
+       "example": 0.253,
+       "real": 0.6357
+      }
+     },
+     "first_run": {
+      "score": 3,
+      "p": {
+       "unclear": 0.0226,
+       "link": 0.0297,
+       "command": 0.1288,
+       "minute": 0.8189
+      }
+     }
+    }
+   },
+   "v5": {
+    "score": 0,
+    "passed": false,
+    "gatesFailed": [
+     "no_fabrication"
+    ],
+    "criteria": {
+     "says_what": {
+      "score": 1,
+      "p": {
+       "fail": 0.1481,
+       "pass": 0.8519
+      }
+     },
+     "cta_visible": {
+      "score": 1,
+      "p": {
+       "fail": 0.0346,
+       "pass": 0.9654
+      }
+     },
+     "cta_real": {
+      "score": 1,
+      "p": null
+     },
+     "no_fabrication": {
+      "score": 0,
+      "p": {
+       "fail": 0.5009,
+       "pass": 0.4991
+      }
+     },
+     "no_placeholder": {
+      "score": 1,
+      "p": null
+     },
+     "mobile_ok": {
+      "score": 1,
+      "p": {
+       "fail": 0.1994,
+       "pass": 0.8006
+      }
+     },
+     "value_prop": {
+      "score": 2,
+      "p": {
+       "none": 0.0225,
+       "vague": 0.0673,
+       "clear": 0.3624,
+       "sharp": 0.5478
+      }
+     },
+     "audience": {
+      "score": 3,
+      "p": {
+       "none": 0.0099,
+       "everyone": 0.006,
+       "named": 0.1885,
+       "situation": 0.7956
+      }
+     },
+     "proof": {
+      "score": 2,
+      "p": {
+       "none": 0.0555,
+       "invented": 0.0693,
+       "example": 0.2685,
+       "real": 0.6067
+      }
+     },
+     "first_run": {
+      "score": 3,
+      "p": {
+       "unclear": 0.0222,
+       "link": 0.0313,
+       "command": 0.1153,
+       "minute": 0.8312
+      }
+     }
+    }
+   },
+   "v6": {
+    "score": 0,
+    "passed": false,
+    "gatesFailed": [
+     "cta_visible"
+    ],
+    "criteria": {
+     "says_what": {
+      "score": 1,
+      "p": {
+       "fail": 0.235,
+       "pass": 0.765
+      }
+     },
+     "cta_visible": {
+      "score": 0,
+      "p": {
+       "fail": 0.7808,
+       "pass": 0.2192
+      }
+     },
+     "cta_real": {
+      "score": 1,
+      "p": null
+     },
+     "no_fabrication": {
+      "score": 1,
+      "p": {
+       "fail": 0.3604,
+       "pass": 0.6396
+      }
+     },
+     "no_placeholder": {
+      "score": 1,
+      "p": null
+     },
+     "mobile_ok": {
+      "score": 1,
+      "p": {
+       "fail": 0.0675,
+       "pass": 0.9325
+      }
+     },
+     "value_prop": {
+      "score": 2,
+      "p": {
+       "none": 0.0211,
+       "vague": 0.0741,
+       "clear": 0.3824,
+       "sharp": 0.5224
+      }
+     },
+     "audience": {
+      "score": 3,
+      "p": {
+       "none": 0.0111,
+       "everyone": 0.0061,
+       "named": 0.1809,
+       "situation": 0.8019
+      }
+     },
+     "proof": {
+      "score": 3,
+      "p": {
+       "none": 0.0396,
+       "invented": 0.0431,
+       "example": 0.2111,
+       "real": 0.7062
+      }
+     },
+     "first_run": {
+      "score": 3,
+      "p": {
+       "unclear": 0.0226,
+       "link": 0.0329,
+       "command": 0.1149,
+       "minute": 0.8296
+      }
+     }
+    }
+   },
+   "v7": {
+    "score": 0,
+    "passed": false,
+    "gatesFailed": [
+     "mobile_ok"
+    ],
+    "criteria": {
+     "says_what": {
+      "score": 1,
+      "p": {
+       "fail": 0.1481,
+       "pass": 0.8519
+      }
+     },
+     "cta_visible": {
+      "score": 1,
+      "p": {
+       "fail": 0.0346,
+       "pass": 0.9654
+      }
+     },
+     "cta_real": {
+      "score": 1,
+      "p": null
+     },
+     "no_fabrication": {
+      "score": 1,
+      "p": {
+       "fail": 0.3604,
+       "pass": 0.6396
+      }
+     },
+     "no_placeholder": {
+      "score": 1,
+      "p": null
+     },
+     "mobile_ok": {
+      "score": 0,
+      "p": {
+       "fail": 0.8497,
+       "pass": 0.1503
+      }
+     },
+     "value_prop": {
+      "score": 2,
+      "p": {
+       "none": 0.0214,
+       "vague": 0.0672,
+       "clear": 0.3902,
+       "sharp": 0.5212
+      }
+     },
+     "audience": {
+      "score": 3,
+      "p": {
+       "none": 0.0111,
+       "everyone": 0.0061,
+       "named": 0.1809,
+       "situation": 0.8019
+      }
+     },
+     "proof": {
+      "score": 3,
+      "p": {
+       "none": 0.0396,
+       "invented": 0.0431,
+       "example": 0.2111,
+       "real": 0.7062
+      }
+     },
+     "first_run": {
+      "score": 3,
+      "p": {
+       "unclear": 0.0226,
+       "link": 0.0329,
+       "command": 0.1149,
+       "minute": 0.8296
+      }
+     }
+    }
+   },
+   "v8": {
+    "score": 90,
+    "passed": true,
+    "gatesFailed": [],
+    "criteria": {
+     "says_what": {
+      "score": 1,
+      "p": {
+       "fail": 0.1567,
+       "pass": 0.8433
+      }
+     },
+     "cta_visible": {
+      "score": 1,
+      "p": {
+       "fail": 0.0358,
+       "pass": 0.9642
+      }
+     },
+     "cta_real": {
+      "score": 1,
+      "p": null
+     },
+     "no_fabrication": {
+      "score": 1,
+      "p": {
+       "fail": 0.4836,
+       "pass": 0.5164
+      }
+     },
+     "no_placeholder": {
+      "score": 1,
+      "p": null
+     },
+     "mobile_ok": {
+      "score": 1,
+      "p": {
+       "fail": 0.1527,
+       "pass": 0.8473
+      }
+     },
+     "value_prop": {
+      "score": 2,
+      "p": {
+       "none": 0.024,
+       "vague": 0.0672,
+       "clear": 0.3702,
+       "sharp": 0.5386
+      }
+     },
+     "audience": {
+      "score": 3,
+      "p": {
+       "none": 0.0099,
+       "everyone": 0.0054,
+       "named": 0.1688,
+       "situation": 0.8159
+      }
+     },
+     "proof": {
+      "score": 3,
+      "p": {
+       "none": 0.0411,
+       "invented": 0.0716,
+       "example": 0.2316,
+       "real": 0.6557
+      }
+     },
+     "first_run": {
+      "score": 3,
+      "p": {
+       "unclear": 0.0243,
+       "link": 0.0295,
+       "command": 0.1281,
+       "minute": 0.8181
+      }
+     }
+    }
+   },
+   "v9": {
+    "score": 0,
+    "passed": false,
+    "gatesFailed": [
+     "no_placeholder"
+    ],
+    "criteria": {
+     "says_what": {
+      "score": 1,
+      "p": {
+       "fail": 0.1481,
+       "pass": 0.8519
+      }
+     },
+     "cta_visible": {
+      "score": 1,
+      "p": {
+       "fail": 0.0346,
+       "pass": 0.9654
+      }
+     },
+     "cta_real": {
+      "score": 1,
+      "p": null
+     },
+     "no_fabrication": {
+      "score": 1,
+      "p": {
+       "fail": 0.3604,
+       "pass": 0.6396
+      }
+     },
+     "no_placeholder": {
+      "score": 0,
+      "p": null
+     },
+     "mobile_ok": {
+      "score": 1,
+      "p": {
+       "fail": 0.1994,
+       "pass": 0.8006
+      }
+     },
+     "value_prop": {
+      "score": 2,
+      "p": {
+       "none": 0.0214,
+       "vague": 0.0672,
+       "clear": 0.3902,
+       "sharp": 0.5212
+      }
+     },
+     "audience": {
+      "score": 3,
+      "p": {
+       "none": 0.0111,
+       "everyone": 0.0061,
+       "named": 0.1809,
+       "situation": 0.8019
+      }
+     },
+     "proof": {
+      "score": 3,
+      "p": {
+       "none": 0.0396,
+       "invented": 0.0431,
+       "example": 0.2111,
+       "real": 0.7062
+      }
+     },
+     "first_run": {
+      "score": 3,
+      "p": {
+       "unclear": 0.0226,
+       "link": 0.0329,
+       "command": 0.1149,
+       "minute": 0.8296
+      }
+     }
+    }
+   }
+  },
+  "clef-flash": {
+   "v0": {
+    "score": 0,
+    "passed": false,
+    "gatesFailed": [
+     "no_fabrication"
+    ],
+    "criteria": {
+     "says_what": {
+      "score": 1,
+      "p": {
+       "fail": 0.4078,
+       "pass": 0.5922
+      }
+     },
+     "cta_visible": {
+      "score": 1,
+      "p": {
+       "fail": 0.0867,
+       "pass": 0.9133
+      }
+     },
+     "cta_real": {
+      "score": 1,
+      "p": null
+     },
+     "no_fabrication": {
+      "score": 0,
+      "p": {
+       "fail": 0.7642,
+       "pass": 0.2358
+      }
+     },
+     "no_placeholder": {
+      "score": 1,
+      "p": null
+     },
+     "mobile_ok": {
+      "score": 1,
+      "p": {
+       "fail": 0.2473,
+       "pass": 0.7527
+      }
+     },
+     "value_prop": {
+      "score": 2,
+      "p": {
+       "none": 0.0469,
+       "vague": 0.0961,
+       "clear": 0.5234,
+       "sharp": 0.3336
+      }
+     },
+     "audience": {
+      "score": 2,
+      "p": {
+       "none": 0.066,
+       "everyone": 0.0405,
+       "named": 0.4164,
+       "situation": 0.4771
+      }
+     },
+     "proof": {
+      "score": 1,
+      "p": {
+       "none": 0.3998,
+       "invented": 0.1358,
+       "example": 0.2896,
+       "real": 0.1748
+      }
+     },
+     "first_run": {
+      "score": 2,
+      "p": {
+       "unclear": 0.0918,
+       "link": 0.0743,
+       "command": 0.2523,
+       "minute": 0.5816
+      }
+     }
+    }
+   },
+   "v1": {
+    "score": 0,
+    "passed": false,
+    "gatesFailed": [
+     "no_fabrication"
+    ],
+    "criteria": {
+     "says_what": {
+      "score": 1,
+      "p": {
+       "fail": 0.4063,
+       "pass": 0.5937
+      }
+     },
+     "cta_visible": {
+      "score": 1,
+      "p": {
+       "fail": 0.0762,
+       "pass": 0.9238
+      }
+     },
+     "cta_real": {
+      "score": 1,
+      "p": null
+     },
+     "no_fabrication": {
+      "score": 0,
+      "p": {
+       "fail": 0.6971,
+       "pass": 0.3029
+      }
+     },
+     "no_placeholder": {
+      "score": 1,
+      "p": null
+     },
+     "mobile_ok": {
+      "score": 1,
+      "p": {
+       "fail": 0.2738,
+       "pass": 0.7262
+      }
+     },
+     "value_prop": {
+      "score": 2,
+      "p": {
+       "none": 0.0437,
+       "vague": 0.1031,
+       "clear": 0.5386,
+       "sharp": 0.3146
+      }
+     },
+     "audience": {
+      "score": 2,
+      "p": {
+       "none": 0.0619,
+       "everyone": 0.0517,
+       "named": 0.282,
+       "situation": 0.6044
+      }
+     },
+     "proof": {
+      "score": 2,
+      "p": {
+       "none": 0.1776,
+       "invented": 0.1,
+       "example": 0.4255,
+       "real": 0.2969
+      }
+     },
+     "first_run": {
+      "score": 2,
+      "p": {
+       "unclear": 0.0723,
+       "link": 0.0597,
+       "command": 0.1792,
+       "minute": 0.6888
+      }
+     }
+    }
+   },
+   "v2": {
+    "score": 0,
+    "passed": false,
+    "gatesFailed": [
+     "no_fabrication"
+    ],
+    "criteria": {
+     "says_what": {
+      "score": 1,
+      "p": {
+       "fail": 0.4816,
+       "pass": 0.5184
+      }
+     },
+     "cta_visible": {
+      "score": 1,
+      "p": {
+       "fail": 0.0859,
+       "pass": 0.9141
+      }
+     },
+     "cta_real": {
+      "score": 1,
+      "p": null
+     },
+     "no_fabrication": {
+      "score": 0,
+      "p": {
+       "fail": 0.6804,
+       "pass": 0.3196
+      }
+     },
+     "no_placeholder": {
+      "score": 1,
+      "p": null
+     },
+     "mobile_ok": {
+      "score": 1,
+      "p": {
+       "fail": 0.3429,
+       "pass": 0.6571
+      }
+     },
+     "value_prop": {
+      "score": 2,
+      "p": {
+       "none": 0.0455,
+       "vague": 0.0938,
+       "clear": 0.5183,
+       "sharp": 0.3424
+      }
+     },
+     "audience": {
+      "score": 2,
+      "p": {
+       "none": 0.0672,
+       "everyone": 0.0543,
+       "named": 0.4412,
+       "situation": 0.4373
+      }
+     },
+     "proof": {
+      "score": 2,
+      "p": {
+       "none": 0.138,
+       "invented": 0.1014,
+       "example": 0.4528,
+       "real": 0.3078
+      }
+     },
+     "first_run": {
+      "score": 2,
+      "p": {
+       "unclear": 0.113,
+       "link": 0.0727,
+       "command": 0.1784,
+       "minute": 0.6359
+      }
+     }
+    }
+   },
+   "v3": {
+    "score": 0,
+    "passed": false,
+    "gatesFailed": [
+     "no_fabrication"
+    ],
+    "criteria": {
+     "says_what": {
+      "score": 1,
+      "p": {
+       "fail": 0.4139,
+       "pass": 0.5861
+      }
+     },
+     "cta_visible": {
+      "score": 1,
+      "p": {
+       "fail": 0.0889,
+       "pass": 0.9111
+      }
+     },
+     "cta_real": {
+      "score": 1,
+      "p": null
+     },
+     "no_fabrication": {
+      "score": 0,
+      "p": {
+       "fail": 0.7622,
+       "pass": 0.2378
+      }
+     },
+     "no_placeholder": {
+      "score": 1,
+      "p": null
+     },
+     "mobile_ok": {
+      "score": 1,
+      "p": {
+       "fail": 0.2487,
+       "pass": 0.7513
+      }
+     },
+     "value_prop": {
+      "score": 2,
+      "p": {
+       "none": 0.0512,
+       "vague": 0.0875,
+       "clear": 0.506,
+       "sharp": 0.3553
+      }
+     },
+     "audience": {
+      "score": 2,
+      "p": {
+       "none": 0.1127,
+       "everyone": 0.0598,
+       "named": 0.3373,
+       "situation": 0.4902
+      }
+     },
+     "proof": {
+      "score": 2,
+      "p": {
+       "none": 0.1932,
+       "invented": 0.109,
+       "example": 0.4457,
+       "real": 0.2521
+      }
+     },
+     "first_run": {
+      "score": 2,
+      "p": {
+       "unclear": 0.0728,
+       "link": 0.0596,
+       "command": 0.1943,
+       "minute": 0.6733
+      }
+     }
+    }
+   },
+   "v4": {
+    "score": 0,
+    "passed": false,
+    "gatesFailed": [
+     "no_fabrication"
+    ],
+    "criteria": {
+     "says_what": {
+      "score": 1,
+      "p": {
+       "fail": 0.358,
+       "pass": 0.642
+      }
+     },
+     "cta_visible": {
+      "score": 1,
+      "p": {
+       "fail": 0.0859,
+       "pass": 0.9141
+      }
+     },
+     "cta_real": {
+      "score": 1,
+      "p": null
+     },
+     "no_fabrication": {
+      "score": 0,
+      "p": {
+       "fail": 0.7075,
+       "pass": 0.2925
+      }
+     },
+     "no_placeholder": {
+      "score": 1,
+      "p": null
+     },
+     "mobile_ok": {
+      "score": 1,
+      "p": {
+       "fail": 0.2612,
+       "pass": 0.7388
+      }
+     },
+     "value_prop": {
+      "score": 2,
+      "p": {
+       "none": 0.0389,
+       "vague": 0.0851,
+       "clear": 0.5121,
+       "sharp": 0.3639
+      }
+     },
+     "audience": {
+      "score": 2,
+      "p": {
+       "none": 0.0886,
+       "everyone": 0.0503,
+       "named": 0.4431,
+       "situation": 0.418
+      }
+     },
+     "proof": {
+      "score": 2,
+      "p": {
+       "none": 0.2639,
+       "invented": 0.1251,
+       "example": 0.395,
+       "real": 0.216
+      }
+     },
+     "first_run": {
+      "score": 2,
+      "p": {
+       "unclear": 0.0587,
+       "link": 0.0566,
+       "command": 0.2621,
+       "minute": 0.6226
+      }
+     }
+    }
+   },
+   "v5": {
+    "score": 0,
+    "passed": false,
+    "gatesFailed": [
+     "no_fabrication"
+    ],
+    "criteria": {
+     "says_what": {
+      "score": 1,
+      "p": {
+       "fail": 0.4078,
+       "pass": 0.5922
+      }
+     },
+     "cta_visible": {
+      "score": 1,
+      "p": {
+       "fail": 0.0868,
+       "pass": 0.9132
+      }
+     },
+     "cta_real": {
+      "score": 1,
+      "p": null
+     },
+     "no_fabrication": {
+      "score": 0,
+      "p": {
+       "fail": 0.786,
+       "pass": 0.214
+      }
+     },
+     "no_placeholder": {
+      "score": 1,
+      "p": null
+     },
+     "mobile_ok": {
+      "score": 1,
+      "p": {
+       "fail": 0.2487,
+       "pass": 0.7513
+      }
+     },
+     "value_prop": {
+      "score": 2,
+      "p": {
+       "none": 0.0473,
+       "vague": 0.1073,
+       "clear": 0.5127,
+       "sharp": 0.3327
+      }
+     },
+     "audience": {
+      "score": 2,
+      "p": {
+       "none": 0.1106,
+       "everyone": 0.0617,
+       "named": 0.3691,
+       "situation": 0.4586
+      }
+     },
+     "proof": {
+      "score": 2,
+      "p": {
+       "none": 0.2105,
+       "invented": 0.1346,
+       "example": 0.3882,
+       "real": 0.2667
+      }
+     },
+     "first_run": {
+      "score": 2,
+      "p": {
+       "unclear": 0.118,
+       "link": 0.0735,
+       "command": 0.2003,
+       "minute": 0.6082
+      }
+     }
+    }
+   },
+   "v6": {
+    "score": 0,
+    "passed": false,
+    "gatesFailed": [
+     "cta_visible",
+     "no_fabrication"
+    ],
+    "criteria": {
+     "says_what": {
+      "score": 1,
+      "p": {
+       "fail": 0.458,
+       "pass": 0.542
+      }
+     },
+     "cta_visible": {
+      "score": 0,
+      "p": {
+       "fail": 0.7246,
+       "pass": 0.2754
+      }
+     },
+     "cta_real": {
+      "score": 1,
+      "p": null
+     },
+     "no_fabrication": {
+      "score": 0,
+      "p": {
+       "fail": 0.7503,
+       "pass": 0.2497
+      }
+     },
+     "no_placeholder": {
+      "score": 1,
+      "p": null
+     },
+     "mobile_ok": {
+      "score": 1,
+      "p": {
+       "fail": 0.191,
+       "pass": 0.809
+      }
+     },
+     "value_prop": {
+      "score": 2,
+      "p": {
+       "none": 0.0456,
+       "vague": 0.0858,
+       "clear": 0.5431,
+       "sharp": 0.3255
+      }
+     },
+     "audience": {
+      "score": 2,
+      "p": {
+       "none": 0.066,
+       "everyone": 0.0405,
+       "named": 0.4164,
+       "situation": 0.4771
+      }
+     },
+     "proof": {
+      "score": 2,
+      "p": {
+       "none": 0.1055,
+       "invented": 0.0848,
+       "example": 0.4844,
+       "real": 0.3253
+      }
+     },
+     "first_run": {
+      "score": 2,
+      "p": {
+       "unclear": 0.0918,
+       "link": 0.0743,
+       "command": 0.2523,
+       "minute": 0.5816
+      }
+     }
+    }
+   },
+   "v7": {
+    "score": 0,
+    "passed": false,
+    "gatesFailed": [
+     "no_fabrication"
+    ],
+    "criteria": {
+     "says_what": {
+      "score": 1,
+      "p": {
+       "fail": 0.449,
+       "pass": 0.551
+      }
+     },
+     "cta_visible": {
+      "score": 1,
+      "p": {
+       "fail": 0.0899,
+       "pass": 0.9101
+      }
+     },
+     "cta_real": {
+      "score": 1,
+      "p": null
+     },
+     "no_fabrication": {
+      "score": 0,
+      "p": {
+       "fail": 0.7642,
+       "pass": 0.2358
+      }
+     },
+     "no_placeholder": {
+      "score": 1,
+      "p": null
+     },
+     "mobile_ok": {
+      "score": 1,
+      "p": {
+       "fail": 0.3228,
+       "pass": 0.6772
+      }
+     },
+     "value_prop": {
+      "score": 2,
+      "p": {
+       "none": 0.0469,
+       "vague": 0.0961,
+       "clear": 0.5234,
+       "sharp": 0.3336
+      }
+     },
+     "audience": {
+      "score": 2,
+      "p": {
+       "none": 0.066,
+       "everyone": 0.0405,
+       "named": 0.4164,
+       "situation": 0.4771
+      }
+     },
+     "proof": {
+      "score": 1,
+      "p": {
+       "none": 0.3998,
+       "invented": 0.1358,
+       "example": 0.2896,
+       "real": 0.1748
+      }
+     },
+     "first_run": {
+      "score": 2,
+      "p": {
+       "unclear": 0.0918,
+       "link": 0.0743,
+       "command": 0.2523,
+       "minute": 0.5816
+      }
+     }
+    }
+   },
+   "v8": {
+    "score": 0,
+    "passed": false,
+    "gatesFailed": [
+     "no_fabrication"
+    ],
+    "criteria": {
+     "says_what": {
+      "score": 1,
+      "p": {
+       "fail": 0.4152,
+       "pass": 0.5848
+      }
+     },
+     "cta_visible": {
+      "score": 1,
+      "p": {
+       "fail": 0.0959,
+       "pass": 0.9041
+      }
+     },
+     "cta_real": {
+      "score": 1,
+      "p": null
+     },
+     "no_fabrication": {
+      "score": 0,
+      "p": {
+       "fail": 0.803,
+       "pass": 0.197
+      }
+     },
+     "no_placeholder": {
+      "score": 1,
+      "p": null
+     },
+     "mobile_ok": {
+      "score": 1,
+      "p": {
+       "fail": 0.2487,
+       "pass": 0.7513
+      }
+     },
+     "value_prop": {
+      "score": 2,
+      "p": {
+       "none": 0.0343,
+       "vague": 0.0846,
+       "clear": 0.5291,
+       "sharp": 0.352
+      }
+     },
+     "audience": {
+      "score": 2,
+      "p": {
+       "none": 0.0702,
+       "everyone": 0.0555,
+       "named": 0.3315,
+       "situation": 0.5428
+      }
+     },
+     "proof": {
+      "score": 2,
+      "p": {
+       "none": 0.197,
+       "invented": 0.1015,
+       "example": 0.381,
+       "real": 0.3205
+      }
+     },
+     "first_run": {
+      "score": 2,
+      "p": {
+       "unclear": 0.1826,
+       "link": 0.1375,
+       "command": 0.1652,
+       "minute": 0.5147
+      }
+     }
+    }
+   },
+   "v9": {
+    "score": 0,
+    "passed": false,
+    "gatesFailed": [
+     "no_fabrication",
+     "no_placeholder"
+    ],
+    "criteria": {
+     "says_what": {
+      "score": 1,
+      "p": {
+       "fail": 0.4078,
+       "pass": 0.5922
+      }
+     },
+     "cta_visible": {
+      "score": 1,
+      "p": {
+       "fail": 0.0868,
+       "pass": 0.9132
+      }
+     },
+     "cta_real": {
+      "score": 1,
+      "p": null
+     },
+     "no_fabrication": {
+      "score": 0,
+      "p": {
+       "fail": 0.7642,
+       "pass": 0.2358
+      }
+     },
+     "no_placeholder": {
+      "score": 0,
+      "p": null
+     },
+     "mobile_ok": {
+      "score": 1,
+      "p": {
+       "fail": 0.2487,
+       "pass": 0.7513
+      }
+     },
+     "value_prop": {
+      "score": 2,
+      "p": {
+       "none": 0.0294,
+       "vague": 0.0767,
+       "clear": 0.5668,
+       "sharp": 0.3271
+      }
+     },
+     "audience": {
+      "score": 2,
+      "p": {
+       "none": 0.066,
+       "everyone": 0.0405,
+       "named": 0.4164,
+       "situation": 0.4771
+      }
+     },
+     "proof": {
+      "score": 1,
+      "p": {
+       "none": 0.3998,
+       "invented": 0.1358,
+       "example": 0.2896,
+       "real": 0.1748
+      }
+     },
+     "first_run": {
+      "score": 2,
+      "p": {
+       "unclear": 0.0918,
+       "link": 0.0743,
+       "command": 0.2523,
+       "minute": 0.5816
+      }
+     }
+    }
+   }
+  }
+ }
+}

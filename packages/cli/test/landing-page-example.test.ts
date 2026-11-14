@@ -63,3 +63,34 @@ describe("examples/landing-page", () => {
     expect(page.gate("no_placeholder")).toBe(true);
   });
 });
+
+describe("examples/landing-page/trap", () => {
+  const trap = (name: string) => at(`trap/${name}`);
+  interface TrapCase { id: string; expected: Record<string, string>; inputs: Array<{ type: string; path: string; tags: string[] }> }
+  const cases = readFileSync(trap("cases.jsonl"), "utf8").trim().split("\n").map((line) => JSON.parse(line) as TrapCase);
+  const results = JSON.parse(readFileSync(trap("results.json"), "utf8")) as {
+    rubricVersion: string; cases: Record<string, Record<string, { score: number; passed: boolean; gatesFailed: string[] }>>;
+  };
+
+  it("has ten pages, each labelled on all six gates, with one planted failure at most", () => {
+    expect(cases.map((c) => c.id)).toEqual(Array.from({ length: 10 }, (_, i) => `v${i}`));
+    for (const c of cases) {
+      expect(Object.keys(c.expected).sort(), c.id).toEqual([...GATES].sort());
+      expect(Object.values(c.expected).filter((v) => v === "fail").length, c.id).toBeLessThanOrEqual(1);
+      expect(c.inputs.map((i) => i.tags[0]), c.id).toEqual(["desktop", "mobile", "page", "source", "facts"]);
+    }
+    // The control and the known false positive are the two pages a person would ship.
+    expect(cases.filter((c) => !Object.values(c.expected).includes("fail")).map((c) => c.id)).toEqual(["v0", "v9"]);
+  });
+
+  it("was run on the frozen rubric, and its README says what Clef decided for each page", () => {
+    expect(results.rubricVersion).toBe(readFileSync(at("verdict.lock"), "utf8").match(/version: (rv_\w+)/)![1]);
+    const readme = readFileSync(trap("README.md"), "utf8");
+    for (const [id, r] of Object.entries(results.cases.clef!)) {
+      const row = readme.split("\n").find((line) => line.startsWith(`| ${id} |`))!;
+      const clef = row.split("|")[4]!.trim();
+      if (r.passed) expect(clef, id).toBe(`**${r.score}, pass**`);
+      else expect(clef.startsWith("0:"), id).toBe(true);
+    }
+  });
+});
