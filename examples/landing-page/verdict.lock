@@ -1,0 +1,7 @@
+# verdict.lock — written by `verdict version freeze`, `fork`, `run`, `push`, `pull` and `promote`. Commit it; `verdict version verify` checks it.
+lockVersion: 1
+rubrics:
+  landing-page.yaml:
+    version: rv_69b523a910c1078e63a3
+    contentHash: 69b523a910c1078e63a33c7f41609032e50e5563ed20a582379c11570506ab4f
+    judgmentHash: e2b38736104b17790dbf952a782e3518cb964289e98e21daa40e4228ce402d03
