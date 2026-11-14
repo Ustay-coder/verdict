@@ -1,0 +1,152 @@
+{
+  "_source": "blog/data/round-01.json의 기준선(2026-11-07) 부분집합. 현재값은 포함하지 않음(1편은 기준선 편).",
+  "baseline_date": "2026-11-07",
+  "measured_files": 2515,
+  "file_mean": 84.23,
+  "file_median": 85.06,
+  "file_line_weighted_mean": 78.77,
+  "gap_mean_minus_weighted": 5.46,
+  "grade_a_files": 699,
+  "grade_a_threshold": 90,
+  "grade_d_files": 108,
+  "grade_d_threshold": 70,
+  "files_below_85": 1249,
+  "files_over_400_lines": 69,
+  "long_file_threshold_lines": 400,
+  "criteria_count": 10,
+  "criteria_scale": "0-5",
+  "criteria_mean_baseline": {
+    "testability": 4.135,
+    "analysability": 4.192,
+    "dead_code": 4.31,
+    "error_handling": 4.321,
+    "file_length": 4.916,
+    "cohesion": 4.296,
+    "types": 4.532,
+    "naming": 4.548,
+    "comments": 3.909,
+    "unchecked_casts": 4.978
+  },
+  "weakest_three": {
+    "comments": 3.91,
+    "testability": 4.14,
+    "analysability": 4.19
+  },
+  "low_score_types": [
+    "API route: 인증·입력 검증·DB 접근·응답 조립이 함수 하나에 섞임 (62~69점)",
+    "클라이언트 훅: 상태·API 호출·업무 규칙이 한 파일에 섞임 (69.8점 등)",
+    "거대 서비스·repository·스키마: 800~1,500줄, analysability와 testability 감점"
+  ],
+  "workspace_mean_baseline": {
+    "평가 앱": 83.41,
+    "웹 앱": 84.72,
+    "인증 앱": 82.36
+  },
+  "lowest_files_score_range_examples": [
+    {
+      "role": "워커 런타임 모듈",
+      "score": 60.65,
+      "lines": 786
+    },
+    {
+      "role": "평가 repository",
+      "score": 60.44,
+      "lines": 1515
+    },
+    {
+      "role": "결과 클라이언트 모듈",
+      "score": 67.16,
+      "lines": 579
+    },
+    {
+      "role": "링크 repository",
+      "score": 63.17,
+      "lines": 1269
+    },
+    {
+      "role": "지원자 제출 repository",
+      "score": 62.97,
+      "lines": 877
+    },
+    {
+      "role": "집계 캐시 서비스",
+      "score": 65.65,
+      "lines": 770
+    },
+    {
+      "role": "최종 검토 서비스",
+      "score": 67.16,
+      "lines": 845
+    }
+  ],
+  "repo_rubric": {
+    "metric_count": 9,
+    "score": 44.1,
+    "grade": "D",
+    "coverage_line_pct": 60.2,
+    "coverage_branch_pct": 53.7,
+    "duplication_pct": 4.73,
+    "total_lines": "272.7k",
+    "criteria": {
+      "coverage_lines": {
+        "weight": 3,
+        "value_before": 60.2,
+        "score_before": 0.26
+      },
+      "coverage_branches": {
+        "weight": 1,
+        "value_before": 53.7,
+        "score_before": 0.3
+      },
+      "duplication": {
+        "weight": 2,
+        "value_before": 4.73,
+        "score_before": 0.21
+      },
+      "complexity": {
+        "weight": 3,
+        "value_before": 0.98,
+        "score_before": 0.88
+      },
+      "unit_size": {
+        "weight": 2,
+        "score_before": 0
+      },
+      "lint": {
+        "weight": 2,
+        "score_before": 0.94
+      },
+      "typing": {
+        "weight": 2,
+        "score_before": 0.47
+      },
+      "typecheck": {
+        "weight": 1,
+        "score_before": 1
+      },
+      "security": {
+        "weight": 2,
+        "score_before": 0
+      }
+    },
+    "functions_over_60_lines": 913,
+    "security": {
+      "critical": 13,
+      "high": 144
+    }
+  },
+  "coverage_by_app_baseline": {
+    "평가 앱": 79.8,
+    "웹 앱": 33.5,
+    "인증 앱": 59.8
+  },
+  "measurement_notes": {
+    "judged_once_per_file": true,
+    "judge_variance": "판정 모델 점수는 실행마다 조금 달라질 수 있음"
+  },
+  "unknown": [
+    "A·D 외 등급(B, C)의 경계와 파일 수",
+    "파일 점수 분포 히스토그램",
+    "기준별 최저 파일 목록"
+  ]
+}
