@@ -1,0 +1,16 @@
+{
+ "applicationNo": "CKP-2026-030",
+ "companyName": "가상기업 030",
+ "itemName": "AI 기반 중소기업 협력사 보안점검 자동화 서비스",
+ "sector": "보안",
+ "businessType": "개인",
+ "startDate": 20260210,
+ "representatives": 2,
+ "industryCode": "10799",
+ "businessStatus": "계속사업자",
+ "govFundRequested": 5000,
+ "documents": {
+  "idCopy": true,
+  "bizRegistration": true
+ }
+}

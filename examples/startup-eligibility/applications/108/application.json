@@ -1,0 +1,16 @@
+{
+ "applicationNo": "CKP-2026-108",
+ "companyName": "가상기업 108",
+ "itemName": "107. 법률문서 자동작성 및 위험조항 탐지 SaaS",
+ "sector": "법률 문서",
+ "businessType": "법인",
+ "startDate": 20230210,
+ "representatives": 2,
+ "industryCode": "62010",
+ "businessStatus": "계속사업자",
+ "govFundRequested": 5000,
+ "documents": {
+  "idCopy": true,
+  "bizRegistration": true
+ }
+}

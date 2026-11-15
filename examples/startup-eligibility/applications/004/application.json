@@ -1,0 +1,16 @@
+{
+ "applicationNo": "CKP-2026-004",
+ "companyName": "가상기업 004",
+ "itemName": "AI 기반 가정용 호흡·수면 모니터링 헬스케어 기기",
+ "sector": "헬스케어 기기",
+ "businessType": "법인",
+ "startDate": 20250725,
+ "representatives": 1,
+ "industryCode": "28909",
+ "businessStatus": "계속사업자",
+ "govFundRequested": 8500,
+ "documents": {
+  "idCopy": true,
+  "bizRegistration": true
+ }
+}

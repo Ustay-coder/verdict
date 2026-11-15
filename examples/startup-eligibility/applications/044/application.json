@@ -1,0 +1,16 @@
+{
+ "applicationNo": "CKP-2026-044",
+ "companyName": "가상기업 044",
+ "itemName": "여행 큐레이션·동선 통합 예약 서비스",
+ "sector": "여행",
+ "businessType": "법인",
+ "startDate": 20241016,
+ "representatives": 1,
+ "industryCode": "72129",
+ "businessStatus": "계속사업자",
+ "govFundRequested": 7000,
+ "documents": {
+  "idCopy": true,
+  "bizRegistration": true
+ }
+}

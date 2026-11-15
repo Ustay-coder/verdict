@@ -1,0 +1,16 @@
+{
+ "applicationNo": "CKP-2026-104",
+ "companyName": "가상기업 104",
+ "itemName": "103. 개인 맞춤형 여행 일정 자동 생성 및 현장 변화 대응 통합 서비스",
+ "sector": "여행",
+ "businessType": "법인",
+ "startDate": 20240517,
+ "representatives": 1,
+ "industryCode": "63112",
+ "businessStatus": "계속사업자",
+ "govFundRequested": 5500,
+ "documents": {
+  "idCopy": true,
+  "bizRegistration": true
+ }
+}

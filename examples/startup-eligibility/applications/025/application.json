@@ -1,0 +1,16 @@
+{
+ "applicationNo": "CKP-2026-025",
+ "companyName": "가상기업 025",
+ "itemName": "공공데이터 기반 생활밀착형 민원·안전 혼잡도 예측 서비스",
+ "sector": "공공 데이터",
+ "businessType": "법인",
+ "startDate": 20240804,
+ "representatives": 1,
+ "industryCode": "73903",
+ "businessStatus": "계속사업자",
+ "govFundRequested": 5000,
+ "documents": {
+  "idCopy": true,
+  "bizRegistration": true
+ }
+}

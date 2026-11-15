@@ -1,0 +1,16 @@
+{
+ "applicationNo": "CKP-2026-078",
+ "companyName": "가상기업 078",
+ "itemName": "법률 문서 자동 검토·리스크 안내 SaaS",
+ "sector": "법률 문서",
+ "businessType": "법인",
+ "startDate": 20250530,
+ "representatives": 2,
+ "industryCode": "26429",
+ "businessStatus": "계속사업자",
+ "govFundRequested": 9000,
+ "documents": {
+  "idCopy": true,
+  "bizRegistration": true
+ }
+}

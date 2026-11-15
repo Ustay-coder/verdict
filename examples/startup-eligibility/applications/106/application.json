@@ -1,0 +1,16 @@
+{
+ "applicationNo": "CKP-2026-106",
+ "companyName": "가상기업 106",
+ "itemName": "스마트 결제보조 리스크 알림·정산 연결 서비스",
+ "sector": "핀테크(결제 보조)",
+ "businessType": "개인",
+ "startDate": 20230613,
+ "representatives": 1,
+ "industryCode": "62010",
+ "businessStatus": "계속사업자",
+ "govFundRequested": 5000,
+ "documents": {
+  "idCopy": true,
+  "bizRegistration": true
+ }
+}

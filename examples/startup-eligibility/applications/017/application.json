@@ -1,0 +1,16 @@
+{
+ "applicationNo": "CKP-2026-017",
+ "companyName": "가상기업 017",
+ "itemName": "AI 기반 채용면접 일정·커뮤니케이션 자동화 서비스",
+ "sector": "HR·채용",
+ "businessType": "법인",
+ "startDate": 20230410,
+ "representatives": 1,
+ "industryCode": "38220",
+ "businessStatus": "계속사업자",
+ "govFundRequested": 12000,
+ "documents": {
+  "idCopy": true,
+  "bizRegistration": true
+ }
+}

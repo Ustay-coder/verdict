@@ -1,0 +1,16 @@
+{
+ "applicationNo": "CKP-2026-021",
+ "companyName": "가상기업 021",
+ "itemName": "드론 기반 농업용 미세살포 자동화 서비스",
+ "sector": "드론",
+ "businessType": "법인",
+ "startDate": 20240526,
+ "representatives": 1,
+ "industryCode": "10799",
+ "businessStatus": "계속사업자",
+ "govFundRequested": 12000,
+ "documents": {
+  "idCopy": true,
+  "bizRegistration": true
+ }
+}

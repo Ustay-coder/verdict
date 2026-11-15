@@ -1,0 +1,16 @@
+{
+ "applicationNo": "CKP-2026-026",
+ "companyName": "가상기업 026",
+ "itemName": "시니어 웰라이프 동행 서비스",
+ "sector": "시니어 케어",
+ "businessType": "법인",
+ "startDate": 20250315,
+ "representatives": 1,
+ "industryCode": "47912",
+ "businessStatus": "계속사업자",
+ "govFundRequested": 9500,
+ "documents": {
+  "idCopy": true,
+  "bizRegistration": true
+ }
+}

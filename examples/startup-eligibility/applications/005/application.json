@@ -1,0 +1,16 @@
+{
+ "applicationNo": "CKP-2026-005",
+ "companyName": "가상기업 005",
+ "itemName": "디지털 헬스 기반 개인 맞춤 생활습관 코칭 플랫폼",
+ "sector": "디지털 헬스",
+ "businessType": "개인",
+ "startDate": 20250808,
+ "representatives": 2,
+ "industryCode": "47912",
+ "businessStatus": "계속사업자",
+ "govFundRequested": 8000,
+ "documents": {
+  "idCopy": true,
+  "bizRegistration": true
+ }
+}

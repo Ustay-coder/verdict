@@ -1,0 +1,16 @@
+{
+ "applicationNo": "CKP-2026-016",
+ "companyName": "가상기업 016",
+ "itemName": "결제보조형 정산·영수증 자동화 SaaS",
+ "sector": "핀테크(결제 보조)",
+ "businessType": "법인",
+ "startDate": 20230922,
+ "representatives": 1,
+ "industryCode": "47912",
+ "businessStatus": "휴업",
+ "govFundRequested": 6500,
+ "documents": {
+  "idCopy": true,
+  "bizRegistration": true
+ }
+}
