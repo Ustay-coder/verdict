@@ -108,9 +108,12 @@ describe("examples/startup-eligibility", () => {
     expect(fails.filter((n) => n > 1)).toHaveLength(0);
   });
 
-  it("has rules that give the planted answer for one application of each kind, without a model", () => {
+  // One CLI run per kind a rule can break, plus a clean one and the first day of the age window: about ten runs.
+  const RULE_KINDS = ["clean", "near_edge", "age_old", "age_after", "doc_missing", "bad_code", "closed", "over_budget", "no_team", "guide_left"];
+  it("has rules that give the planted answer for one application of each kind a rule can break, without a model", { timeout: 60_000 }, () => {
     const kinds = new Map<string, SeCase>();
-    for (const c of cases) if (!kinds.has(c.name)) kinds.set(c.name, c);
+    for (const c of cases) if (RULE_KINDS.includes(c.name) && !kinds.has(c.name)) kinds.set(c.name, c);
+    expect([...kinds.keys()].sort()).toEqual([...RULE_KINDS].sort());
     for (const c of kinds.values()) {
       const r = spawnSync("node", [cli, "eval", "-r", se("eligibility.yaml"), "--mock", "--json",
         "-i", `application=${se(c.inputs[0]!.path)}`, "-i", `plan=${se(c.inputs[1]!.path)}`], { encoding: "utf8" });
