@@ -23,6 +23,7 @@ The `verdict` binary uses the local engine and `.verdict` file store by default.
 | `run` | Run a rubric version over a gold file and keep the run. `--models jev,clef,clef-flash` runs it once per decision model instead, without editing the rubric, and shows the models side by side ([guide](../guide/decision-models#which-model-on-your-cases)) |
 | `diff` | Compare two versions or runs case by case (fixed, regressed, near boundary…); a policy-only change is re-scored from recorded answers without judge calls (`--rerun` asks again); `--fail-on regressed` gates CI; `--markdown` for PR comments |
 | `rescore` | Score a stored run against new labels without calling judges |
+| `change-test demo`, `change-test create`, `change-test run`, `change-test expect`, `change-test reverify`, `change-test list` | Keep a test of what a rubric change should do to the same documents, run a candidate version against it and check the result against expectations written beforehand; `--fail-on unmet` gates CI ([guide](../guide/change-tests)) |
 | `hub login`, `hub whoami`, `hub list`, `hub logout` | Sign in to a hub with GitHub (device flow), check who you publish as, list your publications, sign out (revokes the key) |
 | `publish`, `withdraw` | Publish a rubric version with the cases (`--case`) and runs (`--run`) you name, after the hub's preview; withdraw a publication |
 | `pull` | Copy a rubric exactly into a file: a hub card (`hub:owner/slug[@rv_…]`) with its public cases (no sign-in needed), or a version your team's server keeps (`<name> --env <environment>`, `<name>@latest`, `<name>@rv_…`) |
@@ -36,7 +37,7 @@ The `verdict` binary uses the local engine and `.verdict` file store by default.
 | `rollback` | Undo the latest change of a rubric's pointer in an environment |
 | `keys` | Manage database-backed API keys |
 | `serve`, `mcp` | Start REST or stdio MCP |
-| `watch` | Live local page of evaluations and leaderboards |
+| `watch` | Live local page of evaluations and leaderboards, stored runs side by side (`/compare`) and change tests (`/change-tests`). `--read-only` serves stored results only; the change-test pages are read-only whenever the server is not bound to this machine |
 
 `eval`, `check` and `compare` check a rubric file listed in `verdict.lock`: they warn when it changed since it was frozen, or when the questions sent or the answering model differ from its locked run; `--strict` fails instead (see [Versions, forks and CI](/guide/versions)).
 

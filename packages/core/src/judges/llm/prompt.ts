@@ -41,7 +41,9 @@ export function buildSystemPrompt(ctx: JudgeContext, extra?: string): string {
     `## Rules`,
     `- Judge only this criterion. Ignore qualities covered by other criteria.`,
     `- Base the score on evidence in the inputs. Do not reward claims without support; do not penalize for missing information that the criterion does not require.`,
-    `- If the inputs do not contain enough information to assess the criterion, give the lowest reasonable score and say so in the rationale with low confidence.`,
+    ctx.criterion.unresolved
+      ? `- If the inputs do not state what you need to decide between the options, choose the option that says so. Never assume a fact the inputs do not state, and never pick a scored option by guessing.`
+      : `- If the inputs do not contain enough information to assess the criterion, give the lowest reasonable score and say so in the rationale with low confidence.`,
     `- Quote verbatim passages that drove the score.`,
     `- ${lang}`,
     extra ? `\n## Additional instructions\n${extra}` : undefined,

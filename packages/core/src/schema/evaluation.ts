@@ -4,7 +4,7 @@
  */
 import type { RatingRawByJudge } from "./rating-raw.js";
 import type { Evidence, Subject } from "./subject.js";
-import type { Rubric } from "./rubric.js";
+import type { InfoRequest, Rubric } from "./rubric.js";
 
 export type RatingStatus = "scored" | "pending" | "error";
 
@@ -51,7 +51,14 @@ export interface CriterionResult {
   /** Ratings still expected (e.g. human raters not yet submitted). */
   pending: number;
   gate?: { passed: boolean; message?: string };
+  /**
+   * Set when the judges picked an option the rubric marks `unresolved`: the criterion has no score, and this says
+   * what is open — the facts to ask for (`needs_info`) or why the judgement is withheld (`abstain`).
+   */
+  unresolved?: UnresolvedResult;
 }
+
+export interface UnresolvedResult { state: "needs_info" | "abstain"; option: string; requests?: InfoRequest[]; reason?: string }
 
 export interface AggregateResult {
   method: string;
@@ -68,6 +75,8 @@ export interface AggregateResult {
   /** Which criteria were included in the total. */
   included: string[];
   excluded: string[];
+  /** Criteria left without a score because the judgement is open (see `CriterionResult.unresolved`); absent when none. */
+  unresolved?: string[];
 }
 
 export interface InputError { input: number | null; path: string; message: string }

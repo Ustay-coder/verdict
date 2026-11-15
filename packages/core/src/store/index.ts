@@ -12,6 +12,8 @@ import type { Publication } from "../hub/publication.js";
 import { matchesPublication, PUBLICATION_LIST_LIMIT, type Publisher, type PublisherStore, type PublicationQuery, type PublicationStore } from "../hub/store.js";
 import { DocumentControlStore, memoryControlDocs } from "../control/documents.js";
 import type { ControlStore } from "../control/store.js";
+import type { ChangeStore } from "../change/store.js";
+import type { ChangeTest, Trial } from "../change/types.js";
 
 export interface StoredRubric extends Rubric { id: string; tenantId?: string; createdAt: string; updatedAt: string }
 
@@ -49,7 +51,7 @@ const RESERVATION_POLL_MS = 5;
 const scoped = <T extends { tenantId?: string }>(x: T | undefined, tenantId?: string) => (x && (tenantId === undefined || x.tenantId === tenantId) ? x : undefined);
 
 /** Stores records in memory; absent or out-of-scope lookups return undefined. */
-export class MemoryStore implements Store, VersionStore, PublicationStore, PublisherStore {
+export class MemoryStore implements Store, VersionStore, PublicationStore, PublisherStore, ChangeStore {
   private idempotency = new Map<string, IdempotencyRecord>();
   async putIdempotency(r: IdempotencyRecord) { this.idempotency.set(JSON.stringify([r.tenantId ?? "", r.key]), r); }
   async getIdempotency(tenantId: string | undefined, key: string) { return this.idempotency.get(JSON.stringify([tenantId ?? "", key])); }
@@ -77,6 +79,16 @@ export class MemoryStore implements Store, VersionStore, PublicationStore, Publi
   async putRun(r: Run) { this.runs.set(r.id, r); }
   async getRun(id: string, tenantId?: string) { return scoped(this.runs.get(id), tenantId); }
   async listRuns(o: RunListOptions = {}) { return recentRuns([...this.runs.values()], o); }
+  async listDatasetVersions(o: ListOptions = {}) { return recentRecords([...this.datasetVersions.values()], o); }
+  changeTests = new Map<string, ChangeTest>();
+  trials = new Map<string, Trial>();
+  // Copies in and out: a trial is saved while it is still being filled in, and a reader must not see later edits.
+  async putChangeTest(t: ChangeTest) { this.changeTests.set(t.id, structuredClone(t)); }
+  async getChangeTest(id: string, tenantId?: string) { return copy(scoped(this.changeTests.get(id), tenantId)); }
+  async listChangeTests(o: ListOptions = {}) { return recentRecords([...this.changeTests.values()], o).map((t) => structuredClone(t)); }
+  async putTrial(t: Trial) { this.trials.set(t.id, structuredClone(t)); }
+  async getTrial(id: string, tenantId?: string) { return copy(scoped(this.trials.get(id), tenantId)); }
+  async listTrials(o: TrialListOptions = {}) { return recentTrials([...this.trials.values()], o).map((t) => structuredClone(t)); }
   publications = new Map<string, Publication>();
   async putPublication(p: Publication) { this.publications.set(p.id, p); }
   async getPublication(id: string) { return this.publications.get(id); }
@@ -97,7 +109,7 @@ export class MemoryStore implements Store, VersionStore, PublicationStore, Publi
 type FileSystem = Pick<typeof import("node:fs/promises"), "readFile" | "writeFile" | "mkdir" | "readdir" | "rename" | "rm">;
 
 /** JSON-files-on-disk store. Good for the CLI and single-node deployments. */
-export class FileStore implements Store, VersionStore, PublicationStore, PublisherStore {
+export class FileStore implements Store, VersionStore, PublicationStore, PublisherStore, ChangeStore {
   /** Projects, environments, pointers and reports (docs/design/control-plane.md), one JSON file per document. */
   readonly control: ControlStore;
   constructor(private dir: string, private fs?: FileSystem) {
@@ -222,6 +234,13 @@ export class FileStore implements Store, VersionStore, PublicationStore, Publish
   async putRun(r: Run) { await this.write("runs", r.id, r); }
   async getRun(id: string, tenantId?: string) { return scoped(await this.read<Run>("runs", id), tenantId); }
   async listRuns(o: RunListOptions = {}) { return recentRuns(await this.all<Run>("runs"), o); }
+  async listDatasetVersions(o: ListOptions = {}) { return recentRecords(await this.all<DatasetVersion>("datasets"), o); }
+  async putChangeTest(t: ChangeTest) { await this.write("change-tests", t.id, t); }
+  async getChangeTest(id: string, tenantId?: string) { return scoped(await this.read<ChangeTest>("change-tests", id), tenantId); }
+  async listChangeTests(o: ListOptions = {}) { return recentRecords(await this.all<ChangeTest>("change-tests"), o); }
+  async putTrial(t: Trial) { await this.write("change-trials", t.id, t); }
+  async getTrial(id: string, tenantId?: string) { return scoped(await this.read<Trial>("change-trials", id), tenantId); }
+  async listTrials(o: TrialListOptions = {}) { return recentTrials(await this.all<Trial>("change-trials"), o); }
   async putPublication(p: Publication) { await this.write("publications", p.id, p); }
   async getPublication(id: string) { return this.read<Publication>("publications", id); }
   async listPublications(q: PublicationQuery = {}) { return newestPublications(await this.all<Publication>("publications"), q); }
@@ -258,6 +277,14 @@ function recentRuns(records: Run[], o: RunListOptions): Run[] {
   const matching = records.filter((r) => (!o.rubricVersionId || r.rubricVersionId === o.rubricVersionId) && (!o.datasetVersionId || r.datasetVersionId === o.datasetVersionId));
   return recentRecords(matching.map((r) => ({ ...r, createdAt: r.startedAt })), o).map(({ createdAt: _c, ...r }) => r as Run);
 }
+
+type TrialListOptions = { tenantId?: string; testId?: string; limit?: number };
+
+function recentTrials(records: Trial[], o: TrialListOptions): Trial[] {
+  return recentRecords(records.filter((t) => !o.testId || t.testId === o.testId), o);
+}
+
+const copy = <T>(value: T | undefined): T | undefined => (value === undefined ? undefined : structuredClone(value));
 
 function newestPublications(records: Publication[], q: PublicationQuery): Publication[] {
   return records.filter((p) => matchesPublication(p, q)).sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, q.limit ?? PUBLICATION_LIST_LIMIT);

@@ -53,6 +53,10 @@ export default defineConfig({
             "link": "/guide/versions"
           },
           {
+            "text": "Change tests",
+            "link": "/guide/change-tests"
+          },
+          {
             "text": "Deployment",
             "link": "/guide/deploy"
           },

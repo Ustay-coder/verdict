@@ -17,6 +17,7 @@ export { loadRubricText, rubricToYaml } from "./yaml.js";
 export * from "./calibration.js";
 export * from "./agreement.js";
 export * from "./versions/index.js";
+export * from "./change/index.js";
 export * from "./hub/index.js";
 export * from "./control/index.js";
 

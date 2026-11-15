@@ -7,6 +7,7 @@ import { z } from "zod";
 import { canonicalJson } from "../../idempotency.js";
 import { parseProvider, ProviderError, readProviderJson, fetchProvider, SystemOneAnswerSchema, SystemOneResponseSchema } from "../../provider-error.js";
 import type { JudgeContext } from "../types.js";
+import { scriptedChoice, scriptedRule, type ScriptAnswer } from "../mock-script.js";
 import { CLEF_LIMITS, clefImages } from "./images.js";
 import { registerDecisionProvider, type DecisionProviderAdapter, type DecisionRequest, type SystemOneAnswer, type SystemOneQuestion } from "./contracts.js";
 
@@ -231,7 +232,8 @@ function replayDecision(req: DecisionRequest, replay: ReplayOptions) {
 
 /**
  * Deterministic fake. options.level (index) / options.normalized / options.probabilities / options.noul, else a length
- * heuristic; options.replay returns recorded answers instead (see ReplayOptions).
+ * heuristic; options.script answers by the text judged (mock-script.ts); options.replay returns recorded answers
+ * instead (see ReplayOptions).
  */
 const mockDecisionProvider: DecisionProviderAdapter = {
   name: "mock",
@@ -240,7 +242,8 @@ const mockDecisionProvider: DecisionProviderAdapter = {
     if (req.options?.replay) return replayDecision(req, req.options.replay as ReplayOptions);
     const answers: Record<string, SystemOneAnswer> = {};
     const o = req.options ?? {};
-    for (const [id, q] of Object.entries(req.questions)) answers[id] = mockAnswer(req, q, o);
+    const rule = scriptedRule(req.options, req.state);
+    for (const [id, q] of Object.entries(req.questions)) answers[id] = mockAnswer(req, q, { ...o, ...scriptedKnobs(rule?.answers?.[id], q) });
     return { answers, model: "mock-decision", requestedModel: req.model, resolvedModel: "mock-decision", usage: { inputTokens: Math.ceil(req.state.length / 4) + 50 * Object.keys(req.questions).length, outputTokens: 0 }, raw: { images: req.images?.length ?? 0 } };
   },
 };
@@ -270,6 +273,13 @@ export function registerBuiltInDecisionProviders(): void {
       },
     });
   }
+}
+
+/** A scripted answer as the knobs the mock already reads (`choice`, `level`, `noul`). */
+function scriptedKnobs(answer: ScriptAnswer | undefined, q: SystemOneQuestion): Record<string, unknown> {
+  if (!answer) return {};
+  const choice = q.type === "choice" ? scriptedChoice(answer, Object.keys(q.criteria)) : undefined;
+  return { ...(choice !== undefined ? { choice } : {}), ...(answer.level !== undefined ? { level: answer.level } : {}), ...(answer.noul !== undefined ? { noul: answer.noul } : {}) };
 }
 
 function mockAnswer(req: DecisionRequest, q: SystemOneQuestion, o: Record<string, unknown>): SystemOneAnswer {

@@ -8,7 +8,7 @@ import { aggregateNumbers, clamp, mean, round } from "./numbers.js";
 import { computeRaw } from "./methods.js";
 export { scaleRange, criterionScale, normalizeScore, denormalizeScore, snapToScale, coerceScore, scoreLabel } from "./scales.js";
 export { aggregateNumbers, clamp, mean, median, round } from "./numbers.js";
-import type { AggregateResult, CriterionResult, Rating } from "../schema/evaluation.js";
+import type { AggregateResult, CriterionResult, Rating, UnresolvedResult } from "../schema/evaluation.js";
 import type { Aggregation, Criterion, Rubric } from "../schema/rubric.js";
 
 /* ------------------------------------------------------------------ */
@@ -23,7 +23,7 @@ export function aggregateRatings(
   expected: number,
 ): CriterionResult {
   const scale = criterionScale(rubric, criterion);
-  const scored = ratings.filter((r) => r.status === "scored" && (typeof r.score === "number" || (criterion.choices && r.choice !== undefined)));
+  let scored = ratings.filter((r) => r.status === "scored" && (typeof r.score === "number" || (criterion.choices && r.choice !== undefined)));
   // why: errors consume expected rater slots but never contribute a score.
   const pendingCount = Math.max(0, expected - scored.length - ratings.filter((r) => r.status === "error").length);
   const method = criterion.rater ?? rubric.aggregation.rater;
@@ -38,8 +38,10 @@ export function aggregateRatings(
   };
   if (criterion.choices && scored.length) {
     applyChoices(base, criterion, scored);
-    // why: categorical choices without a value mapping cannot contribute to numeric aggregation.
-    if (!criterion.values) return { ...base, status: pendingCount > 0 ? "pending" : "scored" };
+    const unscored = choiceWithoutScore(criterion, base, pendingCount);
+    if (unscored) return unscored;
+    // Raters who left it open hold no number; the criterion's score comes from those who decided.
+    scored = scored.filter((r) => typeof r.score === "number");
   }
   if (!scored.length) {
     const allErrored = ratings.length > 0 && ratings.every((r) => r.status === "error");
@@ -57,6 +59,19 @@ export function aggregateRatings(
   };
 }
 
+/**
+ * The result of a chosen option that yields no number, or undefined when the choice is scored.
+ * An open judgement (an option the rubric marks `unresolved`) has no score at all: a zero would read as a decided
+ * worst case. A categorical choice without a value mapping cannot contribute to numeric aggregation either.
+ */
+function choiceWithoutScore(criterion: Criterion, base: CriterionResult, pendingCount: number): CriterionResult | undefined {
+  const choice = base.choice!;
+  const open = criterion.unresolved?.[choice];
+  if (!open && criterion.values) return undefined;
+  const unresolved: UnresolvedResult | undefined = open && { state: open.state, option: choice, ...(open.requests ? { requests: open.requests } : {}), ...(open.reason ? { reason: open.reason } : {}) };
+  return { ...base, status: pendingCount > 0 ? "pending" : "scored", ...(unresolved ? { unresolved } : {}) };
+}
+
 function evalGate(g: Aggregation["gates"][number], score: number) {
   const passed = (g.min === undefined || score >= g.min) && (g.max === undefined || score <= g.max);
   return { passed, message: passed ? undefined : g.message ?? `${g.criterion} outside [${g.min ?? "-inf"}, ${g.max ?? "inf"}]` };
@@ -68,13 +83,16 @@ function evalGate(g: Aggregation["gates"][number], score: number) {
 
 /** Computes the overall result from recorded criterion scores; formula errors propagate. */
 export function aggregateCriteria(rubric: Rubric, results: CriterionResult[], aggregation: Aggregation = rubric.aggregation): AggregateResult {
-  const partial = results.some((r) => r.status === "pending");
+  const open = results.filter((r) => r.unresolved).map((r) => r.criterionId);
+  // why: a total computed without an open criterion is provisional, exactly like one that waits on a person.
+  const partial = results.some((r) => r.status === "pending") || open.length > 0;
   const gates = results.filter((r) => r.gate).map((r) => ({ criterion: r.criterionId, ...r.gate! }));
+  const unresolved = open.length ? { unresolved: open } : {};
 
   const { included, excluded, failed } = selectIncluded(rubric, results, aggregation);
-  if (failed) return { method: aggregation.method, range: outRange(aggregation), gates, partial, included: [], excluded, passed: false };
+  if (failed) return { method: aggregation.method, range: outRange(aggregation), gates, partial, included: [], excluded, ...unresolved, passed: false };
 
-  const empty: AggregateResult = { method: aggregation.method, range: outRange(aggregation), gates, partial, included: included.map((r) => r.criterionId), excluded };
+  const empty: AggregateResult = { method: aggregation.method, range: outRange(aggregation), gates, partial, included: included.map((r) => r.criterionId), excluded, ...unresolved };
   if (!included.length && aggregation.method !== "formula") return empty;
 
   const { raw, natural } = computeRaw(rubric, results, included, aggregation);

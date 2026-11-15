@@ -58,6 +58,20 @@ Humans may submit labels (`"excellent"`, `"pass"`) or numbers; LLMs are told the
 
 Declare 2–255 options with identifier keys (`[a-zA-Z_][a-zA-Z0-9_]*`). `choices` cannot coexist with `levels`. Without `values`, the scale is ignored and the criterion is reported but excluded from totals, regardless of weight or missing policy. Optional `values` must cover every option with a raw score within the criterion scale; gates require values. Decision judges send a `choice` question and keep its option probabilities and confidence, including confidence escalation. Humans submit the option id as `score`; LLM judges return `choice`; benchmarks return an error. Results report the majority choice (ties follow declaration order) and mean option probabilities.
 
+### Options that leave the score open
+
+```yaml
+- id: customer_validation
+  name: Customer validation
+  scale: { type: numeric, min: 0, max: 10 }
+  choices: { paid: Three or more paying customers, unpaid: Three customers, fewer than three pay, undetermined: The document does not say }
+  values: { paid: 10, unpaid: 6 }
+  unresolved:
+    undetermined: { state: needs_info, requests: [{ field: customer_payment_status, question: How many of the customers pay? }] }
+```
+
+A choice listed in `unresolved` must not have a value; `values` covers every other choice. `state: needs_info` needs at least one request (a field id and the question that asks for it); `state: abstain` takes an optional `reason`. When the judges pick such an option the criterion result has no `score` and no `normalized` — never a zero — and carries `unresolved: { state, option, requests, reason }`. The aggregate lists the criterion under `unresolved` and stays `partial`; `aggregation.missing` decides, as for any criterion without a score, what the provisional total is computed from. `unresolved` is policy (how an answer is read), while which options are undecidable is part of what an `llm` judge is told, so it counts as judgment. Change tests (`packages/core/src/change/`, `docs/design/change-tests.md`) check such results against expectations.
+
 ## Input schema
 
 ```yaml

@@ -29,6 +29,7 @@ import { registerPull } from "./commands/pull.js";
 import { registerReport } from "./commands/report.js";
 import { registerEnv, registerProject } from "./commands/project.js";
 import { registerPromote } from "./commands/promote.js";
+import { registerChangeTest } from "./commands/change-test.js";
 import { VERSION } from "./package-version.js";
 
 export { parseInput } from "./inputs.js";
@@ -48,6 +49,7 @@ export function buildCli() {
   registerRun(program);
   registerDiff(program);
   registerRescore(program);
+  registerChangeTest(program);
   registerHub(program);
   registerPublish(program);
   registerPull(program);

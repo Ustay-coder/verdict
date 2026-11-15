@@ -239,6 +239,24 @@ export type Aggregation = z.infer<typeof Aggregation>;
 /* Criteria & Rubric                                                   */
 /* ------------------------------------------------------------------ */
 
+/** A fact to ask for before a criterion can be scored: a stable field id, and the question that asks for it. */
+export const InfoRequest = z.object({
+  field: z.string().regex(/^[a-zA-Z_][a-zA-Z0-9_]*$/, "field must be an identifier (letters, digits, _)"),
+  question: z.string().min(1),
+});
+export type InfoRequest = z.infer<typeof InfoRequest>;
+
+/**
+ * What an undecided answer means. `needs_info`: named facts are missing, each with the question to ask.
+ * `abstain`: the judgement is withheld for another reason (conflicting evidence, out of scope), said in `reason`.
+ */
+export const UnresolvedOption = z.object({
+  state: z.enum(["needs_info", "abstain"]),
+  requests: z.array(InfoRequest).optional(),
+  reason: z.string().optional(),
+});
+export type UnresolvedOption = z.infer<typeof UnresolvedOption>;
+
 export const Criterion = z.object({
   id: z
     .string()
@@ -271,6 +289,11 @@ export const Criterion = z.object({
   optional: z.boolean().default(false),
   /** Group label for reporting (e.g. "Technical", "Business"). */
   group: z.string().optional(),
+  /**
+   * Choice options that mean the inputs do not let the question be decided. Such an option carries no value: a judge
+   * that picks it leaves the criterion without a score (never a zero), and the result says what is open.
+   */
+  unresolved: z.record(z.string(), UnresolvedOption).optional(),
 });
 export type Criterion = z.infer<typeof Criterion>;
 
@@ -333,14 +356,28 @@ function validateIds(rubric: Rubric) {
 }
 function validateChoices(rubric: Rubric, c: Criterion) {
   if (c.choices && c.levels) throw new Error(`${c.id}: choices and levels conflict`);
+  validateUnresolved(c);
   if (c.values) {
     if (!c.choices) throw new Error(`${c.id}: values requires choices`);
     for (const [key, value] of Object.entries(c.values)) {
       if (!Object.hasOwn(c.choices, key)) throw new Error(`${c.id}: values key ${key} not in choices`);
       validateChoiceValue(rubric, c, value);
     }
-    if (Object.keys(c.choices).some(k => !Object.hasOwn(c.values!, k))) throw new Error(`${c.id}: values must cover every choice`);
+    // An unresolved option is the one kind of option without a value: picking it leaves the score open.
+    if (Object.keys(c.choices).some(k => !Object.hasOwn(c.values!, k) && !c.unresolved?.[k])) throw new Error(`${c.id}: values must cover every choice`);
   }
+}
+function validateUnresolved(c: Criterion) {
+  if (!c.unresolved) return;
+  if (!c.choices) throw new Error(`${c.id}: unresolved requires choices`);
+  for (const [key, option] of Object.entries(c.unresolved)) {
+    if (!Object.hasOwn(c.choices, key)) throw new Error(`${c.id}: unresolved key ${key} not in choices`);
+    if (c.values && Object.hasOwn(c.values, key)) throw new Error(`${c.id}: unresolved option ${key} must not have a value`);
+    const fields = option.requests?.map(r => r.field) ?? [];
+    if (option.state === "needs_info" && !fields.length) throw new Error(`${c.id}: unresolved option ${key} needs at least one request`);
+    if (new Set(fields).size !== fields.length) throw new Error(`${c.id}: unresolved option ${key} repeats a request field`);
+  }
+  if (Object.keys(c.choices).every(k => c.unresolved![k])) throw new Error(`${c.id}: at least one choice must be decidable`);
 }
 function validateChoiceValue(rubric: Rubric, c: Criterion, value: number) {
   const scale = c.scale ?? rubric.scale;

@@ -7,6 +7,7 @@ import { z } from "zod";
 import { parseProvider, ProviderError, readProviderJson, fetchProvider } from "../../provider-error.js";
 import { scaleRange } from "../../aggregate/index.js";
 
+import { scriptedChoice, scriptedRule } from "../mock-script.js";
 import { JUDGEMENT_JSON_SCHEMA, JudgementSchema, type LlmProviderAdapter } from "./contracts.js";
 import { registerLlmProvider } from "./registry.js";
 /** Anthropic (Claude) — default provider. Uses structured outputs + server-side refusal fallbacks. */
@@ -114,6 +115,13 @@ export const mockProvider: LlmProviderAdapter = {
   name: "mock",
   async complete(req, ctx) {
     const [lo, hi] = scaleRange(ctx.scale);
+    const usage = { inputTokens: Math.ceil((req.system.length + req.user.length) / 4), outputTokens: 50 };
+    // A script answers by the text judged (mock-script.ts), with the rationale and quotes it was given.
+    const scripted = scriptedRule(req.options, ctx.evidence.map((e) => e.text).join("\n"))?.answers?.[ctx.criterion.id];
+    if (scripted) {
+      const choice = ctx.criterion.choices ? scriptedChoice(scripted, Object.keys(ctx.criterion.choices)) : undefined;
+      return { judgement: { choice, score: scripted.score ?? lo, confidence: scripted.confidence ?? 1, rationale: scripted.rationale ?? `scripted mock judgement for ${ctx.criterion.id}`, quotes: scripted.quotes ?? [] }, model: "mock", usage };
+    }
     const o = req.options ?? {};
     let score: number;
     if (typeof o.score === "number") score = o.score;
@@ -125,7 +133,7 @@ export const mockProvider: LlmProviderAdapter = {
       const len = Math.min(1, text.length / 2000) * 0.5;
       score = lo + (hi - lo) * (0.2 + mention + len);
     }
-    return { judgement: { choice: ctx.criterion.choices ? String(o.choice ?? Object.keys(ctx.criterion.choices)[0]) : undefined, score, confidence: 0.5, rationale: `mock judgement for ${ctx.criterion.id}`, quotes: [] }, model: "mock", usage: { inputTokens: Math.ceil((req.system.length + req.user.length) / 4), outputTokens: 50 } };
+    return { judgement: { choice: ctx.criterion.choices ? String(o.choice ?? Object.keys(ctx.criterion.choices)[0]) : undefined, score, confidence: 0.5, rationale: `mock judgement for ${ctx.criterion.id}`, quotes: [] }, model: "mock", usage };
   },
 };
 

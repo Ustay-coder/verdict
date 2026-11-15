@@ -58,12 +58,14 @@ function usesLlm(spec: JudgeSpec): boolean {
 }
 
 function criterionJudgment(c: Criterion): Json {
-  const { weight: _w, threshold: _t, values: _v, optional: _o, group: _g, rater: _r, judge: _j, ...asked } = c;
-  return asked;
+  const { weight: _w, threshold: _t, values: _v, optional: _o, group: _g, rater: _r, judge: _j, unresolved, ...asked } = c;
+  // Which options mean "cannot be decided" changes what an `llm` judge is told; what follows from picking one is policy.
+  return unresolved ? { ...asked, undecidable: Object.keys(unresolved) } : asked;
 }
 
+// `unresolved` is how an answer is read (no score, a question to ask), like `values`; absent, the hash is unchanged.
 function criterionPolicy(c: Criterion): Json {
-  return { id: c.id, weight: c.weight, threshold: c.threshold, values: c.values, optional: c.optional, rater: c.rater };
+  return { id: c.id, weight: c.weight, threshold: c.threshold, values: c.values, optional: c.optional, rater: c.rater, ...(c.unresolved ? { unresolved: c.unresolved } : {}) };
 }
 
 /** The four parts of a parsed rubric. Inputs are plain JSON, so each part hashes deterministically. */

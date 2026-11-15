@@ -47,8 +47,9 @@ export class LlmJudge implements Judge {
         ctx.usage.inputTokens += s.usage?.inputTokens ?? 0;
         ctx.usage.outputTokens += s.usage?.outputTokens ?? 0;
       }
-      if (ctx.criterion.choices) return choiceRating(ctx, samples, base);
-      return scoreRating(ctx, samples, base, { provider: provider.name, model: this.spec.model, latencyMs: (ctx.now ?? Date.now)() - started });
+      const metadata = { provider: provider.name, model: this.spec.model, latencyMs: (ctx.now ?? Date.now)() - started };
+      if (ctx.criterion.choices) return choiceRating(ctx, samples, base, metadata);
+      return scoreRating(ctx, samples, base, metadata);
     } catch (e) {
       return [{ ...base, status: "error", error: (e as Error).message, raw: { provider: provider.name, latencyMs: (ctx.now ?? Date.now)() - started } }];
     }
@@ -56,14 +57,14 @@ export class LlmJudge implements Judge {
 }
 
 // Choice votes use declaration order to break ties so identical samples always produce the same answer.
-function choiceRating(ctx: JudgeContext, samples: LlmResponse[], base: Omit<Rating<"llm">, "status">): Rating[] {
+function choiceRating(ctx: JudgeContext, samples: LlmResponse[], base: Omit<Rating<"llm">, "status">, metadata: { provider: string; model?: string; latencyMs: number }): Rating[] {
   const options = Object.keys(ctx.criterion.choices!);
   for (const s of samples) if (!s.judgement.choice || !Object.hasOwn(ctx.criterion.choices!, s.judgement.choice)) throw new Error("invalid LLM choice");
   const counts = options.map(o => samples.filter(s => s.judgement.choice === o).length);
   const choice = options[counts.indexOf(Math.max(...counts))]!;
   const best = samples.find(s => s.judgement.choice === choice)!;
   const score = ctx.criterion.values?.[choice];
-  return [{ ...base, status: "scored", choice, score, normalized: score === undefined ? undefined : normalizeScore(score, ctx.scale), confidence: best.judgement.confidence, rationale: best.judgement.rationale, quotes: best.judgement.quotes, probabilities: Object.fromEntries(options.map((o, i) => [o, counts[i]! / samples.length])) }];
+  return [{ ...base, status: "scored", choice, score, normalized: score === undefined ? undefined : normalizeScore(score, ctx.scale), confidence: best.judgement.confidence, rationale: best.judgement.rationale, quotes: best.judgement.quotes.slice(0, MAX_SUPPORTING_QUOTES), probabilities: Object.fromEntries(options.map((o, i) => [o, counts[i]! / samples.length])), raw: { ...metadata, model: best.model ?? metadata.model } }];
 }
 
 // The nearest sample supplies rationale; disagreement may lower confidence but cannot increase it.

@@ -90,7 +90,8 @@ describe("comparison screen", () => {
   it("serves a page that loads the comparison script", () => {
     const page = comparePage("/data/<x>");
     expect(page).toContain("startCompare();");
-    expect(page).toContain('<a href="/compare" class="on">Compare runs</a>');
+    expect(page).toContain('<a href="/compare" class="on" aria-current="page">Compare runs</a>');
+    expect(page).toContain('<a href="/change-tests">Change tests</a>');
     expect(page).not.toContain("<x>");
   });
 });
