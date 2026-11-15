@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- `examples/startup-eligibility`: the 2026 early-stage startup package's eligibility review (요건검토) on 120 made-up applications, in Korean. Seven checks are rules; blind masking, excluded businesses and support history go to a decision model, and its unsure answers to a person. Jev did all 120 in 3.5 s, blocked all 52 planted violations and sent 5 near-misses to a person; Clef-flash passed one violation at 83%.
 - `examples/landing-page`: Claude Code builds a landing page for Verdict and Verdict scores it before it ships, round by round, with a rubric frozen before the first page: six gates (screenshots judged by Clef, two rules) and four scored criteria. The run went 0, 0, 73, 73, 73, 73, 80. The README tells why: a rule blocked a logo's `href="#"`, a failed rule did not say what it matched, and the script sent three empty lists of failures.
 - `examples/landing-page/trap`: the page that passed at 80, with one known defect planted at a time, put to the same frozen rubric on Clef and Clef-flash. Clef blocked seven of eight defects and passed an empty `[Insert demo GIF here]` box at 90; Clef-flash blocked every page, the clean one included.
 

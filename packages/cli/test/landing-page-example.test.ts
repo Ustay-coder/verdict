@@ -94,3 +94,29 @@ describe("examples/landing-page/trap", () => {
     }
   });
 });
+
+describe("examples/startup-eligibility", () => {
+  const se = (name: string) => fileURLToPath(new URL(`../../../examples/startup-eligibility/${name}`, import.meta.url));
+  interface SeCase { id: string; name: string; expected: Record<string, string>; inputs: Array<{ path: string }> }
+  const cases = readFileSync(se("cases.jsonl"), "utf8").trim().split("\n").map((line) => JSON.parse(line) as SeCase);
+  const RULES = ["age_ok", "docs_ok", "industry_code_ok", "status_ok", "budget_ok", "form_ok", "guide_removed"];
+
+  it("has 120 applications: 52 with one planted violation, 68 with none", () => {
+    expect(cases).toHaveLength(120);
+    const fails = cases.map((c) => Object.values(c.expected).filter((v) => v === "fail").length);
+    expect(fails.filter((n) => n === 1)).toHaveLength(52);
+    expect(fails.filter((n) => n > 1)).toHaveLength(0);
+  });
+
+  it("has rules that give the planted answer for one application of each kind, without a model", () => {
+    const kinds = new Map<string, SeCase>();
+    for (const c of cases) if (!kinds.has(c.name)) kinds.set(c.name, c);
+    for (const c of kinds.values()) {
+      const r = spawnSync("node", [cli, "eval", "-r", se("eligibility.yaml"), "--mock", "--json",
+        "-i", `application=${se(c.inputs[0]!.path)}`, "-i", `plan=${se(c.inputs[1]!.path)}`], { encoding: "utf8" });
+      expect(r.status, r.stderr).toBe(0);
+      const e = JSON.parse(r.stdout) as { criteria: Array<{ criterionId: string; score: number }> };
+      for (const rule of RULES) expect(e.criteria.find((x) => x.criterionId === rule)!.score >= 1 ? "pass" : "fail", `${c.name} ${rule}`).toBe(c.expected[rule]);
+    }
+  });
+});
