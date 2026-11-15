@@ -1,0 +1,16 @@
+{
+ "applicationNo": "CKP-2026-111",
+ "companyName": "가상기업 111",
+ "itemName": "드론 기반 소형 태양광 설비 점검 서비스",
+ "sector": "드론",
+ "businessType": "법인",
+ "startDate": 20231227,
+ "representatives": 1,
+ "industryCode": "72129",
+ "businessStatus": "계속사업자",
+ "govFundRequested": 8500,
+ "documents": {
+  "idCopy": true,
+  "bizRegistration": true
+ }
+}

@@ -1,0 +1,16 @@
+{
+ "applicationNo": "CKP-2026-029",
+ "companyName": "가상기업 029",
+ "itemName": "AI 기반 B2B 마케팅 실행 자동화 SaaS",
+ "sector": "B2B 마케팅",
+ "businessType": "법인",
+ "startDate": 20230123,
+ "representatives": 1,
+ "industryCode": "63112",
+ "businessStatus": "계속사업자",
+ "govFundRequested": 5000,
+ "documents": {
+  "idCopy": true,
+  "bizRegistration": true
+ }
+}

@@ -1,0 +1,16 @@
+{
+ "applicationNo": "CKP-2026-056",
+ "companyName": "가상기업 056",
+ "itemName": "시니어 낙상·복약·안부 통합관리 구독서비스",
+ "sector": "시니어 케어",
+ "businessType": "법인",
+ "startDate": 20250801,
+ "representatives": 1,
+ "industryCode": "63112",
+ "businessStatus": "계속사업자",
+ "govFundRequested": 5500,
+ "documents": {
+  "idCopy": true,
+  "bizRegistration": true
+ }
+}

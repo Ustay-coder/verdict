@@ -1,0 +1,16 @@
+{
+ "applicationNo": "CKP-2026-034",
+ "companyName": "가상기업 034",
+ "itemName": "다중 생체신호 기반 일상형 헬스케어 링",
+ "sector": "헬스케어 기기",
+ "businessType": "법인",
+ "startDate": 20230629,
+ "representatives": 1,
+ "industryCode": "72129",
+ "businessStatus": "계속사업자",
+ "govFundRequested": 7000,
+ "documents": {
+  "idCopy": true,
+  "bizRegistration": true
+ }
+}

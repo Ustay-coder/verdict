@@ -1,0 +1,16 @@
+{
+ "applicationNo": "CKP-2026-014",
+ "companyName": "가상기업 014",
+ "itemName": "여행 목적·동행자·시간대에 맞춰 일정과 예약을 자동 조합하는 맞춤형 여행 일정 생성 서비스",
+ "sector": "여행",
+ "businessType": "개인",
+ "startDate": 20230413,
+ "representatives": 1,
+ "industryCode": "47912",
+ "businessStatus": "계속사업자",
+ "govFundRequested": 7500,
+ "documents": {
+  "idCopy": true,
+  "bizRegistration": false
+ }
+}

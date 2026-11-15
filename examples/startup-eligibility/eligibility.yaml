@@ -1,0 +1,94 @@
+# 2026년 초기창업패키지(일반형) 요건검토 — 신청서(JSON)와 사업계획서(텍스트) 한 쌍을 한 건으로 본다.
+# 근거: 중소벤처기업부 공고 「2026년도 초기창업패키지(일반형) 창업기업 모집공고」 3. 신청자격 및 요건, [붙임 3],
+# [붙임 4-1·4-2], (별첨1) 사업계획서 양식의 작성 안내. 숫자·날짜·목록은 규칙이 계산하고, 문장을 읽어야 하는 것만 모델이 본다.
+# 모델이 확신하지 못한 답(통과/미충족 확률이 0.25~0.75)은 담당자 확인으로 넘긴다.
+name: 초기창업패키지 요건검토
+version: "1"
+language: ko
+context: |
+  2026년 초기창업패키지(일반형) 신청 기업의 요건검토다. 사업계획서의 질을 평가하지 않는다.
+  공고문의 신청자격과 신청 제외 대상, 사업계획서 양식의 작성 규칙을 지켰는지만 본다.
+scale: { type: binary, labels: [fail, pass] }
+judges:
+  model:
+    type: decision
+    provider: typesafe
+    model: jev-latest
+    minConfidence: 0.5
+    onLowConfidence: human
+defaultJudge: { type: ref, ref: model }
+criteria:
+  # ── 규칙: 신청서(JSON)와 본문에서 계산한다 ───────────────────────────────────────────────────
+  - id: age_ok
+    name: 업력 (2023.1.23 ~ 2026.1.22 개업·설립)
+    group: 규칙
+    inputs: [application]
+    judge: { type: benchmark, method: formula, expression: "(startDate >= 20230123 and startDate <= 20260122) ? 1 : 0" }
+  - id: docs_ok
+    name: 필수 서류 (신분증 사본, 사업자 증빙)
+    group: 규칙
+    inputs: [application]
+    judge: { type: benchmark, method: formula, expression: "(documents.idCopy == 1 and documents.bizRegistration == 1) ? 1 : 0" }
+  - id: industry_code_ok
+    name: 제외 업종 코드 아님 ([붙임 3])
+    group: 규칙
+    inputs: [application]
+    judge: { type: benchmark, method: regex, pattern: "\"industryCode\":\\s*\"(56211|56212|91242|91249)\"", negate: true }
+  - id: status_ok
+    name: 휴·폐업 아님
+    group: 규칙
+    inputs: [application]
+    judge: { type: benchmark, method: regex, pattern: "\"businessStatus\":\\s*\"(휴업|폐업)\"", negate: true }
+  - id: budget_ok
+    name: 정부지원사업비 1억원 이내
+    group: 규칙
+    inputs: [application]
+    judge: { type: benchmark, method: formula, expression: "govFundRequested <= 10000 ? 1 : 0" }
+  - id: form_ok
+    name: 양식 항목 유지 (문제 인식·실현 가능성·성장전략·팀 구성)
+    group: 규칙
+    inputs: [plan]
+    judge: { type: benchmark, method: keywords, keywords: ["1. 문제 인식 (Problem)", "2. 실현 가능성 (Solution)", "3. 성장전략 (Scale-up)", "4. 팀 구성 (Team)"], mode: all, caseSensitive: true }
+  - id: guide_removed
+    name: 양식 안내 문구 삭제
+    group: 규칙
+    inputs: [plan]
+    judge: { type: benchmark, method: regex, pattern: "※ (개발하고자 하는 창업 아이템|아이디어를 제품·서비스로|정부지원사업비는 최대|경쟁제품·경쟁사 분석|대표자 보유 역량|팀에서 보유 또는|협약기간 내 채용 예정)", negate: true }
+  # ── 모델: 사업계획서 문장을 읽어야 하는 것 ─────────────────────────────────────────────────────
+  - id: blind_ok
+    name: 개인정보 블라인드
+    group: 모델
+    inputs: [plan]
+    anchors:
+      fail: 대표자·직원의 실명, 성별, 생년월일·나이, 대학교(원)명, 직장명 중 하나라도 마스킹 없이 적혀 있다.
+      pass: 사람은 '대표자', '팀원' 등으로만 적혀 있거나, 이름·학교·직장이 ○ 또는 * 로 가려져 있다. 전공·학위·직무만 적는 것은 허용된다.
+  - id: business_ok
+    name: 제외 업종을 영위하려 하지 않음
+    group: 모델
+    inputs: [plan]
+    anchors:
+      fail: 유흥주점, 카지노·도박 등 사행시설, 현금이 걸린 게임장, 또는 가상자산(암호화폐) 매매·중개·거래소를 영위하거나 영위하려는 계획이 있다.
+      pass: 위 업종과 무관한 사업이다. 현금 거래가 없는 일반 게임이나 결제 보조 서비스는 해당하지 않는다.
+  - id: history_ok
+    name: 지원 이력상 제외 아님
+    group: 모델
+    inputs: [plan]
+    anchors:
+      fail: 초기창업패키지 또는 창업도약패키지에 선정되어 협약한 이력이 있거나, 2026년 중앙부처·공공기관의 창업사업화 지원사업을 현재 수행 중이라고 적혀 있다.
+      pass: 그런 이력이 없다. 예비창업패키지 1~2회 선정 이력이나 지자체 지원사업 수행은 제외 사유가 아니다.
+aggregation:
+  method: min
+  normalize: [0, 100]
+  missing: fail               # a check that errored fails the application; it is never skipped
+  gates:
+    - { criterion: age_ok, min: 1, message: 업력 미충족 }
+    - { criterion: docs_ok, min: 1, message: 필수 서류 누락 }
+    - { criterion: industry_code_ok, min: 1, message: 제외 업종 코드 }
+    - { criterion: status_ok, min: 1, message: 휴·폐업 }
+    - { criterion: budget_ok, min: 1, message: 정부지원사업비 1억원 초과 }
+    - { criterion: form_ok, min: 1, message: 양식 항목 변경 }
+    - { criterion: guide_removed, min: 1, message: 안내 문구 미삭제 }
+    - { criterion: blind_ok, min: 1, message: 개인정보 노출 }
+    - { criterion: business_ok, min: 1, message: 제외 업종 영위 }
+    - { criterion: history_ok, min: 1, message: 지원 이력 제외 대상 }
+  passThreshold: 100

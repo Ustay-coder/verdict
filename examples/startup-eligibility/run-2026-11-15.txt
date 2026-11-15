@@ -1,0 +1,69 @@
+초기창업패키지 요건검토 × cases.jsonl: 120 case(s), 3 model(s), the same questions to each
+  model        answered by             agreed with labels   failed   asked a human   input tokens   calls   time
+  jev          typesafe/jev-1.14.0     1195/1195 (100%)     0        5               315,373        120     3.5 s
+  clef-flash   cloudflare/clef-flash   1164/1165 (100%)     0        32              221,682        120     10.4 s
+  clef         cloudflare/clef         1167/1167 (100%)     0        33              221,682        120     11.4 s
+the models gave one answer on 1138 of 1138 question(s) they all answered; they differ on 62:
+  prior_ckp · history_ok   expected fail   jev fail (0.89) | clef-flash fail (0.80) | clef —
+  crypto_item · business_ok   expected fail   jev fail (0.88) | clef-flash pass (0.83) | clef —
+  crypto_item · business_ok   expected fail   jev fail (0.86) | clef-flash — | clef fail (0.82)
+  crypto_item · history_ok   expected pass   jev pass (0.90) | clef-flash pass (0.84) | clef —
+  no_team · history_ok   expected pass   jev pass (0.89) | clef-flash pass (0.83) | clef —
+  bad_code · history_ok   expected pass   jev pass (0.90) | clef-flash — | clef pass (0.80)
+  crypto_item · business_ok   expected fail   jev fail (0.91) | clef-flash — | clef fail (0.82)
+  near_local · history_ok   expected pass   jev pass (0.91) | clef-flash — | clef —
+  over_budget · history_ok   expected pass   jev pass (0.88) | clef-flash pass (0.80) | clef —
+  doc_missing · history_ok   expected pass   jev pass (0.89) | clef-flash pass (0.80) | clef —
+  clean · history_ok   expected pass   jev pass (0.89) | clef-flash — | clef —
+  unmasked · business_ok   expected pass   jev pass (0.97) | clef-flash — | clef pass (0.89)
+  unmasked · history_ok   expected pass   jev pass (0.90) | clef-flash — | clef pass (0.82)
+  running_2026 · history_ok   expected fail   jev fail (0.89) | clef-flash fail (0.78) | clef —
+  age_after · history_ok   expected pass   jev pass (0.88) | clef-flash pass (0.84) | clef —
+  near_edge · history_ok   expected pass   jev pass (0.88) | clef-flash — | clef —
+  doc_missing · blind_ok   expected pass   jev pass (0.97) | clef-flash — | clef pass (0.90)
+  doc_missing · history_ok   expected pass   jev pass (0.91) | clef-flash pass (0.87) | clef —
+  clean · history_ok   expected pass   jev pass (0.90) | clef-flash pass (0.81) | clef —
+  guide_left · history_ok   expected pass   jev pass (0.90) | clef-flash — | clef —
+  near_masked · blind_ok   expected pass   jev pass (0.81) | clef-flash — | clef pass (0.78)
+  prior_ckp · history_ok   expected fail   jev fail (0.89) | clef-flash fail (0.78) | clef —
+  clean · history_ok   expected pass   jev pass (0.92) | clef-flash pass (0.83) | clef —
+  clean · business_ok   expected pass   jev pass (0.98) | clef-flash — | clef pass (0.91)
+  clean · history_ok   expected pass   jev pass (0.89) | clef-flash pass (0.86) | clef —
+  clean · history_ok   expected pass   jev pass (0.87) | clef-flash pass (0.85) | clef —
+  age_old · history_ok   expected pass   jev pass (0.92) | clef-flash — | clef pass (0.76)
+  bad_code · history_ok   expected pass   jev pass (0.88) | clef-flash — | clef pass (0.75)
+  over_budget · history_ok   expected pass   jev pass (0.89) | clef-flash pass (0.86) | clef —
+  casino_item · history_ok   expected pass   jev pass (0.88) | clef-flash — | clef pass (0.76)
+  age_old · history_ok   expected pass   jev pass (0.89) | clef-flash pass (0.82) | clef —
+  casino_item · business_ok   expected fail   jev fail (0.95) | clef-flash — | clef fail (0.91)
+  near_yechang · history_ok   expected pass   jev — | clef-flash pass (0.84) | clef pass (0.88)
+  near_yechang · history_ok   expected pass   jev — | clef-flash pass (0.87) | clef pass (0.85)
+  near_yechang · history_ok   expected pass   jev — | clef-flash pass (0.76) | clef pass (0.81)
+  crypto_item · business_ok   expected fail   jev fail (0.88) | clef-flash — | clef —
+  prior_ckp · business_ok   expected pass   jev pass (0.98) | clef-flash — | clef pass (0.92)
+  prior_ckp · history_ok   expected fail   jev fail (0.89) | clef-flash — | clef —
+  clean · history_ok   expected pass   jev pass (0.88) | clef-flash pass (0.88) | clef —
+  clean · history_ok   expected pass   jev pass (0.89) | clef-flash pass (0.81) | clef —
+  clean · blind_ok   expected pass   jev pass (0.96) | clef-flash — | clef pass (0.92)
+  clean · history_ok   expected pass   jev pass (0.85) | clef-flash — | clef pass (0.81)
+  clean · history_ok   expected pass   jev pass (0.88) | clef-flash pass (0.83) | clef —
+  clean · history_ok   expected pass   jev pass (0.89) | clef-flash pass (0.82) | clef —
+  clean · business_ok   expected pass   jev pass (0.97) | clef-flash — | clef pass (0.89)
+  clean · history_ok   expected pass   jev pass (0.85) | clef-flash — | clef pass (0.78)
+  near_masked · blind_ok   expected pass   jev — | clef-flash — | clef pass (0.83)
+  near_local · history_ok   expected pass   jev pass (0.93) | clef-flash — | clef —
+  unmasked · blind_ok   expected fail   jev fail (0.96) | clef-flash — | clef fail (0.92)
+  clean · history_ok   expected pass   jev pass (0.90) | clef-flash pass (0.85) | clef —
+  near_edge · history_ok   expected pass   jev pass (0.88) | clef-flash — | clef —
+  near_local · history_ok   expected pass   jev pass (0.91) | clef-flash — | clef —
+  near_local · history_ok   expected pass   jev pass (0.94) | clef-flash — | clef pass (0.76)
+  near_masked · blind_ok   expected pass   jev — | clef-flash pass (0.83) | clef pass (0.86)
+  near_edge · blind_ok   expected pass   jev pass (0.96) | clef-flash — | clef pass (0.91)
+  near_edge · history_ok   expected pass   jev pass (0.86) | clef-flash pass (0.80) | clef —
+  near_masked · blind_ok   expected pass   jev pass (0.77) | clef-flash — | clef pass (0.80)
+  casino_item · business_ok   expected fail   jev fail (0.96) | clef-flash — | clef fail (0.93)
+  clean · history_ok   expected pass   jev pass (0.88) | clef-flash pass (0.81) | clef —
+  prior_ckp · history_ok   expected fail   jev fail (0.88) | clef-flash — | clef —
+  running_2026 · history_ok   expected fail   jev fail (0.90) | clef-flash — | clef fail (0.84)
+  running_2026 · history_ok   expected fail   jev fail (0.90) | clef-flash — | clef fail (0.85)
+runs: jev run_8e5bb104a27d4bd88665, clef-flash run_3c400cc71a674634ac62, clef run_2d4872890cb74b628bb8; two of them case by case: verdict diff --base run_8e5bb104a27d4bd88665 --head run_3c400cc71a674634ac62

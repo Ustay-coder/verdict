@@ -1,0 +1,16 @@
+{
+ "applicationNo": "CKP-2026-092",
+ "companyName": "가상기업 092",
+ "itemName": "식품 가공 91번 아이템: 상온 보관형 저당 발효곡물 스프레드",
+ "sector": "식품 가공",
+ "businessType": "개인",
+ "startDate": 20250816,
+ "representatives": 1,
+ "industryCode": "28909",
+ "businessStatus": "계속사업자",
+ "govFundRequested": 8000,
+ "documents": {
+  "idCopy": true,
+  "bizRegistration": true
+ }
+}

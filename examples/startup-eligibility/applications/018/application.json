@@ -1,0 +1,16 @@
+{
+ "applicationNo": "CKP-2026-018",
+ "companyName": "가상기업 018",
+ "itemName": "AI 계약서·법률문서 작성 보조 SaaS",
+ "sector": "법률 문서",
+ "businessType": "개인",
+ "startDate": 20250723,
+ "representatives": 1,
+ "industryCode": "38220",
+ "businessStatus": "계속사업자",
+ "govFundRequested": 5500,
+ "documents": {
+  "idCopy": true,
+  "bizRegistration": true
+ }
+}

@@ -1,0 +1,16 @@
+{
+ "applicationNo": "CKP-2026-105",
+ "companyName": "가상기업 105",
+ "itemName": "AI 기반 공동주택 시설·민원 통합관리 서비스",
+ "sector": "부동산 관리",
+ "businessType": "법인",
+ "startDate": 20250120,
+ "representatives": 1,
+ "industryCode": "62010",
+ "businessStatus": "계속사업자",
+ "govFundRequested": 5500,
+ "documents": {
+  "idCopy": true,
+  "bizRegistration": true
+ }
+}

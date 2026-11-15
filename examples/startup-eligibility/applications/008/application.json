@@ -1,0 +1,16 @@
+{
+ "applicationNo": "CKP-2026-008",
+ "companyName": "가상기업 008",
+ "itemName": "제조 SaaS 7호: 현장데이터 기반 생산·설비 운영 최적화 SaaS",
+ "sector": "제조 SaaS",
+ "businessType": "개인",
+ "startDate": 20240414,
+ "representatives": 1,
+ "industryCode": "28909",
+ "businessStatus": "계속사업자",
+ "govFundRequested": 6000,
+ "documents": {
+  "idCopy": true,
+  "bizRegistration": true
+ }
+}

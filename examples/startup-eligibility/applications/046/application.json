@@ -1,0 +1,16 @@
+{
+ "applicationNo": "CKP-2026-046",
+ "companyName": "가상기업 046",
+ "itemName": "결제보조형 매장 운영 자동화 SaaS",
+ "sector": "핀테크(결제 보조)",
+ "businessType": "법인",
+ "startDate": 20230802,
+ "representatives": 2,
+ "industryCode": "62010",
+ "businessStatus": "계속사업자",
+ "govFundRequested": 6000,
+ "documents": {
+  "idCopy": true,
+  "bizRegistration": true
+ }
+}

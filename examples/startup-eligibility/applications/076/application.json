@@ -1,0 +1,16 @@
+{
+ "applicationNo": "CKP-2026-076",
+ "companyName": "가상기업 076",
+ "itemName": "결제보조 AI 정산·환불 자동화 SaaS",
+ "sector": "핀테크(결제 보조)",
+ "businessType": "개인",
+ "startDate": 20240407,
+ "representatives": 1,
+ "industryCode": "72129",
+ "businessStatus": "계속사업자",
+ "govFundRequested": 8000,
+ "documents": {
+  "idCopy": true,
+  "bizRegistration": true
+ }
+}

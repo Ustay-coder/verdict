@@ -1,0 +1,16 @@
+{
+ "applicationNo": "CKP-2026-002",
+ "companyName": "가상기업 002",
+ "itemName": "식품 가공",
+ "sector": "식품 가공",
+ "businessType": "법인",
+ "startDate": 20260210,
+ "representatives": 1,
+ "industryCode": "63112",
+ "businessStatus": "계속사업자",
+ "govFundRequested": 5500,
+ "documents": {
+  "idCopy": true,
+  "bizRegistration": true
+ }
+}

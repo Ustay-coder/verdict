@@ -1,0 +1,16 @@
+{
+ "applicationNo": "CKP-2026-100",
+ "companyName": "가상기업 100",
+ "itemName": "AI 기반 공조설비 에너지 최적화 솔루션",
+ "sector": "에너지 효율",
+ "businessType": "개인",
+ "startDate": 20230123,
+ "representatives": 1,
+ "industryCode": "10799",
+ "businessStatus": "계속사업자",
+ "govFundRequested": 5000,
+ "documents": {
+  "idCopy": true,
+  "bizRegistration": true
+ }
+}

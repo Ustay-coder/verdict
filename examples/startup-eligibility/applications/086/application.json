@@ -1,0 +1,16 @@
+{
+ "applicationNo": "CKP-2026-086",
+ "companyName": "가상기업 086",
+ "itemName": "시니어 생활리듬 동행관리 서비스",
+ "sector": "시니어 케어",
+ "businessType": "법인",
+ "startDate": 20231209,
+ "representatives": 1,
+ "industryCode": "62010",
+ "businessStatus": "계속사업자",
+ "govFundRequested": 6000,
+ "documents": {
+  "idCopy": true,
+  "bizRegistration": true
+ }
+}
