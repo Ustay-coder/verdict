@@ -12,7 +12,7 @@ import { Repo } from "../src/db.js";
 import { FilePreparer, FileStorage } from "../src/files.js";
 import type { LlmCall } from "../src/llm.js";
 import { Runner } from "../src/runner.js";
-import { fakeLlm, makeEngine, rawReq, SETTINGS } from "./helpers.js";
+import { fakeLlm, HYBRID, makeEngine, rawReq, SETTINGS, type Decide } from "./helpers.js";
 
 const REQUIREMENT = "2025년 12월 31일 기준 창업 3년 이상\n울산 소재 기업\n2025년 매출 1억 원 이상";
 
@@ -45,13 +45,14 @@ let dir: string;
 beforeEach(() => { dir = mkdtempSync(join(tmpdir(), "review-")); });
 afterEach(() => { rmSync(dir, { recursive: true, force: true }); });
 
-function setup(opts: { hook?: (call: LlmCall) => void; env?: Record<string, string> } = {}) {
+function setup(opts: { hook?: (call: LlmCall) => void; env?: Record<string, string>; settings?: typeof SETTINGS; decide?: Parameters<typeof makeEngine>[0] } = {}) {
   const repo = new Repo(join(dir, "review.sqlite"));
   const llm = fakeLlm({ requirements: () => compileAnswer(), facts: (call) => { opts.hook?.(call); return factsFromDoc(call); } });
-  const { engine, router } = makeEngine((state) => (state.includes("울산") ? "met" : "not_met"));
-  const runner = new Runner({ repo, engine, llm, settings: SETTINGS }, router);
+  const { engine, router } = makeEngine(opts.decide ?? ((state) => (state.includes("울산") ? "met" : "not_met")));
+  const settings = opts.settings ?? SETTINGS;
+  const runner = new Runner({ repo, engine, llm, settings }, router);
   const preparer = new FilePreparer(repo, new FileStorage(dir), { llm, ocrModel: "fake" });
-  const app = createReviewApp({ repo, runner, preparer, auth: envAuth(opts.env ?? {}), settings: SETTINGS, heartbeatMs: 50 });
+  const app = createReviewApp({ repo, runner, preparer, auth: envAuth(opts.env ?? {}), settings, heartbeatMs: 50 });
   return { repo, runner, preparer, app, llm };
 }
 
@@ -229,6 +230,31 @@ describe("runner and HTTP contract (mock engine)", () => {
     expect((await s.app.request(`/api/runs/${runId}/retry`, { method: "POST" })).status).toBe(200);
     await s.runner.drain();
     expect(s.repo.getRun(runId)!.status).toBe("completed");
+    s.repo.close();
+  });
+
+  it("hybrid: decides most documents in one decision request, escalates the rest, one requirement event each", async () => {
+    // 모형 Jev: 후보는 첫 번째(관련성 순), 서술형은 본문에 울산이 있으면 충족, 근거는 소재지 줄.
+    const decide: Decide = (state, id, q) => {
+      if (id.endsWith("_ev")) { const n = /\[L(\d+)\] 사업장 소재지/.exec(state)?.[1]; return n && q.criteria[`l${n}`] !== undefined ? `l${n}` : "none"; }
+      if ("met" in q.criteria) return state.includes("울산") ? "met" : "not_met";
+      return "c0";
+    };
+    const s = setup({ settings: HYBRID, decide });
+    const ids = [];
+    for (let i = 0; i < 9; i++) ids.push((await upload(s.app, `h${i}.txt`, docText(i))).id);
+    await s.preparer.whenIdle();
+    const runId = (await startRun(s.app, ids)).body.run.id;
+    await s.runner.drain();
+    expect(s.repo.counts(runId)).toMatchObject({ met: 3, not_met: 3, needs_review: 3, error: 0 });
+    const docs = s.repo.listDocs(runId);
+    // 매출이 없는 문서(kind 2)만 전체 읽기로 넘어간다.
+    expect(docs.map((d) => d.result!.method)).toEqual(["fast", "fast", "full", "fast", "fast", "full", "fast", "fast", "full"]);
+    expect(docs[2]!.result!.escalated!.join()).toMatch(/r3: 후보 값을 찾지 못함/);
+    expect(s.llm.calls.filter((c) => c.name === "facts")).toHaveLength(3);
+    const reqEvents = s.repo.listEvents(runId, 0).filter((e) => e.type === "doc.requirement");
+    expect(reqEvents.every((e) => /^r\d$/.test(String(e.payload.requirementId)))).toBe(true);
+    for (const d of docs) expect(reqEvents.filter((e) => e.payload.docId === d.docId).map((e) => e.payload.requirementId).sort()).toEqual(["r1", "r2", "r3"]);
     s.repo.close();
   });
 });

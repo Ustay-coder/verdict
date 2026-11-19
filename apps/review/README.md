@@ -5,7 +5,7 @@
 
 ```
 apps/review/
-  server/src/   Node 서버(Hono): 업로드·추출(OCR)·요건 해석·사실 대조·Verdict 실행·순차 실행기·SSE
+  server/src/   Node 서버(Hono): 업로드·추출(OCR)·요건 해석·빠른 판정(fast.ts)·사실 대조·Verdict 실행·순차 실행기·SSE
   server/test/  오프라인 테스트(가짜 LLM, 가짜 Jev fetch) — 100건 상태·복구 포함
   web/src/      React + Tailwind + shadcn/ui. main.tsx = 운영 화면, dev/ = 개발용 UI 시안(예시 데이터)
   fixtures/     검증용 예시 PDF(가상 회사, 스캔본·손상 파일 포함). 운영 화면은 쓰지 않음
@@ -39,6 +39,8 @@ Claude Code 클라우드 세션에서는 Node 명령 앞에 `NODE_USE_ENV_PROXY=
 | `REVIEW_DATA_DIR` | `./data` | `review.sqlite`(실행 상태), `verdict.sqlite`(Verdict 평가), `files/`(원본) |
 | `VERDICT_API_KEYS` | 미설정 = 단일 tenant `default` | `키:tenant,…`. 브라우저는 `POST /api/session {apiKey}`로 httpOnly 쿠키를 받는다 |
 | `OPENAI_API_KEY`, `OPENAI_BASE_URL` | | 요건 해석·사실 추출·OCR(구조화 출력, 비전) |
+| `REVIEW_MODE` | `hybrid` | `hybrid` = 문서마다 Jev 한 요청으로 빠른 판정, 확정 못 한 문서만 LLM 사실 추출로. `full` = 항상 LLM 사실 추출 |
+| `REVIEW_FAST_MIN_CONFIDENCE` | `0.8` | 빠른 판정에서 고른 결과의 확률이 이보다 낮으면 LLM 사실 추출로 넘긴다 |
 | `REVIEW_LLM_MODEL` / `REVIEW_OCR_MODEL` | `gpt-5.4-mini` | |
 | `REVIEW_TEXT_JUDGE_PROVIDER` / `REVIEW_TEXT_JUDGE_MODEL` | `typesafe` / `jev-latest` | 서술형 요건을 판정하는 Verdict decision judge. 해당 provider 키 필요(`TYPESAFE_API_KEY` 등) |
 | `REVIEW_SERVE_PROTOTYPE` | 미설정 | `1`이면 개발용 시안 `/prototype.html`도 내보낸다 |

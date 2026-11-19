@@ -21,6 +21,8 @@ import { EngineEventRouter, Runner } from "./runner.js";
 
 export function settingsFromEnv(env = process.env): ReviewSettings {
   return {
+    mode: env.REVIEW_MODE === "full" ? "full" : "hybrid",
+    fastMinConfidence: env.REVIEW_FAST_MIN_CONFIDENCE ? Number(env.REVIEW_FAST_MIN_CONFIDENCE) : 0.8,
     llmModel: env.REVIEW_LLM_MODEL ?? "gpt-5.4-mini",
     textJudge: { provider: (env.REVIEW_TEXT_JUDGE_PROVIDER ?? "typesafe") as ReviewSettings["textJudge"]["provider"], model: env.REVIEW_TEXT_JUDGE_MODEL ?? "jev-latest" },
   };

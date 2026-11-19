@@ -3,10 +3,11 @@
  * 판정은 Verdict가 한다: 날짜·숫자는 benchmark formula(코드 계산), 서술형은 decision 모델(choice),
  * 종합은 formula 집계(3치 논리). 어느 요건이라도 judge 오류면 판정이 아니라 처리 오류로 돌려준다.
  */
-import type { Engine, Evaluation, Input, RubricInput } from "@verdict-ai/core";
+import type { Engine, EngineEvent, Evaluation, Input, RubricInput } from "@verdict-ai/core";
 import { logicFormula, negatedRefs, type CompiledRequirement, type CompiledRequirements } from "./compile.js";
 import type { Extraction } from "./extract.js";
 import { extractFacts, type FactSet, type RejectedFact, type VerifiedFact } from "./facts.js";
+import { buildFastPlan, DEFAULT_FAST_MIN_CONFIDENCE, evaluateFast, readFastEvaluation, type FastPick } from "./fast.js";
 import type { LlmClient } from "./llm.js";
 import { formatAmount, ordinalToIso, type Comparator } from "./text.js";
 
@@ -40,11 +41,21 @@ export interface DocResult {
   requirements: RequirementResult[];
   warnings: string[];
   models: { facts: string; judge?: string };
+  /** fast = Jev 한 요청(빠른 판정), full = LLM 사실 추출 + Verdict. */
+  method?: "fast" | "full";
+  /** 빠른 판정에서 전체 읽기로 넘긴 이유. */
+  escalated?: string[];
+  /** 넘기기 전에 남은 빠른 판정 평가(있을 때). */
+  fastEvaluationId?: string;
 }
 
 export class ReviewError extends Error { constructor(message: string) { super(message); this.name = "ReviewError"; } }
 
 export interface ReviewSettings {
+  /** hybrid = 빠른 판정 후 애매한 문서만 전체 읽기, full = 항상 전체 읽기. 없으면 full(이 값이 없던 이전 실행의 재현). */
+  mode?: "hybrid" | "full";
+  /** 빠른 판정에서 고른 결과의 확률이 이보다 낮으면 전체 읽기로 넘긴다. */
+  fastMinConfidence?: number;
   llmModel: string;
   /** 서술형 요건 판정에 쓰는 Verdict decision judge. */
   textJudge: { provider: "typesafe" | "cloudflare" | "openrouter" | "openai" | "gemini" | "mock"; model?: string; options?: Record<string, unknown> };
@@ -162,10 +173,73 @@ export interface ReviewDeps {
   settings: ReviewSettings;
   tenantId?: string;
   onStage?: (stage: "reading" | "checking" | "saving") => void;
+  /** 요건 하나의 결과가 실제로 정해졌을 때(요건 기준, NOT 극성 반영). */
+  onRequirement?: (requirementId: string, outcome: Outcome) => void;
+  /** Engine.onEvent를 평가 id로 구독(전체 읽기 경로의 criterion.scored를 받는다). */
+  listen?: (evaluationId: string, fn: (e: EngineEvent) => void) => () => void;
 }
 
-/** 문서 한 건 검토. 처리 오류는 ReviewError로 던진다(판정으로 위장하지 않음). */
-export async function reviewDocument(args: { compiled: CompiledRequirements; extraction: Extraction; evaluationId: string; docName: string; runId: string; docId: string }, deps: ReviewDeps): Promise<DocResult> {
+type ReviewArgs = { compiled: CompiledRequirements; extraction: Extraction; evaluationId: string; docName: string; runId: string; docId: string };
+
+/**
+ * 문서 한 건 검토. 처리 오류는 ReviewError로 던진다(판정으로 위장하지 않음).
+ * hybrid: 먼저 빠른 판정(Jev 한 요청)을 하고, 확정하지 못한 문서만 전체 읽기(LLM 추출 + Verdict)로 넘긴다.
+ */
+export async function reviewDocument(args: ReviewArgs, deps: ReviewDeps): Promise<DocResult> {
+  if (deps.settings.mode !== "hybrid") return { ...(await reviewFull(args, deps)), method: "full" };
+  deps.onStage?.("checking");
+  const fastId = `${args.evaluationId}_fast`;
+  const plan = buildFastPlan(args.compiled, args.extraction, deps.settings.textJudge);
+  let escalated: string[];
+  let fastEvaluationId: string | undefined;
+  if ("escalate" in plan) escalated = plan.escalate;
+  else {
+    let ev: Evaluation;
+    try { ev = await evaluateFast(deps.engine, plan, { evaluationId: fastId, docId: args.docId, docName: args.docName, runId: args.runId, tenantId: deps.tenantId }); }
+    catch (e) { ev = { status: "failed", error: (e as Error).message, criteria: [] } as unknown as Evaluation; }
+    fastEvaluationId = ev.id;
+    const read = readFastEvaluation(args.compiled, plan, ev, deps.settings.fastMinConfidence ?? DEFAULT_FAST_MIN_CONFIDENCE);
+    if ("picks" in read) {
+      const result = fastResult(args.compiled, args.extraction, ev, read.picks);
+      for (const r of result.requirements) deps.onRequirement?.(r.id, r.outcome);
+      return result;
+    }
+    escalated = read.escalate;
+  }
+  const full = await reviewFull(args, deps);
+  return { ...full, method: "full", escalated, ...(fastEvaluationId ? { fastEvaluationId } : {}) };
+}
+
+/** 빠른 판정 결과를 요건별 결과로. 판정·종합은 Verdict 평가 그대로, 문장만 코드가 만든다. */
+function fastResult(compiled: CompiledRequirements, extraction: Extraction, ev: Evaluation, picks: FastPick[]): DocResult {
+  const verdict = ev.aggregate.grade as Outcome | undefined;
+  if (!verdict || !(verdict in OUTCOME_LABEL)) throw new ReviewError("판정 실패: 종합 판정을 계산하지 못함");
+  const negated = negatedRefs(compiled.logic);
+  let judgeModel: string | undefined;
+  const requirements = compiled.requirements.map((r): RequirementResult => {
+    const pick = picks.find((p) => p.requirementId === r.id)!;
+    const condition = OUTCOME_BY_SCORE[pick.score]!;
+    const neg = negated.get(r.id) ?? false;
+    const outcome = displayOutcome(condition, neg);
+    const rating = ev.criteria.find((c) => c.criterionId === r.id)?.ratings[0];
+    const isDecision = rating?.judgeType === "decision";
+    if (isDecision) judgeModel = (rating.raw as { model?: string } | undefined)?.model ?? judgeModel;
+    const facts = pick.fact ? [pick.fact] : [];
+    let reason = reasonFor(r, condition, facts, []);
+    if (r.kind === "text" && pick.probability !== undefined) reason = `확인한 줄 1건 기준 판정 (${OUTCOME_LABEL[condition]} ${Math.round(pick.probability * 100)}%)`;
+    return {
+      id: r.id, text: r.text, outcome, facts, rejected: [], needed: outcome === "needs_review" ? [...r.unresolved] : [],
+      ...(neg ? { negated: true, condition } : {}),
+      reason: (neg ? `제외 조건: ${CONDITION_LABEL[condition]} · ` : "") + reason,
+      judge: isDecision ? "decision" : "formula",
+      ...(pick.probability !== undefined ? { confidence: pick.probability } : {}),
+    };
+  });
+  return { verdict, evaluationId: ev.id, requirements, warnings: [...extraction.warnings], models: { facts: "빠른 판정(코드 후보)", ...(judgeModel ? { judge: judgeModel } : {}) }, method: "fast" };
+}
+
+/** 전체 읽기: LLM 사실 추출 + 원문 대조 → Verdict(formula + decision). */
+export async function reviewFull(args: ReviewArgs, deps: ReviewDeps): Promise<DocResult> {
   const { compiled, extraction, evaluationId } = args;
   deps.onStage?.("reading");
   let facts: FactSet;
@@ -176,9 +250,14 @@ export async function reviewDocument(args: { compiled: CompiledRequirements; ext
   // 같은 시도의 평가가 이미 저장돼 있으면(서버 재시작 등) 다시 판정하지 않는다.
   let evaluation: Evaluation | undefined = await deps.engine.store.getEvaluation(evaluationId, deps.tenantId);
   if (evaluation?.status !== "completed") {
+    const negatedIds = negatedRefs(compiled.logic);
+    const off = deps.listen?.(evaluationId, (e) => {
+      if (e.type === "criterion.scored" && typeof e.result.score === "number" && compiled.requirements.some((r) => r.id === e.result.criterionId)) deps.onRequirement?.(e.result.criterionId, displayOutcome(OUTCOME_BY_SCORE[e.result.score]!, negatedIds.get(e.result.criterionId)));
+    });
     try {
       evaluation = await deps.engine.evaluate({ id: evaluationId, rubric, subject: { id: args.docId, name: args.docName, inputs }, tenantId: deps.tenantId, metadata: { runId: args.runId, docId: args.docId } });
     } catch (e) { throw new ReviewError(`판정 실패: ${(e as Error).message}`); }
+    finally { off?.(); }
   }
   if (evaluation.status !== "completed") throw new ReviewError(`판정 실패: ${evaluation.error ?? evaluation.status}`);
   const broken = evaluation.criteria.filter((c) => c.status !== "scored");

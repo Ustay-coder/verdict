@@ -119,6 +119,16 @@ for (const d of repo.listDocs(runId)) {
 }
 const runSpan = sec(at((e) => e.type === "doc.started"), at((e) => e.type === "run.status" && e.payload.status === "completed"));
 const byFile = Object.fromEntries(run.docs.map((d) => [d.fileName, d.status]));
+const results = repo.listDocs(runId).map((d) => d.result).filter(Boolean);
+const methods = results.reduce((m, r) => ({ ...m, [r.method ?? "full"]: (m[r.method ?? "full"] ?? 0) + 1 }), {});
+const reasons = {};
+for (const r of results) for (const e of r.escalated ?? []) { const k = e.replace(/^r\d+: /, "").replace(/\(\d+%\)/, "(…)"); reasons[k] = (reasons[k] ?? 0) + 1; }
+const fastTimes = [], fullTimes = [];
+for (const d of repo.listDocs(runId)) {
+  const mine = events.filter((e) => e.payload.docId === d.docId);
+  const s = mine.find((e) => e.type === "doc.started"), done = mine.find((e) => e.type === "doc.completed" || e.type === "doc.failed");
+  if (s && done && d.result) (d.result.method === "fast" ? fastTimes : fullTimes).push(sec(s.createdAt, done.createdAt));
+}
 const mismatches = cases.filter((c) => byFile[c.file] && byFile[c.file] !== c.expected);
 console.log(`
 [결과] ${N}건 · 요건 3개 · 추출 ${process.env.REVIEW_LLM_MODEL ?? "gpt-5.4-mini"} · 서술형 판정 Jev
@@ -135,7 +145,11 @@ console.log(`
   문서 사이 간격          ${stats(gaps)}
 검토 시작 클릭~완료       ${((tDone - tPrepared) / 1000).toFixed(1)}s
 상태                      ${run.run.status} ${JSON.stringify(run.counts)}
-기대 판정과 일치          ${run.docs.length - mismatches.length}/${run.docs.length}`);
+기대 판정과 일치          ${run.docs.length - mismatches.length}/${run.docs.length}
+판정 방식                 ${JSON.stringify(methods)}  (모드: ${process.env.REVIEW_MODE ?? "hybrid"})
+  빠른 판정 문서          ${stats(fastTimes)}
+  전체 읽기 문서          ${stats(fullTimes)}
+  넘김 사유               ${JSON.stringify(reasons)}`);
 for (const m of mismatches) console.log(`  불일치 ${m.file}: 기대 ${m.expected}, 결과 ${byFile[m.file]} (개업 ${m.open}, ${m.addr}, 매출 ${m.revenue ?? "없음"}${m.unit ? " 천원표기" : ""})`);
 console.log(`\n데이터: ${process.env.REVIEW_DATA_DIR}  서류: ${docsDir}  run: ${runId}`);
 server.close(); await runner.stop();

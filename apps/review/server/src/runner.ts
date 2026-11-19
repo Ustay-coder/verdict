@@ -4,10 +4,10 @@
  * 일시정지는 현재 문서를 저장한 뒤 다음 문서를 시작하지 않는 방식이다.
  */
 import type { Engine, EngineEvent } from "@verdict-ai/core";
-import { compileRequirements, negatedRefs } from "./compile.js";
+import { compileRequirements } from "./compile.js";
 import type { Repo, RunRow, DocRow } from "./db.js";
 import type { LlmClient } from "./llm.js";
-import { displayOutcome, OUTCOME_BY_SCORE, reviewDocument, ReviewError, type ReviewSettings } from "./review.js";
+import { reviewDocument, ReviewError, type ReviewSettings } from "./review.js";
 
 export interface RunnerDeps {
   repo: Repo;
@@ -108,16 +108,17 @@ export class Runner {
     const settings = this.settingsOf(run);
     const evaluationId = `ev_${run.id}_${doc.docId}_${doc.attempt}`;
     if (!repo.transitionDoc(run.id, doc.docId, ["queued"], "reviewing", { stage: "reading", startedAt: this.now(), evaluationId, error: null }, { type: "doc.started", payload: { position: doc.position, attempt: doc.attempt } })) return;
-    const negated = negatedRefs(run.compiled!.logic);
-    const off = this.router.on(evaluationId, (e) => {
-      if (e.type === "criterion.scored" && typeof e.result.score === "number") repo.appendEvent(run.id, "doc.requirement", { docId: doc.docId, requirementId: e.result.criterionId, outcome: displayOutcome(OUTCOME_BY_SCORE[e.result.score]!, negated.get(e.result.criterionId)) });
-    });
     try {
       const file = repo.getFile(doc.fileId, run.tenantId);
       if (!file?.extraction || file.status !== "ready") throw new ReviewError("파일 추출본이 없습니다");
       const result = await reviewDocument(
         { compiled: run.compiled!, extraction: file.extraction, evaluationId, docName: doc.fileName, runId: run.id, docId: doc.docId },
-        { engine, llm, settings, tenantId: run.tenantId, onStage: (stage) => { repo.setStage(run.id, doc.docId, stage); } },
+        {
+          engine, llm, settings, tenantId: run.tenantId,
+          onStage: (stage) => { repo.setStage(run.id, doc.docId, stage); },
+          onRequirement: (requirementId, outcome) => { repo.appendEvent(run.id, "doc.requirement", { docId: doc.docId, requirementId, outcome }); },
+          listen: (id, fn) => this.router.on(id, fn),
+        },
       );
       repo.setStage(run.id, doc.docId, "saving");
       repo.transitionDoc(run.id, doc.docId, ["reviewing"], result.verdict, { stage: null, result, completedAt: this.now() }, { type: "doc.completed", payload: { verdict: result.verdict } });
@@ -125,7 +126,7 @@ export class Runner {
       const message = e instanceof ReviewError ? e.message : `처리 오류: ${(e as Error).message}`;
       try { repo.transitionDoc(run.id, doc.docId, ["reviewing"], "error", { stage: null, error: message, completedAt: this.now() }, { type: "doc.failed", payload: { error: message } }); }
       catch (saveError) { this.deps.log?.("결과 저장 실패", saveError); }
-    } finally { off(); }
+    }
   }
 
   /* ---------- 제어 ---------- */
