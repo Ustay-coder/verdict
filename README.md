@@ -34,7 +34,7 @@ git clone https://github.com/Ustay-coder/verdict && cd verdict/examples/banking7
 verdict run -r intent.yaml -d cases.jsonl --models mock           # a stand-in model: shows the flow, not real answers
 ```
 
-With a key for any one service, name its model instead (`TYPESAFE_API_KEY` for `jev`; `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_API_TOKEN` for `clef`; `OPENROUTER_API_KEY`; `OPENAI_API_KEY`). A model that cannot answer keeps its row and says why.
+With a key for any one service, name its model instead (`TYPESAFE_API_KEY` for `jev`; `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_API_TOKEN` for `clef`; `OPENROUTER_API_KEY`; `OPENAI_API_KEY`; `GEMINI_API_KEY`). A model that cannot answer keeps its row and says why.
 
 Then your own cases:
 
@@ -69,7 +69,7 @@ The rubric file is not edited: `--models` re-points its decision judges, one run
 
 Rules (`benchmark`), people (`human`) and prompted models (`llm`) can judge a criterion too. Keys, context sizes and what each scale becomes: [Models and inputs](https://docs.verdict-ai.dev/reference/models).
 
-**Checked against the live services: Jev, Clef, Clef-flash, OpenRouter and OpenAI's Decisions API** — what each was sent, what it answered and when is in [docs/PROVIDERS.md](docs/PROVIDERS.md).
+**Checked against the live services: Jev, Clef, Clef-flash, OpenRouter, OpenAI's Decisions API and Gemini's** — what each was sent, what it answered and when is in [docs/PROVIDERS.md](docs/PROVIDERS.md).
 
 ## Once you have chosen a model
 
