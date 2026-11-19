@@ -1,0 +1,14 @@
+# apps/review/Dockerfile 전용(BuildKit). 빌드 컨텍스트는 저장소 루트.
+**/node_modules
+**/dist
+**/.wrangler
+**/data
+**/coverage
+.git
+.verdict*
+website/.vitepress/cache
+website/.vitepress/dist
+docs/verdict-review/screens
+apps/review/fixtures
+**/*.log
+**/.env*

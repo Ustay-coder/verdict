@@ -1,0 +1,5 @@
+{
+  "//": "shadcn CLI가 @/ 경로를 찾기 위한 설정. 실제 타입검사는 server/tsconfig.json, web/tsconfig.json.",
+  "compilerOptions": { "baseUrl": "./web", "paths": { "@/*": ["./src/*"] }, "jsx": "react-jsx", "noEmit": true },
+  "include": []
+}

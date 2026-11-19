@@ -1,0 +1,33 @@
+// 서류 검토 서비스 1단계(온라인 테스트) 배포 설정. 절차와 필요한 권한은 README.md.
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "verdict-review",
+  "main": "src/index.ts",
+  "upload_source_maps": true,
+  "compatibility_date": "2026-11-09",
+  "observability": { "enabled": true },
+  // Access로 보호하는 사용자 지정 도메인만 연다. workers.dev 주소는 Access 우회로가 되므로 끈다.
+  "workers_dev": false,
+  "preview_urls": false,
+  "routes": [{ "pattern": "review.verdict-ai.dev", "custom_domain": true }],
+  "containers": [
+    {
+      "class_name": "ReviewContainer",
+      "scheduling_policy": "durable_object",
+      "images": {
+        // 저장소 루트를 빌드 컨텍스트로 쓴다(워크스페이스의 core·db·api 패키지가 필요).
+        "base": { "dockerfile": "../review/Dockerfile", "build_context": "../.." }
+      }
+    }
+  ],
+  "durable_objects": { "bindings": [{ "name": "REVIEW", "class_name": "ReviewContainer" }] },
+  "exports": { "ReviewContainer": { "type": "durable-object", "storage": "sqlite" } },
+  "vars": {
+    // 배포 전에 실제 값으로 바꾼다(README 3단계).
+    "ACCESS_TEAM_DOMAIN": "https://REPLACE-ME.cloudflareaccess.com",
+    "ACCESS_AUD": "REPLACE-ME",
+    "REVIEW_MODE": "hybrid",
+    "REVIEW_MAX_FILES_PER_RUN": "200"
+  }
+  // 비밀: wrangler secret put OPENAI_API_KEY / TYPESAFE_API_KEY
+}
