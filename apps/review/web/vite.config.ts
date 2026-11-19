@@ -15,7 +15,11 @@ export default defineConfig({
     emptyOutDir: true,
     rollupOptions: {
       // index.html = 운영 화면. prototype.html = 개발용 UI 시안(예시 데이터, 타이머 진행). 운영 화면은 시안 코드를 import하지 않는다.
-      input: { app: fileURLToPath(new URL("./index.html", import.meta.url)), prototype: fileURLToPath(new URL("./prototype.html", import.meta.url)) },
+      // 배포 이미지는 REVIEW_NO_PROTOTYPE=1로 시안을 빼고 만든다.
+      input: {
+        app: fileURLToPath(new URL("./index.html", import.meta.url)),
+        ...(process.env.REVIEW_NO_PROTOTYPE === "1" ? {} : { prototype: fileURLToPath(new URL("./prototype.html", import.meta.url)) }),
+      },
     },
   },
 });

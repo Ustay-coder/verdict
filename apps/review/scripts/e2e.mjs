@@ -1,6 +1,7 @@
 /**
  * 운영 화면 E2E: 실제 서버(실제 OCR·LLM·Verdict/Jev)에 대해 브라우저로 세 단계를 끝까지 조작한다.
  *   서버 실행 후: node apps/review/scripts/e2e.mjs http://localhost:8791
+ *   배포된 서비스: REVIEW_ACCESS_CLIENT_ID / REVIEW_ACCESS_CLIENT_SECRET(Access 서비스 토큰)를 주고 공개 주소로 실행한다.
  * 스크린샷은 docs/verdict-review/screens/ 에 저장된다(배율 2).
  */
 import { createRequire } from "node:module";
@@ -20,8 +21,10 @@ const FILES = ["가온테크_신청서류.pdf", "바다물산_신청서류.pdf",
 const payload = (path) => ({ name: basename(path), mimeType: "application/pdf", buffer: readFileSync(path) });
 const results = [];
 const check = (name, ok, detail = "") => { results.push({ name, ok, detail }); console.log(`${ok ? "PASS" : "FAIL"} ${name}${detail ? ` — ${detail}` : ""}`); };
+const accessHeaders = process.env.REVIEW_ACCESS_CLIENT_ID ? { "CF-Access-Client-Id": process.env.REVIEW_ACCESS_CLIENT_ID, "CF-Access-Client-Secret": process.env.REVIEW_ACCESS_CLIENT_SECRET ?? "" } : undefined;
+const contextOptions = (o) => ({ ...o, ...(accessHeaders ? { extraHTTPHeaders: accessHeaders } : {}) });
 const browser = await chromium.launch();
-const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 2 });
+const ctx = await browser.newContext(contextOptions({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 2 }));
 const page = await ctx.newPage();
 const errors = [];
 page.on("pageerror", (e) => errors.push(e.message));
@@ -142,7 +145,7 @@ await page.screenshot({ path: shots + "real-7-detail.png" });
 await page.keyboard.press("Escape");
 
 // 모바일 배치(같은 실행)
-const mobile = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 });
+const mobile = await browser.newContext(contextOptions({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 }));
 const mp = await mobile.newPage();
 await mp.goto(`${base}/?run=${runId}`);
 await mp.waitForSelector("[data-bin]");
@@ -153,7 +156,7 @@ check("모바일: 대기 → 현재 → 결과 세로 배치", order[0] < order[
 await mp.screenshot({ path: shots + "real-8-mobile-completed.png", fullPage: true });
 
 // 동작 줄이기: 새 실행에서 이동 모션 없이 같은 결과
-const reduced = await browser.newContext({ viewport: { width: 1440, height: 900 }, reducedMotion: "reduce" });
+const reduced = await browser.newContext(contextOptions({ viewport: { width: 1440, height: 900 }, reducedMotion: "reduce" }));
 const rp = await reduced.newPage();
 await rp.goto(base);
 await rp.evaluate(() => localStorage.clear());

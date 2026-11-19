@@ -56,6 +56,9 @@ export class FilePreparer {
 
   enqueue(id: string) { if (!this.queue.includes(id)) this.queue.push(id); this.pump(); }
 
+  /** 준비 중이거나 대기 중인 파일이 있으면 true. */
+  busy() { return this.active > 0 || this.queue.length > 0; }
+
   /** 테스트용: 대기 중인 준비가 끝날 때까지. */
   whenIdle(): Promise<void> { return this.active || this.queue.length ? new Promise((r) => this.idle.push(r)) : Promise.resolve(); }
 

@@ -45,14 +45,14 @@ let dir: string;
 beforeEach(() => { dir = mkdtempSync(join(tmpdir(), "review-")); });
 afterEach(() => { rmSync(dir, { recursive: true, force: true }); });
 
-function setup(opts: { hook?: (call: LlmCall) => void; env?: Record<string, string>; settings?: typeof SETTINGS; decide?: Parameters<typeof makeEngine>[0] } = {}) {
+function setup(opts: { hook?: (call: LlmCall) => void; env?: Record<string, string>; settings?: typeof SETTINGS; decide?: Parameters<typeof makeEngine>[0]; maxFilesPerRun?: number } = {}) {
   const repo = new Repo(join(dir, "review.sqlite"));
   const llm = fakeLlm({ requirements: () => compileAnswer(), facts: (call) => { opts.hook?.(call); return factsFromDoc(call); } });
   const { engine, router } = makeEngine(opts.decide ?? ((state) => (state.includes("울산") ? "met" : "not_met")));
   const settings = opts.settings ?? SETTINGS;
   const runner = new Runner({ repo, engine, llm, settings }, router);
   const preparer = new FilePreparer(repo, new FileStorage(dir), { llm, ocrModel: "fake" });
-  const app = createReviewApp({ repo, runner, preparer, auth: envAuth(opts.env ?? {}), settings, heartbeatMs: 50 });
+  const app = createReviewApp({ repo, runner, preparer, auth: envAuth(opts.env ?? {}), settings, heartbeatMs: 50, maxFilesPerRun: opts.maxFilesPerRun });
   return { repo, runner, preparer, app, llm };
 }
 
@@ -255,6 +255,27 @@ describe("runner and HTTP contract (mock engine)", () => {
     const reqEvents = s.repo.listEvents(runId, 0).filter((e) => e.type === "doc.requirement");
     expect(reqEvents.every((e) => /^r\d$/.test(String(e.payload.requirementId)))).toBe(true);
     for (const d of docs) expect(reqEvents.filter((e) => e.payload.docId === d.docId).map((e) => e.payload.requirementId).sort()).toEqual(["r1", "r2", "r3"]);
+    s.repo.close();
+  });
+
+  it("reports busy on /api/health while work remains, caps files per run and disables proxy buffering on SSE", async () => {
+    const s = setup({ maxFilesPerRun: 3 });
+    expect(await (await s.app.request("/api/health")).json()).toEqual({ ok: true, busy: false });
+    const ids = [];
+    for (let i = 0; i < 4; i++) ids.push((await upload(s.app, `c${i}.txt`, docText(0))).id);
+    await s.preparer.whenIdle();
+    const tooMany = await startRun(s.app, ids);
+    expect(tooMany.status).toBe(400);
+    const runId = (await startRun(s.app, ids.slice(0, 2))).body.run.id;
+    expect(((await (await s.app.request("/api/health")).json()) as { busy: boolean }).busy).toBe(true);
+    await s.runner.drain();
+    expect(((await (await s.app.request("/api/health")).json()) as { busy: boolean }).busy).toBe(false);
+    const ac = new AbortController();
+    const res = await s.app.request(`/api/runs/${runId}/events`, { signal: ac.signal });
+    expect(res.headers.get("x-accel-buffering")).toBe("no");
+    expect(res.headers.get("content-type")).toMatch(/text\/event-stream/);
+    ac.abort();
+    await res.body?.cancel().catch(() => {});
     s.repo.close();
   });
 });

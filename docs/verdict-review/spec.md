@@ -249,3 +249,12 @@ doc:  queued ─▶ reviewing(stage: reading → checking → saving) ─▶ met
 - 표에서 같은 줄에 여러 연도 값이 있을 때(“2025년 2024년” 열), 어느 열의 값인지는 추출 모델의 선택을 따른다. 코드는 그 값이 인용 안에 있는지만 확인한다.
 - 추출 모델 출력은 실행마다 조금씩 다를 수 있다. 인용을 원문에서 못 찾으면 `확인 필요`로 떨어지는 쪽으로만 흔들리게 설계했다(값을 지어내지 않음).
 - Cloudflare Workers 배포 어댑터(R2·Queues·Durable Objects)는 없다. Node 서버 한 프로세스가 실행기를 맡는다.
+
+## 15. 배포 (1단계: 온라인 테스트, `apps/review-deploy`)
+- 구성: `review.verdict-ai.dev` → Cloudflare Access → 앞단 Worker(Access JWT 검증, 검증된 사용자만 `x-verdict-user`) → Durable Object `main` → 컨테이너 1대(`apps/review/Dockerfile`, `standard-1`, 인터넷 허용).
+- 컨테이너는 서버를 그대로 실행한다(포트 8080, `/data`에 SQLite·파일). 개발용 시안은 이미지에서 뺀다(`REVIEW_NO_PROTOTYPE=1`).
+- 꺼짐 방지: 비활성 타이머 30분. `/api/health`의 `busy`(진행 중인 실행 또는 준비 중인 파일)가 참이면 Durable Object 알람이 5분마다 타이머를 연장한다.
+- 서버 보완: `/api/health` → `{ ok, busy }`, SSE 응답에 `x-accel-buffering: no`, 실행당 서류 수 상한 `REVIEW_MAX_FILES_PER_RUN`(기본 500, 배포 설정 200), 스캔 렌더러를 앱 의존성(`@napi-rs/canvas`)에서 찾음.
+- 한계: 컨테이너 디스크는 재배포·재시작·정지 때 지워진다(2단계에서 D1·R2로). 절차·권한·확인 방법은 `apps/review-deploy/README.md`.
+- 검증(이 세션): Worker 접근 확인 테스트 5건, Dockerfile과 같은 빌드 단계를 빈 복사본에서 재현해 실행 묶음 생성, 그 묶음으로 띄운 서버에 원격 모드 측정 12건(스캔 3) 12/12. Docker 데몬이 없어 이미지 빌드와 실제 배포는 하지 않았다.
+

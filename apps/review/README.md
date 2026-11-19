@@ -9,7 +9,7 @@ apps/review/
   server/test/  오프라인 테스트(가짜 LLM, 가짜 Jev fetch) — 100건 상태·복구 포함
   web/src/      React + Tailwind + shadcn/ui. main.tsx = 운영 화면, dev/ = 개발용 UI 시안(예시 데이터)
   fixtures/     검증용 예시 PDF(가상 회사, 스캔본·손상 파일 포함). 운영 화면은 쓰지 않음
-  scripts/      make-fixtures / live-check(실연동) / e2e(브라우저) / screens(시안 스크린샷)
+  scripts/      make-fixtures / live-check(실연동) / e2e(브라우저, 원격 가능) / bench(측정, 원격 가능) / screens(시안 스크린샷)
 ```
 
 ## 실행
@@ -44,6 +44,9 @@ Claude Code 클라우드 세션에서는 Node 명령 앞에 `NODE_USE_ENV_PROXY=
 | `REVIEW_LLM_MODEL` / `REVIEW_OCR_MODEL` | `gpt-5.4-mini` | |
 | `REVIEW_TEXT_JUDGE_PROVIDER` / `REVIEW_TEXT_JUDGE_MODEL` | `typesafe` / `jev-latest` | 서술형 요건을 판정하는 Verdict decision judge. 해당 provider 키 필요(`TYPESAFE_API_KEY` 등) |
 | `REVIEW_SERVE_PROTOTYPE` | 미설정 | `1`이면 개발용 시안 `/prototype.html`도 내보낸다 |
+| `REVIEW_MAX_FILES_PER_RUN` | `500` | 한 번에 검토할 수 있는 서류 수 |
+
+온라인 배포(Cloudflare Containers): [`apps/review-deploy/README.md`](../review-deploy/README.md). 이미지: `Dockerfile`(빌드 컨텍스트는 저장소 루트).
 
 ## 확인
 

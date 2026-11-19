@@ -7,7 +7,8 @@
 import { serve } from "@hono/node-server";
 import { serveStatic } from "@hono/node-server/serve-static";
 import { envAuth } from "@verdict-ai/api";
-import { Engine } from "@verdict-ai/core";
+import { Engine, lazyCanvasPdfPages } from "@verdict-ai/core";
+import { createRequire } from "node:module";
 import { fromSqliteFile } from "@verdict-ai/db/sqlite";
 import { mkdirSync } from "node:fs";
 import { join, relative } from "node:path";
@@ -39,8 +40,11 @@ export async function startReviewServer(env = process.env) {
   const settings = settingsFromEnv(env);
   const log = (m: string, e?: unknown) => console.error(m, e);
   const runner = new Runner({ repo, engine, llm, settings, log }, router);
-  const preparer = new FilePreparer(repo, new FileStorage(dataDir), { llm, ocrModel: env.REVIEW_OCR_MODEL ?? "gpt-5.4-mini" }, 2, log);
-  const app = createReviewApp({ repo, runner, preparer, auth: envAuth(env), settings });
+  // 스캔 PDF를 그림으로 바꾸는 canvas는 이 앱의 의존성으로 찾는다(배포 이미지에서도 같은 경로).
+  const renderPages = lazyCanvasPdfPages(async () => { try { return createRequire(import.meta.url)("@napi-rs/canvas") as unknown; } catch { return undefined; } });
+  const preparer = new FilePreparer(repo, new FileStorage(dataDir), { llm, ocrModel: env.REVIEW_OCR_MODEL ?? "gpt-5.4-mini", renderPages }, 2, log);
+  const maxFilesPerRun = env.REVIEW_MAX_FILES_PER_RUN ? Number(env.REVIEW_MAX_FILES_PER_RUN) : undefined;
+  const app = createReviewApp({ repo, runner, preparer, auth: envAuth(env), settings, maxFilesPerRun });
 
   const webDist = fileURLToPath(new URL("../../web/dist", import.meta.url));
   const root = relative(process.cwd(), webDist) || ".";

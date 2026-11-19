@@ -2,7 +2,9 @@
  * 실제 처리 시간 측정(실제 OCR·LLM·Verdict/Jev 호출). 값이 서로 다른 가상 회사 서류 N건을 만들어
  * 업로드 → 준비 → 검토를 끝까지 돌리고, 단계별 시간과 기대 판정 일치율을 출력한다.
  *   NODE_USE_ENV_PROXY=1 node apps/review/scripts/bench.mjs [건수=100] [스캔 비율=0.1]
- * 비용이 드는 실호출이다. 데이터는 임시 디렉터리에 저장된다.
+ * 원격 모드(배포된 서비스): REVIEW_BASE_URL=https://review.verdict-ai.dev 와 Access 서비스 토큰
+ *   REVIEW_ACCESS_CLIENT_ID / REVIEW_ACCESS_CLIENT_SECRET 을 주면 로컬 서버 없이 API만으로 잰다.
+ * 비용이 드는 실호출이다. 로컬 모드의 데이터는 임시 디렉터리에 저장된다.
  */
 import { createRequire } from "node:module";
 import { mkdtempSync, writeFileSync, readFileSync, mkdirSync } from "node:fs";
@@ -68,9 +70,13 @@ await browser.close();
 console.log(`[gen] ${N}건 생성 (스캔 ${cases.filter((c) => c.scan).length}) → ${docsDir}`);
 
 /* ---------- 측정 ---------- */
-const { startReviewServer } = await import("../server/dist/main.js");
-const { server, runner, repo } = await startReviewServer();
-const base = `http://localhost:${process.env.PORT}`;
+const remote = process.env.REVIEW_BASE_URL?.replace(/\/$/, "");
+const accessHeaders = process.env.REVIEW_ACCESS_CLIENT_ID ? { "CF-Access-Client-Id": process.env.REVIEW_ACCESS_CLIENT_ID, "CF-Access-Client-Secret": process.env.REVIEW_ACCESS_CLIENT_SECRET ?? "" } : {};
+const local = remote ? undefined : await (await import("../server/dist/main.js")).startReviewServer();
+const { server, runner, repo } = local ?? {};
+const base = remote ?? `http://localhost:${process.env.PORT}`;
+/** 원격이면 Access 서비스 토큰 헤더를 붙인다. */
+const fetch = (url, init = {}) => globalThis.fetch(url, { ...init, headers: { ...accessHeaders, ...(init.headers ?? {}) } });
 const REQ = "2025년 12월 31일 기준 창업 3년 이상\n울산 소재 기업\n2025년 매출 1억 원 이상";
 const t0 = Date.now();
 const ids = await Promise.all(cases.map(async (c) => {
@@ -96,6 +102,37 @@ for (;;) {
   await new Promise((r) => setTimeout(r, 2000));
 }
 const tDone = Date.now();
+
+if (remote) {
+  // 원격: 저장소 DB 없이 API 응답(문서 시작·완료 시각, 결과의 판정 방식)으로 집계한다.
+  const sec2 = (a, b) => (new Date(b) - new Date(a)) / 1000;
+  const st2 = (a) => { const s = [...a].sort((x, y) => x - y); return s.length ? `n=${s.length} 평균 ${(s.reduce((x, y) => x + y, 0) / s.length).toFixed(2)}s · 중앙 ${s[s.length >> 1].toFixed(2)}s · p90 ${s[Math.floor(s.length * 0.9)].toFixed(2)}s · 최대 ${s.at(-1).toFixed(2)}s` : "없음"; };
+  const details = await Promise.all(run.docs.map(async (d) => (await fetch(`${base}/api/runs/${runId}/docs/${d.docId}`)).json()));
+  const per = { fast: [], full: [] };
+  const reasons = {};
+  for (const d of details) {
+    if (d.startedAt && d.completedAt && d.result) per[d.result.method ?? "full"].push(sec2(d.startedAt, d.completedAt));
+    for (const e of d.result?.escalated ?? []) { const k = e.replace(/^r\d+: /, "").replace(/\(\d+%\)/, "(…)"); reasons[k] = (reasons[k] ?? 0) + 1; }
+  }
+  const starts = details.map((d) => d.startedAt).filter(Boolean).sort();
+  const ends = details.map((d) => d.completedAt).filter(Boolean).sort();
+  const byFile2 = Object.fromEntries(run.docs.map((d) => [d.fileName, d.status]));
+  const wrong = cases.filter((c) => byFile2[c.file] && byFile2[c.file] !== c.expected);
+  console.log(`
+[원격 결과] ${base} · ${N}건(스캔 ${cases.filter((c) => c.scan).length})
+업로드(동시 전송)        ${((tUploaded - t0) / 1000).toFixed(1)}s
+준비 완료까지(벽시계)     ${((tPrepared - t0) / 1000).toFixed(1)}s   준비 실패 ${failedPrep.length}건 ${failedPrep.map((f) => `${f.name}: ${f.error}`).join(", ")}
+검토(첫 시작~마지막 완료) ${starts.length ? sec2(starts[0], ends.at(-1)).toFixed(1) : "-"}s
+검토 시작 클릭~완료       ${((tDone - tPrepared) / 1000).toFixed(1)}s
+  빠른 판정 문서          ${st2(per.fast)}
+  전체 읽기 문서          ${st2(per.full)}
+  넘김 사유               ${JSON.stringify(reasons)}
+상태                      ${run.run.status} ${JSON.stringify(run.counts)}
+기대 판정과 일치          ${run.docs.length - wrong.length}/${run.docs.length}`);
+  for (const m of wrong) console.log(`  불일치 ${m.file}: 기대 ${m.expected}, 결과 ${byFile2[m.file]}`);
+  console.log(`run: ${runId}`);
+  process.exit(0);
+}
 
 /* ---------- 집계 ---------- */
 const sec = (a, b) => (new Date(b) - new Date(a)) / 1000;

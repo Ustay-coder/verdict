@@ -15,7 +15,7 @@ import type { FilePreparer } from "./files.js";
 import type { ReviewSettings } from "./review.js";
 import type { Runner } from "./runner.js";
 
-export interface AppDeps { repo: Repo; runner: Runner; preparer: FilePreparer; auth: Auth; settings: ReviewSettings; heartbeatMs?: number }
+export interface AppDeps { repo: Repo; runner: Runner; preparer: FilePreparer; auth: Auth; settings: ReviewSettings; heartbeatMs?: number; maxFilesPerRun?: number }
 type Env = { Variables: { tenantId: string } };
 
 export const MAX_REQUIREMENT_CHARS = 4000;
@@ -23,7 +23,7 @@ const COOKIE = "verdict_key";
 
 export function fileView(f: FileRow) { return { id: f.id, name: f.name, status: f.status, ...(f.error ? { error: f.error } : {}) }; }
 export function docView(d: DocRow) {
-  return { docId: d.docId, position: d.position, fileName: d.fileName, status: d.status, stage: d.stage, attempt: d.attempt, completedAt: d.completedAt, ...(d.error ? { error: d.error } : {}) };
+  return { docId: d.docId, position: d.position, fileName: d.fileName, status: d.status, stage: d.stage, attempt: d.attempt, startedAt: d.startedAt, completedAt: d.completedAt, ...(d.error ? { error: d.error } : {}) };
 }
 export function snapshot(repo: Repo, run: RunRow) {
   const docs = repo.listDocs(run.id);
@@ -47,7 +47,8 @@ export function createReviewApp(deps: AppDeps) {
     return c.json({ error: { message: "서버 오류" } }, 500);
   });
 
-  app.get("/api/health", (c) => c.json({ ok: true }));
+  // busy: 진행 중인 실행이나 준비 중인 파일이 있음. 배포 환경의 앞단이 이 값을 보고 컨테이너를 꺼지지 않게 둔다(내용은 담지 않는다).
+  app.get("/api/health", (c) => c.json({ ok: true, busy: repo.activeRuns().length > 0 || preparer.busy() }));
 
   app.post("/api/session", async (c) => {
     const { apiKey } = z.object({ apiKey: z.string().min(1) }).parse(await c.req.json());
@@ -93,11 +94,13 @@ export function createReviewApp(deps: AppDeps) {
   });
 
   /* ---------- runs ---------- */
-  const RunBody = z.object({ requirement: z.string().max(MAX_REQUIREMENT_CHARS), fileIds: z.array(z.string()).min(1).max(500) });
+  const maxFiles = deps.maxFilesPerRun ?? 500;
+  const RunBody = z.object({ requirement: z.string().max(MAX_REQUIREMENT_CHARS), fileIds: z.array(z.string()).min(1) });
   app.post("/api/runs", async (c) => {
     const body = RunBody.parse(await c.req.json());
     const requirement = body.requirement.trim();
     if (!requirement) throw new HTTPException(400, { message: "요건이 비어 있습니다" });
+    if (body.fileIds.length > maxFiles) throw new HTTPException(400, { message: `한 번에 ${maxFiles}건까지 검토할 수 있습니다` });
     if (new Set(body.fileIds).size !== body.fileIds.length) throw new HTTPException(400, { message: "같은 파일이 두 번 들어 있습니다" });
     const tenantId = c.var.tenantId;
     const key = c.req.header("idempotency-key")?.slice(0, 200);
@@ -144,6 +147,9 @@ export function createReviewApp(deps: AppDeps) {
     const run = loadRun(c);
     const header = c.req.header("last-event-id");
     const after = Number(header ?? c.req.query("after") ?? 0) || 0;
+    // 프록시(Cloudflare 등)가 이벤트를 모아 두지 않게 한다.
+    c.header("x-accel-buffering", "no");
+    c.header("cache-control", "no-cache, no-transform");
     return streamSSE(c, async (stream) => {
       let last = after;
       const queue: EventRow[] = [];
