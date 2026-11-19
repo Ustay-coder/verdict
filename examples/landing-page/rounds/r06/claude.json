@@ -1,0 +1,9 @@
+{
+  "result": "I've added content to `index.html` for each of the three checks; everything else on the page is unchanged. I haven't re-scored it with Verdict or opened it in a browser, so I haven't seen how the new parts look.\n\n- **Why I would use it (2/3):** \"How it works\" now opens with three short problem statements before the steps:\n  - Vendor benchmarks aren't about the messages your system has to sort.\n  - Each API wants its questions in its own shape, so comparing four models means writing the same question four ways.\n  - You still have to line up the answers yourself to find where the models disagree.\n- **Who it is for (2/3):** under the hero tagline there's a new \"Built for\" line. It names engineers picking a decision model to classify, route or triage things like support messages, tickets or documents, who already have labeled cases and need to know which model gets those right. This is my wording built from your README, so check that it describes your actual users.\n- **Shows real output (2/3):** below the results table there's now a terminal block with the exact command and the output it printed for the 2026-11-12 run, copied from your README. Before, the page only showed that run as a styled table.\n\nOne thing in that terminal block isn't real output. Your README cuts the run off with `…` after \"they differ on 10:\", and the placeholder rule failed on `…` earlier, so I left it out. In its place is a grey comment line: \"the ten cases follow, one by one; the full output is in examples/banking77\". If you paste a few of those ten differing cases, I'll put the real lines in instead.",
+  "session_id": "45db75c8-118e-46c0-b0d9-2b42b5418cfe",
+  "cost_usd": 1.3816401999999997,
+  "duration_ms": 45828,
+  "model": [
+    "claude-opus-5-5"
+  ]
+}

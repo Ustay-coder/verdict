@@ -1,0 +1,37 @@
+Landing page — ship or not × cases.jsonl: 10 case(s), 2 model(s), the same questions to each
+  model        answered by             agreed with labels   failed   asked a human   pictures sent   input tokens   calls   time
+  clef         cloudflare/clef         54/60 (90%)          0        0               10/10           123,455        50      3.6 s
+  clef-flash   cloudflare/clef-flash   48/60 (80%)          0        0               10/10           123,455        50      2.2 s
+the models gave one answer on 69 of 100 question(s) they all answered; they differ on 31:
+  None (the round-6 page as it passed) · no_fabrication   expected pass   clef pass (0.64) | clef-flash fail (0.76)
+  None (the round-6 page as it passed) · audience   clef 3 (0.80) | clef-flash 2 (0.42)
+  None (the round-6 page as it passed) · proof   clef 3 (0.71) | clef-flash 1 (0.14)
+  None (the round-6 page as it passed) · first_run   clef 3 (0.83) | clef-flash 2 (0.25)
+  An invented testimonial on the first screen · audience   clef 3 (0.78) | clef-flash 2 (0.28)
+  An invented testimonial on the first screen · first_run   clef 3 (0.81) | clef-flash 2 (0.18)
+  An invented user count on the first screen · audience   clef 3 (0.81) | clef-flash 2 (0.44)
+  An invented user count on the first screen · first_run   clef 3 (0.79) | clef-flash 2 (0.18)
+  The real run's best result inflated: Clef-flash 73/80 (91%) shown as 79/80 (99%) · audience   clef 3 (0.82) | clef-flash 2 (0.34)
+  The real run's best result inflated: Clef-flash 73/80 (91%) shown as 79/80 (99%) · first_run   clef 3 (0.77) | clef-flash 2 (0.19)
+  A wrong package name in every install command (@verdict/cli) · audience   clef 3 (0.82) | clef-flash 2 (0.44)
+  A wrong package name in every install command (@verdict/cli) · first_run   clef 3 (0.82) | clef-flash 2 (0.26)
+  Every repository link points to a repository that does not exist (verdict-cli) · audience   clef 3 (0.80) | clef-flash 2 (0.37)
+  Every repository link points to a repository that does not exist (verdict-cli) · first_run   clef 3 (0.83) | clef-flash 2 (0.20)
+  The first-screen install command and button drawn in the background colour · no_fabrication   expected pass   clef pass (0.64) | clef-flash fail (0.75)
+  The first-screen install command and button drawn in the background colour · audience   clef 3 (0.80) | clef-flash 2 (0.42)
+  The first-screen install command and button drawn in the background colour · proof   clef 3 (0.71) | clef-flash 2 (0.48)
+  The first-screen install command and button drawn in the background colour · first_run   clef 3 (0.83) | clef-flash 2 (0.25)
+  The page is 960px wide on a phone and overflows sideways · no_fabrication   expected pass   clef pass (0.64) | clef-flash fail (0.76)
+  The page is 960px wide on a phone and overflows sideways · mobile_ok   expected fail   clef fail (0.85) | clef-flash pass (0.68)
+  The page is 960px wide on a phone and overflows sideways · audience   clef 3 (0.80) | clef-flash 2 (0.42)
+  The page is 960px wide on a phone and overflows sideways · proof   clef 3 (0.71) | clef-flash 1 (0.14)
+  The page is 960px wide on a phone and overflows sideways · first_run   clef 3 (0.83) | clef-flash 2 (0.25)
+  An unfilled slot on the first screen: [Insert demo GIF here] · no_fabrication   expected pass   clef pass (0.52) | clef-flash fail (0.80)
+  An unfilled slot on the first screen: [Insert demo GIF here] · audience   clef 3 (0.82) | clef-flash 2 (0.33)
+  An unfilled slot on the first screen: [Insert demo GIF here] · proof   clef 3 (0.66) | clef-flash 2 (0.38)
+  An unfilled slot on the first screen: [Insert demo GIF here] · first_run   clef 3 (0.82) | clef-flash 2 (0.17)
+  None a person would block: the logo links back to the top with href="#" · no_fabrication   expected pass   clef pass (0.64) | clef-flash fail (0.76)
+  None a person would block: the logo links back to the top with href="#" · audience   clef 3 (0.80) | clef-flash 2 (0.42)
+  None a person would block: the logo links back to the top with href="#" · proof   clef 3 (0.71) | clef-flash 1 (0.14)
+  None a person would block: the logo links back to the top with href="#" · first_run   clef 3 (0.83) | clef-flash 2 (0.25)
+runs: clef run_34fa0cb7c3004878b7ab, clef-flash run_58e4eec825a945108a6a; two of them case by case: verdict diff --base run_34fa0cb7c3004878b7ab --head run_58e4eec825a945108a6a

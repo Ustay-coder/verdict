@@ -1,0 +1,1250 @@
+{
+  "id": "eval_mwgbt0pokjuj8et0",
+  "rubric": {
+    "name": "Landing page — ship or not",
+    "version": "1",
+    "description": "Decide whether an AI-generated landing page for a developer tool can go live.",
+    "context": "A developer asked an AI coding agent for a landing page for their open-source developer tool and is deciding whether to publish it. The reader of the page is a developer who has never heard of the tool. The facts input says what is true about the tool; anything the page claims beyond it is invented.",
+    "scale": {
+      "type": "numeric",
+      "min": 0,
+      "max": 3,
+      "step": 1
+    },
+    "judges": {
+      "clef": {
+        "type": "decision",
+        "provider": "cloudflare",
+        "model": "@cf/cloudflare/clef",
+        "onLowConfidence": "accept",
+        "escalateTo": []
+      }
+    },
+    "defaultJudge": {
+      "type": "ref",
+      "ref": "clef"
+    },
+    "criteria": [
+      {
+        "id": "says_what",
+        "name": "First screen says what it is",
+        "weight": 0,
+        "scale": {
+          "type": "binary",
+          "labels": [
+            "fail",
+            "pass"
+          ]
+        },
+        "anchors": {
+          "fail": "From the first screen alone a developer cannot say what the tool does, or only gets a slogan.",
+          "pass": "From the first screen alone a developer can say in one sentence what the tool does and for what."
+        },
+        "inputs": [
+          "desktop"
+        ],
+        "optional": false,
+        "group": "Gate"
+      },
+      {
+        "id": "cta_visible",
+        "name": "A next step on the first screen",
+        "weight": 0,
+        "scale": {
+          "type": "binary",
+          "labels": [
+            "fail",
+            "pass"
+          ]
+        },
+        "anchors": {
+          "fail": "The first screen has no visible button, link or command telling the reader what to do next.",
+          "pass": "The first screen shows a clear next step, such as an install command or a button to the code or docs."
+        },
+        "inputs": [
+          "desktop"
+        ],
+        "optional": false,
+        "group": "Gate"
+      },
+      {
+        "id": "cta_real",
+        "name": "The next step leads somewhere real",
+        "weight": 0,
+        "scale": {
+          "type": "binary",
+          "labels": [
+            "fail",
+            "pass"
+          ]
+        },
+        "judge": {
+          "type": "benchmark",
+          "method": "keywords",
+          "keywords": [
+            "npm install -g @verdict-ai/cli",
+            "github.com/Ustay-coder/verdict"
+          ],
+          "mode": "any",
+          "caseSensitive": false
+        },
+        "inputs": [
+          "source"
+        ],
+        "optional": false,
+        "group": "Gate"
+      },
+      {
+        "id": "no_fabrication",
+        "name": "Nothing invented",
+        "weight": 0,
+        "scale": {
+          "type": "binary",
+          "labels": [
+            "fail",
+            "pass"
+          ]
+        },
+        "anchors": {
+          "fail": "The page claims something the facts do not support: testimonials or quotes, customer or company logos, user, download or star counts, speed or accuracy numbers, pricing plans, a sign-up or waitlist, or features the facts do not list.",
+          "pass": "Every claim about users, customers, numbers, prices and features on the page is backed by the facts."
+        },
+        "inputs": [
+          "page",
+          "facts"
+        ],
+        "optional": false,
+        "group": "Gate"
+      },
+      {
+        "id": "no_placeholder",
+        "name": "No placeholders left",
+        "weight": 0,
+        "scale": {
+          "type": "binary",
+          "labels": [
+            "fail",
+            "pass"
+          ]
+        },
+        "judge": {
+          "type": "benchmark",
+          "method": "regex",
+          "pattern": "lorem ipsum|href=[\"']#[\"']|example\\.(com|org)|\\bTODO\\b|\\bTBD\\b|your-?(org|name|username)|\\bacme\\b",
+          "flags": "i",
+          "negate": true
+        },
+        "inputs": [
+          "source"
+        ],
+        "optional": false,
+        "group": "Gate"
+      },
+      {
+        "id": "mobile_ok",
+        "name": "Readable on a phone",
+        "weight": 0,
+        "scale": {
+          "type": "binary",
+          "labels": [
+            "fail",
+            "pass"
+          ]
+        },
+        "anchors": {
+          "fail": "On the phone-width screen, text or code is cut off, overflows sideways, overlaps, or is too small to read.",
+          "pass": "On the phone-width screen, everything visible fits, does not overlap and can be read."
+        },
+        "inputs": [
+          "mobile"
+        ],
+        "optional": false,
+        "group": "Gate"
+      },
+      {
+        "id": "value_prop",
+        "name": "Why I would use it",
+        "weight": 3,
+        "levels": [
+          {
+            "value": 0,
+            "label": "none",
+            "description": "No reason to use the tool is given"
+          },
+          {
+            "value": 1,
+            "label": "vague",
+            "description": "A generic benefit that would fit any tool in the category."
+          },
+          {
+            "value": 2,
+            "label": "clear",
+            "description": "A specific problem the tool solves"
+          },
+          {
+            "value": 3,
+            "label": "sharp",
+            "description": "A specific problem"
+          }
+        ],
+        "inputs": [
+          "desktop",
+          "page"
+        ],
+        "optional": false
+      },
+      {
+        "id": "audience",
+        "name": "Who it is for",
+        "weight": 2,
+        "levels": [
+          {
+            "value": 0,
+            "label": "none",
+            "description": "The page never says who should use it."
+          },
+          {
+            "value": 1,
+            "label": "everyone",
+            "description": "Aimed at everyone"
+          },
+          {
+            "value": 2,
+            "label": "named",
+            "description": "Names a specific kind of user."
+          },
+          {
+            "value": 3,
+            "label": "situation",
+            "description": "Names a specific user in a specific situation the reader can recognise as their own."
+          }
+        ],
+        "inputs": [
+          "page"
+        ],
+        "optional": false
+      },
+      {
+        "id": "proof",
+        "name": "Shows real output",
+        "weight": 3,
+        "levels": [
+          {
+            "value": 0,
+            "label": "none",
+            "description": "No example of what the tool produces."
+          },
+          {
+            "value": 1,
+            "label": "invented",
+            "description": "An example that is made up or does not match the facts."
+          },
+          {
+            "value": 2,
+            "label": "example",
+            "description": "A realistic example of a command and its output."
+          },
+          {
+            "value": 3,
+            "label": "real",
+            "description": "A real run from the facts"
+          }
+        ],
+        "inputs": [
+          "page",
+          "facts"
+        ],
+        "optional": false
+      },
+      {
+        "id": "first_run",
+        "name": "How fast I can try it",
+        "weight": 2,
+        "levels": [
+          {
+            "value": 0,
+            "label": "unclear",
+            "description": "The page does not say how to start."
+          },
+          {
+            "value": 1,
+            "label": "link",
+            "description": "Only a link to the code or docs."
+          },
+          {
+            "value": 2,
+            "label": "command",
+            "description": "An install command to copy."
+          },
+          {
+            "value": 3,
+            "label": "minute",
+            "description": "The install command and a first run that works without signing up or an API key."
+          }
+        ],
+        "inputs": [
+          "page"
+        ],
+        "optional": false
+      }
+    ],
+    "aggregation": {
+      "method": "formula",
+      "formula": "min(says_what_n, cta_visible_n, cta_real_n, no_fabrication_n, no_placeholder_n, mobile_ok_n) < 0.5 ? 0 : (value_prop_n * 3 + audience_n * 2 + proof_n * 3 + first_run_n * 2) / 10",
+      "rater": "mean",
+      "normalize": [
+        0,
+        100
+      ],
+      "missing": "zero",
+      "gates": [
+        {
+          "criterion": "says_what",
+          "min": 1,
+          "message": "The first screen does not say what it is"
+        },
+        {
+          "criterion": "cta_visible",
+          "min": 1,
+          "message": "No next step on the first screen"
+        },
+        {
+          "criterion": "cta_real",
+          "min": 1,
+          "message": "No real install command or repository link"
+        },
+        {
+          "criterion": "no_fabrication",
+          "min": 1,
+          "message": "The page claims something that is not true"
+        },
+        {
+          "criterion": "no_placeholder",
+          "min": 1,
+          "message": "Placeholders left in the page"
+        },
+        {
+          "criterion": "mobile_ok",
+          "min": 1,
+          "message": "Breaks on a phone"
+        }
+      ],
+      "passThreshold": 80,
+      "precision": 0
+    }
+  },
+  "subject": {
+    "name": "r05",
+    "inputs": [
+      {
+        "type": "image",
+        "path": "/home/user/verdict/examples/landing-page/rounds/r05/desktop.png",
+        "filename": "desktop.png",
+        "label": "desktop",
+        "tags": [
+          "desktop"
+        ]
+      },
+      {
+        "type": "image",
+        "path": "/home/user/verdict/examples/landing-page/rounds/r05/mobile.png",
+        "filename": "mobile.png",
+        "label": "mobile",
+        "tags": [
+          "mobile"
+        ]
+      },
+      {
+        "type": "file",
+        "path": "/home/user/verdict/examples/landing-page/rounds/r05/index.html",
+        "filename": "index.html",
+        "label": "page",
+        "tags": [
+          "page"
+        ]
+      },
+      {
+        "type": "file",
+        "path": "/home/user/verdict/examples/landing-page/rounds/r05/source.txt",
+        "filename": "source.txt",
+        "label": "source",
+        "tags": [
+          "source"
+        ]
+      },
+      {
+        "type": "file",
+        "path": "/home/user/verdict/examples/landing-page/facts.md",
+        "filename": "facts.md",
+        "label": "facts",
+        "tags": [
+          "facts"
+        ]
+      }
+    ]
+  },
+  "evidence": [
+    {
+      "inputIndex": 0,
+      "kind": "image",
+      "label": "desktop",
+      "tags": [
+        "desktop"
+      ],
+      "truncated": false,
+      "stats": {
+        "chars": 67,
+        "words": 8,
+        "lines": 1
+      },
+      "source": "desktop.png",
+      "images": [
+        {
+          "mimeType": "image/png",
+          "bytes": 217118,
+          "width": 2560,
+          "height": 1600
+        }
+      ]
+    },
+    {
+      "inputIndex": 1,
+      "kind": "image",
+      "label": "mobile",
+      "tags": [
+        "mobile"
+      ],
+      "truncated": false,
+      "stats": {
+        "chars": 65,
+        "words": 8,
+        "lines": 1
+      },
+      "source": "mobile.png",
+      "images": [
+        {
+          "mimeType": "image/png",
+          "bytes": 121970,
+          "width": 780,
+          "height": 1688
+        }
+      ]
+    },
+    {
+      "inputIndex": 2,
+      "kind": "file",
+      "label": "page",
+      "tags": [
+        "page"
+      ],
+      "truncated": false,
+      "stats": {
+        "chars": 5912,
+        "words": 912,
+        "lines": 200
+      },
+      "source": "index.html"
+    },
+    {
+      "inputIndex": 3,
+      "kind": "file",
+      "label": "source",
+      "tags": [
+        "source"
+      ],
+      "truncated": false,
+      "stats": {
+        "chars": 38831,
+        "words": 2438,
+        "lines": 577
+      },
+      "source": "source.txt"
+    },
+    {
+      "inputIndex": 4,
+      "kind": "file",
+      "label": "facts",
+      "tags": [
+        "facts"
+      ],
+      "truncated": false,
+      "stats": {
+        "chars": 1275,
+        "words": 195,
+        "lines": 10
+      },
+      "source": "facts.md"
+    }
+  ],
+  "status": "completed",
+  "criteria": [
+    {
+      "criterionId": "says_what",
+      "name": "First screen says what it is",
+      "weight": 0,
+      "group": "Gate",
+      "status": "scored",
+      "ratings": [
+        {
+          "id": "rat_mwgbt1sl7hg3f20a",
+          "criterionId": "says_what",
+          "raterId": "clef",
+          "judgeType": "decision",
+          "createdAt": "2026-11-14T11:32:14.806Z",
+          "status": "scored",
+          "score": 1,
+          "normalized": 1,
+          "confidence": 0.4018,
+          "probabilities": {
+            "fail": 0.2991,
+            "pass": 0.7009
+          },
+          "rationale": "cloudflare/@cf/cloudflare/clef distribution: fail=30% pass=70%",
+          "raw": {
+            "provider": "cloudflare",
+            "model": "@cf/cloudflare/clef",
+            "requestedModel": "@cf/cloudflare/clef",
+            "resolvedModel": "clef",
+            "modelVerified": true,
+            "question": {
+              "type": "noul",
+              "instructions": "Context: A developer asked an AI coding agent for a landing page for their open-source developer tool and is deciding whether to publish it. The reader of the page is a developer who has never heard of the tool. The facts input says what is true about the tool; anything the page claims beyond it is invented. Criterion \"First screen says what it is\". Is the input \"pass\" for this criterion?",
+              "criteria": {
+                "true": "From the first screen alone a developer can say in one sentence what the tool does and for what.",
+                "false": "From the first screen alone a developer cannot say what the tool does, or only gets a slogan."
+              }
+            },
+            "answer": {
+              "type": "noul",
+              "noul": 0.7009
+            },
+            "levels": [
+              {
+                "value": 0,
+                "label": "fail",
+                "description": "From the first screen alone a developer cannot say what the tool does, or only gets a slogan."
+              },
+              {
+                "value": 1,
+                "label": "pass",
+                "description": "From the first screen alone a developer can say in one sentence what the tool does and for what."
+              }
+            ],
+            "latencyMs": 1376,
+            "lowConfidence": false,
+            "stateChars": 144,
+            "stateTruncated": false,
+            "threshold": 0.5,
+            "thresholdSource": "default",
+            "images": {
+              "attached": 1,
+              "sent": 1
+            }
+          }
+        }
+      ],
+      "pending": 0,
+      "score": 1,
+      "normalized": 1,
+      "gate": {
+        "passed": true
+      }
+    },
+    {
+      "criterionId": "cta_visible",
+      "name": "A next step on the first screen",
+      "weight": 0,
+      "group": "Gate",
+      "status": "scored",
+      "ratings": [
+        {
+          "id": "rat_mwgbt1smvda4tpbx",
+          "criterionId": "cta_visible",
+          "raterId": "clef",
+          "judgeType": "decision",
+          "createdAt": "2026-11-14T11:32:14.806Z",
+          "status": "scored",
+          "score": 1,
+          "normalized": 1,
+          "confidence": 0.9,
+          "probabilities": {
+            "fail": 0.05,
+            "pass": 0.95
+          },
+          "rationale": "cloudflare/@cf/cloudflare/clef distribution: fail=5% pass=95%",
+          "raw": {
+            "provider": "cloudflare",
+            "model": "@cf/cloudflare/clef",
+            "requestedModel": "@cf/cloudflare/clef",
+            "resolvedModel": "clef",
+            "modelVerified": true,
+            "question": {
+              "type": "noul",
+              "instructions": "Context: A developer asked an AI coding agent for a landing page for their open-source developer tool and is deciding whether to publish it. The reader of the page is a developer who has never heard of the tool. The facts input says what is true about the tool; anything the page claims beyond it is invented. Criterion \"A next step on the first screen\". Is the input \"pass\" for this criterion?",
+              "criteria": {
+                "true": "The first screen shows a clear next step, such as an install command or a button to the code or docs.",
+                "false": "The first screen has no visible button, link or command telling the reader what to do next."
+              }
+            },
+            "answer": {
+              "type": "noul",
+              "noul": 0.95
+            },
+            "levels": [
+              {
+                "value": 0,
+                "label": "fail",
+                "description": "The first screen has no visible button, link or command telling the reader what to do next."
+              },
+              {
+                "value": 1,
+                "label": "pass",
+                "description": "The first screen shows a clear next step, such as an install command or a button to the code or docs."
+              }
+            ],
+            "latencyMs": 1376,
+            "lowConfidence": false,
+            "stateChars": 144,
+            "stateTruncated": false,
+            "threshold": 0.5,
+            "thresholdSource": "default",
+            "images": {
+              "attached": 1,
+              "sent": 1
+            }
+          }
+        }
+      ],
+      "pending": 0,
+      "score": 1,
+      "normalized": 1,
+      "gate": {
+        "passed": true
+      }
+    },
+    {
+      "criterionId": "cta_real",
+      "name": "The next step leads somewhere real",
+      "weight": 0,
+      "group": "Gate",
+      "status": "scored",
+      "ratings": [
+        {
+          "id": "rat_mwgbt0qvx0iqki56",
+          "criterionId": "cta_real",
+          "raterId": "benchmark:keywords",
+          "judgeType": "benchmark",
+          "createdAt": "2026-11-14T11:32:13.447Z",
+          "status": "scored",
+          "normalized": 1,
+          "score": 1,
+          "confidence": 1,
+          "rationale": "2/2 keywords present: npm install -g @verdict-ai/cli, github.com/Ustay-coder/verdict",
+          "raw": {
+            "hits": [
+              "npm install -g @verdict-ai/cli",
+              "github.com/Ustay-coder/verdict"
+            ]
+          }
+        }
+      ],
+      "pending": 0,
+      "score": 1,
+      "normalized": 1,
+      "gate": {
+        "passed": true
+      }
+    },
+    {
+      "criterionId": "no_fabrication",
+      "name": "Nothing invented",
+      "weight": 0,
+      "group": "Gate",
+      "status": "scored",
+      "ratings": [
+        {
+          "id": "rat_mwgbt14c76mnwq56",
+          "criterionId": "no_fabrication",
+          "raterId": "clef",
+          "judgeType": "decision",
+          "createdAt": "2026-11-14T11:32:13.932Z",
+          "status": "scored",
+          "score": 1,
+          "normalized": 1,
+          "confidence": 0.1084,
+          "probabilities": {
+            "fail": 0.4458,
+            "pass": 0.5542
+          },
+          "rationale": "cloudflare/@cf/cloudflare/clef distribution: fail=45% pass=55%",
+          "raw": {
+            "provider": "cloudflare",
+            "model": "@cf/cloudflare/clef",
+            "requestedModel": "@cf/cloudflare/clef",
+            "resolvedModel": "clef",
+            "modelVerified": true,
+            "question": {
+              "type": "noul",
+              "instructions": "Context: A developer asked an AI coding agent for a landing page for their open-source developer tool and is deciding whether to publish it. The reader of the page is a developer who has never heard of the tool. The facts input says what is true about the tool; anything the page claims beyond it is invented. Criterion \"Nothing invented\". Is the input \"pass\" for this criterion?",
+              "criteria": {
+                "true": "Every claim about users, customers, numbers, prices and features on the page is backed by the facts.",
+                "false": "The page claims something the facts do not support: testimonials or quotes, customer or company logos, user, download or star counts, speed or accuracy numbers, pricing plans, a sign-up or waitlist, or features the facts do not list."
+              }
+            },
+            "answer": {
+              "type": "noul",
+              "noul": 0.5542
+            },
+            "levels": [
+              {
+                "value": 0,
+                "label": "fail",
+                "description": "The page claims something the facts do not support: testimonials or quotes, customer or company logos, user, download or star counts, speed or accuracy numbers, pricing plans, a sign-up or waitlist, or features the facts do not list."
+              },
+              {
+                "value": 1,
+                "label": "pass",
+                "description": "Every claim about users, customers, numbers, prices and features on the page is backed by the facts."
+              }
+            ],
+            "latencyMs": 492,
+            "lowConfidence": false,
+            "stateChars": 7333,
+            "stateTruncated": false,
+            "threshold": 0.5,
+            "thresholdSource": "default"
+          }
+        }
+      ],
+      "pending": 0,
+      "score": 1,
+      "normalized": 1,
+      "gate": {
+        "passed": true
+      }
+    },
+    {
+      "criterionId": "no_placeholder",
+      "name": "No placeholders left",
+      "weight": 0,
+      "group": "Gate",
+      "status": "scored",
+      "ratings": [
+        {
+          "id": "rat_mwgbt0qvgg17s71r",
+          "criterionId": "no_placeholder",
+          "raterId": "benchmark:regex",
+          "judgeType": "benchmark",
+          "createdAt": "2026-11-14T11:32:13.447Z",
+          "status": "scored",
+          "normalized": 1,
+          "score": 1,
+          "confidence": 1,
+          "rationale": "regex /lorem ipsum|href=[\"']#[\"']|example\\.(com|org)|\\bTODO\\b|\\bTBD\\b|your-?(org|name|username)|\\bacme\\b/ matched 0 time(s) (negated)",
+          "raw": {
+            "count": 0
+          }
+        }
+      ],
+      "pending": 0,
+      "score": 1,
+      "normalized": 1,
+      "gate": {
+        "passed": true
+      }
+    },
+    {
+      "criterionId": "mobile_ok",
+      "name": "Readable on a phone",
+      "weight": 0,
+      "group": "Gate",
+      "status": "scored",
+      "ratings": [
+        {
+          "id": "rat_mwgbt1b1qo4b3jc4",
+          "criterionId": "mobile_ok",
+          "raterId": "clef",
+          "judgeType": "decision",
+          "createdAt": "2026-11-14T11:32:14.173Z",
+          "status": "scored",
+          "score": 1,
+          "normalized": 1,
+          "confidence": 0.6788,
+          "probabilities": {
+            "fail": 0.1606,
+            "pass": 0.8394
+          },
+          "rationale": "cloudflare/@cf/cloudflare/clef distribution: fail=16% pass=84%",
+          "raw": {
+            "provider": "cloudflare",
+            "model": "@cf/cloudflare/clef",
+            "requestedModel": "@cf/cloudflare/clef",
+            "resolvedModel": "clef",
+            "modelVerified": true,
+            "question": {
+              "type": "noul",
+              "instructions": "Context: A developer asked an AI coding agent for a landing page for their open-source developer tool and is deciding whether to publish it. The reader of the page is a developer who has never heard of the tool. The facts input says what is true about the tool; anything the page claims beyond it is invented. Criterion \"Readable on a phone\". Is the input \"pass\" for this criterion?",
+              "criteria": {
+                "true": "On the phone-width screen, everything visible fits, does not overlap and can be read.",
+                "false": "On the phone-width screen, text or code is cut off, overflows sideways, overlaps, or is too small to read."
+              }
+            },
+            "answer": {
+              "type": "noul",
+              "noul": 0.8394
+            },
+            "levels": [
+              {
+                "value": 0,
+                "label": "fail",
+                "description": "On the phone-width screen, text or code is cut off, overflows sideways, overlaps, or is too small to read."
+              },
+              {
+                "value": 1,
+                "label": "pass",
+                "description": "On the phone-width screen, everything visible fits, does not overlap and can be read."
+              }
+            ],
+            "latencyMs": 731,
+            "lowConfidence": false,
+            "stateChars": 140,
+            "stateTruncated": false,
+            "threshold": 0.5,
+            "thresholdSource": "default",
+            "images": {
+              "attached": 1,
+              "sent": 1
+            }
+          }
+        }
+      ],
+      "pending": 0,
+      "score": 1,
+      "normalized": 1,
+      "gate": {
+        "passed": true
+      }
+    },
+    {
+      "criterionId": "value_prop",
+      "name": "Why I would use it",
+      "weight": 3,
+      "status": "scored",
+      "ratings": [
+        {
+          "id": "rat_mwgbt1xavx2fwi17",
+          "criterionId": "value_prop",
+          "raterId": "clef",
+          "judgeType": "decision",
+          "createdAt": "2026-11-14T11:32:14.974Z",
+          "status": "scored",
+          "score": 2,
+          "normalized": 0.7845666666666666,
+          "confidence": 0.2133,
+          "probabilities": {
+            "none": 0.0236,
+            "vague": 0.0816,
+            "clear": 0.4123,
+            "sharp": 0.4825
+          },
+          "rationale": "cloudflare/@cf/cloudflare/clef distribution: none=2% vague=8% clear=41% sharp=48%",
+          "raw": {
+            "provider": "cloudflare",
+            "model": "@cf/cloudflare/clef",
+            "requestedModel": "@cf/cloudflare/clef",
+            "resolvedModel": "clef",
+            "modelVerified": true,
+            "question": {
+              "type": "score",
+              "instructions": "Context: A developer asked an AI coding agent for a landing page for their open-source developer tool and is deciding whether to publish it. The reader of the page is a developer who has never heard of the tool. The facts input says what is true about the tool; anything the page claims beyond it is invented. Criterion \"Why I would use it\". Place the input on the ordered levels below (worst to best). Judge only this criterion using the evidence in the state.",
+              "criteria": [
+                "none: No reason to use the tool is given",
+                "vague: A generic benefit that would fit any tool in the category.",
+                "clear: A specific problem the tool solves",
+                "sharp: A specific problem"
+              ]
+            },
+            "answer": {
+              "type": "score",
+              "score": 2.3537,
+              "legend": {
+                "0": "none: No reason to use the tool is given",
+                "1": "vague: A generic benefit that would fit any tool in the category.",
+                "2": "clear: A specific problem the tool solves",
+                "3": "sharp: A specific problem"
+              },
+              "probabilities": {
+                "0": 0.0236,
+                "1": 0.0816,
+                "2": 0.4123,
+                "3": 0.4825
+              },
+              "confidence": 0.2133
+            },
+            "levels": [
+              {
+                "value": 0,
+                "label": "none",
+                "description": "No reason to use the tool is given"
+              },
+              {
+                "value": 1,
+                "label": "vague",
+                "description": "A generic benefit that would fit any tool in the category."
+              },
+              {
+                "value": 2,
+                "label": "clear",
+                "description": "A specific problem the tool solves"
+              },
+              {
+                "value": 3,
+                "label": "sharp",
+                "description": "A specific problem"
+              }
+            ],
+            "latencyMs": 1530,
+            "lowConfidence": false,
+            "stateChars": 6130,
+            "stateTruncated": false,
+            "images": {
+              "attached": 1,
+              "sent": 1
+            }
+          }
+        }
+      ],
+      "pending": 0,
+      "score": 2,
+      "normalized": 0.6666666666666666
+    },
+    {
+      "criterionId": "audience",
+      "name": "Who it is for",
+      "weight": 2,
+      "status": "scored",
+      "ratings": [
+        {
+          "id": "rat_mwgbt1bfw1fkos7e",
+          "criterionId": "audience",
+          "raterId": "clef",
+          "judgeType": "decision",
+          "createdAt": "2026-11-14T11:32:14.187Z",
+          "status": "scored",
+          "score": 2,
+          "normalized": 0.8088333333333333,
+          "confidence": 0.2645,
+          "probabilities": {
+            "none": 0.0569,
+            "everyone": 0.0231,
+            "named": 0.3566,
+            "situation": 0.5634
+          },
+          "rationale": "cloudflare/@cf/cloudflare/clef distribution: none=6% everyone=2% named=36% situation=56%",
+          "raw": {
+            "provider": "cloudflare",
+            "model": "@cf/cloudflare/clef",
+            "requestedModel": "@cf/cloudflare/clef",
+            "resolvedModel": "clef",
+            "modelVerified": true,
+            "question": {
+              "type": "score",
+              "instructions": "Context: A developer asked an AI coding agent for a landing page for their open-source developer tool and is deciding whether to publish it. The reader of the page is a developer who has never heard of the tool. The facts input says what is true about the tool; anything the page claims beyond it is invented. Criterion \"Who it is for\". Place the input on the ordered levels below (worst to best). Judge only this criterion using the evidence in the state.",
+              "criteria": [
+                "none: The page never says who should use it.",
+                "everyone: Aimed at everyone",
+                "named: Names a specific kind of user.",
+                "situation: Names a specific user in a specific situation the reader can recognise as their own."
+              ]
+            },
+            "answer": {
+              "type": "score",
+              "score": 2.4264,
+              "legend": {
+                "0": "none: The page never says who should use it.",
+                "1": "everyone: Aimed at everyone",
+                "2": "named: Names a specific kind of user.",
+                "3": "situation: Names a specific user in a specific situation the reader can recognise as their own."
+              },
+              "probabilities": {
+                "0": 0.0569,
+                "1": 0.0231,
+                "2": 0.3566,
+                "3": 0.5634
+              },
+              "confidence": 0.2645
+            },
+            "levels": [
+              {
+                "value": 0,
+                "label": "none",
+                "description": "The page never says who should use it."
+              },
+              {
+                "value": 1,
+                "label": "everyone",
+                "description": "Aimed at everyone"
+              },
+              {
+                "value": 2,
+                "label": "named",
+                "description": "Names a specific kind of user."
+              },
+              {
+                "value": 3,
+                "label": "situation",
+                "description": "Names a specific user in a specific situation the reader can recognise as their own."
+              }
+            ],
+            "latencyMs": 741,
+            "lowConfidence": false,
+            "stateChars": 5984,
+            "stateTruncated": false
+          }
+        }
+      ],
+      "pending": 0,
+      "score": 2,
+      "normalized": 0.6666666666666666
+    },
+    {
+      "criterionId": "proof",
+      "name": "Shows real output",
+      "weight": 3,
+      "status": "scored",
+      "ratings": [
+        {
+          "id": "rat_mwgbt14dddqvi8ti",
+          "criterionId": "proof",
+          "raterId": "clef",
+          "judgeType": "decision",
+          "createdAt": "2026-11-14T11:32:13.933Z",
+          "status": "scored",
+          "score": 2,
+          "normalized": 0.7991666666666667,
+          "confidence": 0.2442,
+          "probabilities": {
+            "none": 0.0611,
+            "invented": 0.0628,
+            "example": 0.2936,
+            "real": 0.5825
+          },
+          "rationale": "cloudflare/@cf/cloudflare/clef distribution: none=6% invented=6% example=29% real=58%",
+          "raw": {
+            "provider": "cloudflare",
+            "model": "@cf/cloudflare/clef",
+            "requestedModel": "@cf/cloudflare/clef",
+            "resolvedModel": "clef",
+            "modelVerified": true,
+            "question": {
+              "type": "score",
+              "instructions": "Context: A developer asked an AI coding agent for a landing page for their open-source developer tool and is deciding whether to publish it. The reader of the page is a developer who has never heard of the tool. The facts input says what is true about the tool; anything the page claims beyond it is invented. Criterion \"Shows real output\". Place the input on the ordered levels below (worst to best). Judge only this criterion using the evidence in the state.",
+              "criteria": [
+                "none: No example of what the tool produces.",
+                "invented: An example that is made up or does not match the facts.",
+                "example: A realistic example of a command and its output.",
+                "real: A real run from the facts"
+              ]
+            },
+            "answer": {
+              "type": "score",
+              "score": 2.3974,
+              "legend": {
+                "0": "none: No example of what the tool produces.",
+                "1": "invented: An example that is made up or does not match the facts.",
+                "2": "example: A realistic example of a command and its output.",
+                "3": "real: A real run from the facts"
+              },
+              "probabilities": {
+                "0": 0.0611,
+                "1": 0.0628,
+                "2": 0.2936,
+                "3": 0.5825
+              },
+              "confidence": 0.2442
+            },
+            "levels": [
+              {
+                "value": 0,
+                "label": "none",
+                "description": "No example of what the tool produces."
+              },
+              {
+                "value": 1,
+                "label": "invented",
+                "description": "An example that is made up or does not match the facts."
+              },
+              {
+                "value": 2,
+                "label": "example",
+                "description": "A realistic example of a command and its output."
+              },
+              {
+                "value": 3,
+                "label": "real",
+                "description": "A real run from the facts"
+              }
+            ],
+            "latencyMs": 492,
+            "lowConfidence": false,
+            "stateChars": 7333,
+            "stateTruncated": false
+          }
+        }
+      ],
+      "pending": 0,
+      "score": 2,
+      "normalized": 0.6666666666666666
+    },
+    {
+      "criterionId": "first_run",
+      "name": "How fast I can try it",
+      "weight": 2,
+      "status": "scored",
+      "ratings": [
+        {
+          "id": "rat_mwgbt1bfyq560b3u",
+          "criterionId": "first_run",
+          "raterId": "clef",
+          "judgeType": "decision",
+          "createdAt": "2026-11-14T11:32:14.187Z",
+          "status": "scored",
+          "score": 3,
+          "normalized": 0.9154333333333334,
+          "confidence": 0.5741,
+          "probabilities": {
+            "unclear": 0.0167,
+            "link": 0.0328,
+            "command": 0.138,
+            "minute": 0.8125
+          },
+          "rationale": "cloudflare/@cf/cloudflare/clef distribution: unclear=2% link=3% command=14% minute=81%",
+          "raw": {
+            "provider": "cloudflare",
+            "model": "@cf/cloudflare/clef",
+            "requestedModel": "@cf/cloudflare/clef",
+            "resolvedModel": "clef",
+            "modelVerified": true,
+            "question": {
+              "type": "score",
+              "instructions": "Context: A developer asked an AI coding agent for a landing page for their open-source developer tool and is deciding whether to publish it. The reader of the page is a developer who has never heard of the tool. The facts input says what is true about the tool; anything the page claims beyond it is invented. Criterion \"How fast I can try it\". Place the input on the ordered levels below (worst to best). Judge only this criterion using the evidence in the state.",
+              "criteria": [
+                "unclear: The page does not say how to start.",
+                "link: Only a link to the code or docs.",
+                "command: An install command to copy.",
+                "minute: The install command and a first run that works without signing up or an API key."
+              ]
+            },
+            "answer": {
+              "type": "score",
+              "score": 2.7462,
+              "legend": {
+                "0": "unclear: The page does not say how to start.",
+                "1": "link: Only a link to the code or docs.",
+                "2": "command: An install command to copy.",
+                "3": "minute: The install command and a first run that works without signing up or an API key."
+              },
+              "probabilities": {
+                "0": 0.0167,
+                "1": 0.0328,
+                "2": 0.138,
+                "3": 0.8125
+              },
+              "confidence": 0.5741
+            },
+            "levels": [
+              {
+                "value": 0,
+                "label": "unclear",
+                "description": "The page does not say how to start."
+              },
+              {
+                "value": 1,
+                "label": "link",
+                "description": "Only a link to the code or docs."
+              },
+              {
+                "value": 2,
+                "label": "command",
+                "description": "An install command to copy."
+              },
+              {
+                "value": 3,
+                "label": "minute",
+                "description": "The install command and a first run that works without signing up or an API key."
+              }
+            ],
+            "latencyMs": 741,
+            "lowConfidence": false,
+            "stateChars": 5984,
+            "stateTruncated": false
+          }
+        }
+      ],
+      "pending": 0,
+      "score": 3,
+      "normalized": 1
+    }
+  ],
+  "aggregate": {
+    "method": "formula",
+    "range": [
+      0,
+      100
+    ],
+    "gates": [
+      {
+        "criterion": "says_what",
+        "passed": true
+      },
+      {
+        "criterion": "cta_visible",
+        "passed": true
+      },
+      {
+        "criterion": "cta_real",
+        "passed": true
+      },
+      {
+        "criterion": "no_fabrication",
+        "passed": true
+      },
+      {
+        "criterion": "no_placeholder",
+        "passed": true
+      },
+      {
+        "criterion": "mobile_ok",
+        "passed": true
+      }
+    ],
+    "partial": false,
+    "included": [
+      "value_prop",
+      "audience",
+      "proof",
+      "first_run"
+    ],
+    "excluded": [
+      "says_what",
+      "cta_visible",
+      "cta_real",
+      "no_fabrication",
+      "no_placeholder",
+      "mobile_ok"
+    ],
+    "raw": 0.733333,
+    "score": 73,
+    "passed": false
+  },
+  "pendingTasks": [],
+  "usage": {
+    "decisionCalls": 5,
+    "llmCalls": 0,
+    "inputTokens": 10588,
+    "outputTokens": 0,
+    "durationMs": 1573
+  },
+  "createdAt": "2026-11-14T11:32:13.405Z",
+  "updatedAt": "2026-11-14T11:32:14.977Z"
+}

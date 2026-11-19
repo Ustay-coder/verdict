@@ -1,0 +1,119 @@
+# Ship / don't ship for an AI-made landing page. Written and frozen before the first page was generated.
+# Evidence per round: desktop.png (1280×800, first screen), mobile.png (390×844, first screen),
+# page.html (its visible text), source.txt (the raw HTML) and facts.md (what is true about the product).
+name: Landing page — ship or not
+version: "1"
+description: Decide whether an AI-generated landing page for a developer tool can go live.
+context: >-
+  A developer asked an AI coding agent for a landing page for their open-source developer tool and is deciding whether to
+  publish it. The reader of the page is a developer who has never heard of the tool. The facts input says what is true
+  about the tool; anything the page claims beyond it is invented.
+scale: { type: numeric, min: 0, max: 3, step: 1 }
+judges:
+  clef: { type: decision, provider: cloudflare, model: "@cf/cloudflare/clef" }
+defaultJudge: { type: ref, ref: clef }
+criteria:
+  # ── Gates: any one failing blocks the deploy and the score is 0 ──────────────────────────────
+  - id: says_what
+    name: First screen says what it is
+    group: Gate
+    weight: 0
+    inputs: [desktop]
+    scale: { type: binary, labels: [fail, pass] }
+    anchors:
+      fail: From the first screen alone a developer cannot say what the tool does, or only gets a slogan.
+      pass: From the first screen alone a developer can say in one sentence what the tool does and for what.
+  - id: cta_visible
+    name: A next step on the first screen
+    group: Gate
+    weight: 0
+    inputs: [desktop]
+    scale: { type: binary, labels: [fail, pass] }
+    anchors:
+      fail: The first screen has no visible button, link or command telling the reader what to do next.
+      pass: The first screen shows a clear next step, such as an install command or a button to the code or docs.
+  - id: cta_real
+    name: The next step leads somewhere real
+    group: Gate
+    weight: 0
+    inputs: [source]
+    scale: { type: binary, labels: [fail, pass] }
+    judge: { type: benchmark, method: keywords, keywords: ["npm install -g @verdict-ai/cli", "github.com/Ustay-coder/verdict"], mode: any, caseSensitive: false }
+  - id: no_fabrication
+    name: Nothing invented
+    group: Gate
+    weight: 0
+    inputs: [page, facts]
+    scale: { type: binary, labels: [fail, pass] }
+    anchors:
+      fail: >-
+        The page claims something the facts do not support: testimonials or quotes, customer or company logos, user,
+        download or star counts, speed or accuracy numbers, pricing plans, a sign-up or waitlist, or features the facts do not list.
+      pass: Every claim about users, customers, numbers, prices and features on the page is backed by the facts.
+  - id: no_placeholder
+    name: No placeholders left
+    group: Gate
+    weight: 0
+    inputs: [source]
+    scale: { type: binary, labels: [fail, pass] }
+    judge: { type: benchmark, method: regex, pattern: "lorem ipsum|href=[\"']#[\"']|example\\.(com|org)|\\bTODO\\b|\\bTBD\\b|your-?(org|name|username)|\\bacme\\b", flags: i, negate: true }
+  - id: mobile_ok
+    name: Readable on a phone
+    group: Gate
+    weight: 0
+    inputs: [mobile]
+    scale: { type: binary, labels: [fail, pass] }
+    anchors:
+      fail: On the phone-width screen, text or code is cut off, overflows sideways, overlaps, or is too small to read.
+      pass: On the phone-width screen, everything visible fits, does not overlap and can be read.
+  # ── Score: how good it is once it may ship ───────────────────────────────────────────────────
+  - id: value_prop
+    name: Why I would use it
+    weight: 3
+    inputs: [desktop, page]
+    levels:
+      - { value: 0, label: none, description: No reason to use the tool is given, or only buzzwords. }
+      - { value: 1, label: vague, description: A generic benefit that would fit any tool in the category. }
+      - { value: 2, label: clear, description: A specific problem the tool solves, stated plainly. }
+      - { value: 3, label: sharp, description: A specific problem, and what the reader gets that they cannot easily get today. }
+  - id: audience
+    name: Who it is for
+    weight: 2
+    inputs: [page]
+    levels:
+      - { value: 0, label: none, description: The page never says who should use it. }
+      - { value: 1, label: everyone, description: Aimed at everyone, or at a broad group such as "developers" or "teams". }
+      - { value: 2, label: named, description: Names a specific kind of user. }
+      - { value: 3, label: situation, description: Names a specific user in a specific situation the reader can recognise as their own. }
+  - id: proof
+    name: Shows real output
+    weight: 3
+    inputs: [page, facts]
+    levels:
+      - { value: 0, label: none, description: No example of what the tool produces. }
+      - { value: 1, label: invented, description: An example that is made up or does not match the facts. }
+      - { value: 2, label: example, description: A realistic example of a command and its output. }
+      - { value: 3, label: real, description: A real run from the facts, with its numbers and what they mean, stated without overclaiming. }
+  - id: first_run
+    name: How fast I can try it
+    weight: 2
+    inputs: [page]
+    levels:
+      - { value: 0, label: unclear, description: The page does not say how to start. }
+      - { value: 1, label: link, description: Only a link to the code or docs. }
+      - { value: 2, label: command, description: An install command to copy. }
+      - { value: 3, label: minute, description: The install command and a first run that works without signing up or an API key. }
+aggregation:
+  method: formula
+  formula: "min(says_what_n, cta_visible_n, cta_real_n, no_fabrication_n, no_placeholder_n, mobile_ok_n) < 0.5 ? 0 : (value_prop_n * 3 + audience_n * 2 + proof_n * 3 + first_run_n * 2) / 10"
+  normalize: [0, 100]
+  missing: zero
+  gates:
+    - { criterion: says_what, min: 1, message: The first screen does not say what it is }
+    - { criterion: cta_visible, min: 1, message: No next step on the first screen }
+    - { criterion: cta_real, min: 1, message: No real install command or repository link }
+    - { criterion: no_fabrication, min: 1, message: The page claims something that is not true }
+    - { criterion: no_placeholder, min: 1, message: Placeholders left in the page }
+    - { criterion: mobile_ok, min: 1, message: Breaks on a phone }
+  passThreshold: 80
+  precision: 0

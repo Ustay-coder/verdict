@@ -1,0 +1,9 @@
+{
+  "result": "I removed everything in `index.html` that reads as a placeholder. I can't see the rule's definition or run Verdict here, so I don't know exactly what it matched. Re-score the file to confirm the deploy block is gone.\n\nA search for the usual placeholder patterns (`…`, `...`, `<name>` slots, TODO/TBD/FIXME, lorem, `{{ }}`, \"e.g.\", \"coming soon\") now finds nothing. Before, it found 11 matches on 7 lines, and I replaced each with something concrete:\n\n| Where | Before | After |\n| --- | --- | --- |\n| \"Read the disagreements\" step and the Try it terminal | `verdict diff --base run_… --head run_…` | `verdict diff --base $BEFORE --head $AFTER`, with a comment saying these are the ids of any two runs |\n| Models table, OpenRouter row | `openrouter:<model>` / \"e.g. `typesafe/jev-1.13`\" | `openrouter:typesafe/jev-1.13` — \"Any OpenRouter model, named after the colon\" |\n| Models table, OpenAI row | `openai:<model>` / \"e.g. `gpt-6-luna`\" | `openai:gpt-6-luna` — \"Decisions API, any model named after the colon\" |\n| Models table, systemone row | `systemone:<model>` | `systemone:` + your model's name |\n| Text input card | `text:…` | `text:Where is my card?` |\n| JSON input card | `json:{…}` | `json:{\"amount\": 40}` |\n\nThe model names in the table come from your README. I made up the two example inputs, \"Where is my card?\" and `{\"amount\": 40}`, to suit the banking example; check they show the right syntax. Nothing else on the page changed.\n\nIf the check still fails, send me what the `No placeholders left` rule matches and I'll go straight to it.",
+  "session_id": "45db75c8-118e-46c0-b0d9-2b42b5418cfe",
+  "cost_usd": 0.9330406000000001,
+  "duration_ms": 37596,
+  "model": [
+    "claude-opus-5-5"
+  ]
+}
