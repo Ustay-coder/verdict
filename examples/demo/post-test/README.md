@@ -1,6 +1,6 @@
 # Topic test: which demo gets the best response on X?
 
-**Status: ready to post (2026-11-08). Nothing posted yet.**
+**Status: done (2026-11-22). No winner: the posts reached too few people to compare topics. See [Results](#results).**
 
 Five videos show five use cases for Verdict. The question is which one developers on X respond to most, because that
 is the use case to lead with on the site, in the next videos and in the launch post.
@@ -161,6 +161,36 @@ is.
   respond to.
 - **Analytics access:** some account-level analytics need X Premium. This plan uses per-post numbers and Media Studio.
   X has also changed how it counts video views, so compare posts only within this test.
+
+## Results
+
+All ten posts went out on schedule at 23:00 KST, 9–20 November. Data: [`results/posts.csv`](results/posts.csv); full
+output: [`results/final-analysis.txt`](results/final-analysis.txt).
+
+| Arm | Round 1: impressions, views, completion | Round 2 | Pooled completed views per impression (95% interval) | Chance of being best |
+| --- | --- | --- | --- | --- |
+| E | 15, 3, 33% | 36, 17, 18% | 7.9% (3.2–18.6%) | 66% |
+| B | 41, 18, 17% | 26, 2, 0% | 4.6% (1.6–12.5%) | 17% |
+| D | 39, 10, 20% | 16, 6, 0% | 3.6% (1.0–12.3%) | 13% |
+| F | 29, 17, 6% | 53, 11, 9% | 2.4% (0.7–8.5%) | 3% |
+| C | 15, 9, 0% | 46, 7, 0% | 0.0% (0–5.9%) | 1% |
+
+- **Decision: no winner.** E leads the pooled rate, but its chance of being best is 66% (the rule needs 90%), and B led
+  round 1.
+- **Why the test couldn't answer:** the ten posts had 316 impressions in all, about 32 each, and about 11 views watched
+  to the end in total. At 32 impressions per post, one topic would have to be about 5 to 7 times another before this
+  test could tell them apart (`analyze.py detectable --impressions 32 --base 0.05`). Every interval above overlaps
+  every other.
+- **Other responses:** 1 profile visit (B, round 1), 3 replies (B in both rounds, E in round 2), 3 likes, no follows,
+  bookmarks, quotes or reposts. Too few to compare.
+- **Reach didn't follow the topic either:** the same video got 15 and 36 impressions (E), or 29 and 53 (F), in its two
+  slots.
+- **Predictions:** recorded in [`predictions.md`](predictions.md); with these counts none can be scored.
+
+**What it does show:** organic posts on this account reach about 30 people each, so the account's reach, not the topic,
+limits what organic posting can learn right now. To compare topics, each needs on the order of 1,000+ impressions per
+post. The X Ads A/B test from the first version of this design (equal budget, same audience, up to five cells) gets
+there regardless of follower count.
 
 ## Files
 

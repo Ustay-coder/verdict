@@ -48,7 +48,7 @@ def wilson(x, n, conf=0.95):
     k = z(1 - (1 - conf) / 2); p = x / n
     mid = (p + k * k / (2 * n)) / (1 + k * k / n)
     half = k * math.sqrt(p * (1 - p) / n + k * k / (4 * n * n)) / (1 + k * k / n)
-    return (mid - half, mid + half)
+    return (max(0.0, mid - half), min(1.0, mid + half))
 
 def p_best(pairs, seed=7):
     rnd = random.Random(seed); wins = [0] * len(pairs)

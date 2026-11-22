@@ -1,0 +1,22 @@
+Primary: completed views / impression
+
+Round 1: B 7.46%  E 6.60%  D 5.13%  F 3.52%  C 0.00%   (impressions: F 29, C 15, B 41, E 15, D 39)
+Round 2: E 8.50%  F 1.87%  D 0.00%  C 0.00%  B 0.00%   (impressions: D 16, E 36, B 26, C 46, F 53)
+
+Both rounds pooled:
+arm  topic                               impr    rate      95% interval  P(best)
+E    sponsored script 0 to 85              51   7.94%    3.15%–18.63%       66%
+B    AI landing page 0 to 93               67   4.57%    1.58%–12.48%       17%
+D    AI judge vs people 57 to 76%          55   3.64%    1.00%–12.32%       13%
+F    our launch post 0 to 88               82   2.45%    0.68%–8.48%         3%
+C    hackathon write-up 5th to 1st         61   0.00%    0.00%–5.92%         1%
+
+Decision (P(best) >= 90% pooled AND first in every round): no winner: best is E at 66% (< 90%)
+Pooled P(best) treats every impression as independent; posts on different days vary more than that, which is why the topic must also win each round.
+
+Secondary (direction only), pooled:
+  views per impression   B=29.9%  C=26.2%  D=29.1%  E=39.2%  F=34.1%
+  intent per 1k          B=14.93  C=0.00  D=0.00  E=0.00  F=0.00
+  conversation per 1k    B=29.85  C=0.00  D=0.00  E=19.61  F=0.00
+  reposts per 1k         B=0.00  C=0.00  D=0.00  E=0.00  F=0.00
+  reach (impressions)    B=67  C=61  D=55  E=51  F=82
