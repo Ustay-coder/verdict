@@ -73,9 +73,10 @@ Check each community's self-promotion rules first. Some allow it only in a weekl
 > **Why it stalled, as far as I can tell:** some labels are lenient ("Update README.md" counted as having a why), and the
 > run-to-run noise is 1 to 2 points, so small rule edits can't be told apart from chance.
 >
-> [Offer D]
->
 > What agreement would you need before letting an AI judge gate anything?
+
+No offer in this post (decided 2026-11-23): it is an experiment write-up, and a pitch at the end would read as an ad.
+If a commenter asks to try it on their own judge, answer with Offer D in a reply and log it as a request.
 
 ### Hacker News
 
