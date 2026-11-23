@@ -40,7 +40,10 @@ Use these lines unchanged in every post, so the offer stays the same and only th
 > back, AI-template tells, contrast, headings that sell instead of describe) and send back the failing checks in
 > order. Free for the first 10 pages.
 
-**For every offer:** "Email it to [email address]. I'll only use what you send to score it, and won't post it anywhere
+**No offer paragraph in the posts** (decided 2026-11-23): they are write-ups, and a pitch would read as an ad. Use an
+offer only in a reply, when someone asks to try it, and log that as a request.
+
+**In a reply:** "Email it to [email address]. I'll only use what you send to score it, and won't post it anywhere
 without asking." (Decided 2026-11-23: requests by email, 10 free reviews per use case, and the promise stays.)
 
 ---
@@ -112,8 +115,6 @@ Show HN is for something people can try themselves, and a free review offer does
 > The demo script promised viewers guaranteed credit approval, so it scored 0. Claude Code fixed one rule per review,
 > and nine reviews later it was approved at 85, just over the bar. The script's voice stayed its weakest point.
 >
-> [Offer E]
->
 > Which of these rules do you see broken most often?
 
 ### LinkedIn (brand and agency people are there)
@@ -123,8 +124,6 @@ Show HN is for something people can try themselves, and a free review offer does
 > We built a reviewer that scores scripts against FTC disclosure and endorsement guidance plus the brand's brief. In
 > our demo (fictional creator, fictional app), one line promised viewers guaranteed credit approval. Score: 0. Fixing
 > one rule per review took it to 85, approved.
->
-> [Offer E]
 >
 > If you approve creator scripts for a brand: what do you check first?
 
@@ -156,8 +155,6 @@ Show HN is for something people can try themselves, and a free review offer does
 > Claude Code fixed one failing check per round: 0, 10, 20, 23, 33, 34, 49, 58, 71, 93. That took about 8 minutes,
 > unattended. Two rounds barely moved because the fix was only partial.
 >
-> [Offer B]
->
 > Which of those do you spot first on a landing page?
 
 ### GeekNews (Show GN) or Disquiet, in Korean
@@ -175,9 +172,6 @@ Show HN is for something people can try themselves, and a free review offer does
 >
 > Claude Code가 한 번에 체크 하나씩 고쳐서 0 → 10 → 20 → 23 → 33 → 34 → 49 → 58 → 71 → 93까지 왔습니다. 무인으로
 > 약 8분 걸렸습니다. 두 번은 수정이 부분적이라 거의 오르지 않았습니다.
->
-> 랜딩 페이지 URL을 보내 주시면 같은 기준으로 채점해서 안 맞는 체크를 순서대로 알려 드립니다. 선착순 10곳까지
-> 무료입니다. [이메일 주소]로 보내 주세요. 보내 주신 자료는 채점에만 쓰고, 허락 없이 공개하지 않습니다.
 >
 > 여러분은 랜딩 페이지에서 무엇을 가장 먼저 보시나요?
 
